@@ -1,4 +1,4 @@
-# Trash Tech Blog - Isis Vitória
+# Landing Page - Isis Vitória
 
 Projeto Full-Stack desenvolvido para a psicóloga Isis Vitória, focado em acolhimento e gestão de pacientes.
 
