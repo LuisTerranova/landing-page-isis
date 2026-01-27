@@ -1,0 +1,7 @@
+﻿services:
+  landing-page-isis:
+    image: landing-page-isis
+    build:
+      context: .
+      dockerfile: landing-page-isis/Dockerfile
+

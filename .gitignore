@@ -1,0 +1,28 @@
+## [Standard .NET Ignore]
+bin/
+obj/
+/packages/
+TestResults/
+[Log,log]
+*.user
+*.userosscache
+*.sln.docuser
+
+## [JetBrains Rider / ReSharper]
+.idea/
+*.sln.iml
+riderModule.iml
+_ReSharper.Caches/
+*.DotSettings.user
+
+## [Docker]
+.dockerignore
+
+## [OS specific]
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
