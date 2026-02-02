@@ -1,11 +1,17 @@
-﻿@inherits LayoutComponentBase
+﻿@using landing_page_isis.Components.Navigation
+@inherits LayoutComponentBase
 @inject IsisTheme CustomTheme
 
 
 <MudThemeProvider Theme="CustomTheme"/>
 <MudPopoverProvider />
-
 <MudDialogProvider />
-
 <MudSnackbarProvider />
+
+<MudLayout>
+    <NavBar/>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
 

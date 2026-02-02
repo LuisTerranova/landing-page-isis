@@ -1,0 +1,252 @@
+@page "/"
+@using MudBlazor
+
+<div class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%;">
+    <MudContainer MaxWidth="MaxWidth.Large">
+        <MudPaper id="hero" Elevation="0" Class="bg-transparent">
+            <MudGrid Justify="Justify.Center">
+                <MudItem xs="12" md="10" Class="d-flex flex-column align-center text-center">
+                    <MudText Typo="Typo.h6" Color="Color.Secondary" Style="letter-spacing: 4px; font-weight: 300;"
+                             Class="mb-4">
+                        AQUI E O SEU ESPACO
+                    </MudText>
+
+                    <MudText Typo="Typo.h1" Color="Color.Secondary" Style="font-weight: 900; line-height: 1.1;"
+                             Class="mb-8">
+                        Sua saúde em boas mãos
+                    </MudText>
+
+                    <MudText Typo="Typo.h5" Align="Align.Center"
+                             Style="font-weight: 300; line-height: 1.6; color: #555; max-width: 750px;" Class="mb-12">
+                        Investir em psicoterapia é o primeiro passo para uma vida mais leve e consciente.
+                        Vamos juntos transformar a forma como você lida com suas emoções e desafios?
+                    </MudText>
+
+                    <div class="d-flex flex-column align-center">
+                        <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 400; color: #666;">Agende sua consulta
+                            agora mesmo
+                        </MudText>
+                        <MudButton Variant="Variant.Filled"
+                                   Style="background-color: #284B32; color: white; padding: 18px 48px; font-size: 1.1rem;"
+                                   Size="Size.Large" Class="rounded-lg shadow-xl">
+                            Iniciar Atendimento
+                        </MudButton>
+                    </div>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudContainer>
+</div>
+
+<div class="d-flex justify-center">
+    <MudImage Src="isis-content-separator.png" Height="120" Alt="Separador Isis Vitória"/>
+</div>
+
+<div id="sobre" class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%;">
+    <MudContainer MaxWidth="MaxWidth.Large">
+        <MudPaper Elevation="0" Class="bg-transparent">
+            <MudGrid AlignItems="AlignItems.Center" Spacing="10">
+                <MudItem xs="12" md="7" Class="d-flex flex-column justify-center pe-md-12">
+                    <MudText Typo="Typo.h6" Color="Color.Secondary"
+                             Style="letter-spacing: 2px; font-weight: 300; margin-bottom: 10px">
+                        CONHEÇA MINHA TRAJETÓRIA
+                    </MudText>
+                    <MudText Typo="Typo.h2" Color="Color.Secondary" Class="mb-4" Style="font-weight: 700;">
+                        Sobre Mim
+                    </MudText>
+
+                    <div style="width: 60px; height: 4px; background-color: #284B32; border-radius: 2px;"
+                         class="mb-8"></div>
+
+                    <MudText Typo="Typo.h6" Class="text-justify mb-6"
+                             Style="font-weight: 400; line-height: 1.8; color: #444; font-size: 1.2rem;">
+                        Acredito que o desenvolvimento humano é um processo contínuo e profundamente enraizado nas
+                        interações sociais e na cultura que nos rodeia. Pautada na <b>Abordagem Histórico-Cultural</b>,
+                        meu trabalho clínico busca compreender o indivíduo não de forma isolada, mas a partir de sua
+                        história de vida e das mediações que moldaram sua subjetividade.
+                    </MudText>
+
+                    <MudStack Row="true" Spacing="3" Class="mt-4 flex-wrap">
+                        <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Secondary"
+                                 Variant="Variant.Text" Style="font-weight: 500;">Ética
+                        </MudChip>
+                        <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Secondary"
+                                 Variant="Variant.Text" Style="font-weight: 500;">Acolhimento
+                        </MudChip>
+                        <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Secondary"
+                                 Variant="Variant.Text" Style="font-weight: 500;">Ciência
+                        </MudChip>
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="5" Style="background-color: #7E0F20; overflow: hidden;"
+                         Class="rounded-xl d-flex align-end justify-center pa-0">
+                    <MudImage Src="isis-photo.png" Alt="Isis Vitória" Class="rounded-xl" Fluid="true"
+                              Style="width: 100%; object-fit: cover; display: block;"/>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudContainer>
+</div>
+
+<div id="servicos" class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%; padding: 80px 0;">
+    <MudContainer MaxWidth="MaxWidth.Large">
+
+        <div class="d-flex flex-column align-center text-center mb-16">
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Style="letter-spacing: 4px; font-weight: 300;" Class="mb-2">
+                COMO POSSO AJUDAR
+            </MudText>
+            <MudText Typo="Typo.h2" Color="Color.Secondary" Style="font-weight: 800; line-height: 1.1;">
+                Meus Serviços
+            </MudText>
+            <div style="width: 80px; height: 4px; background-color: #284B32; border-radius: 2px;" class="mt-6"></div>
+        </div>
+
+        <MudGrid Spacing="8">
+
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                          Style="background-color: white; border: 1px solid #eee; height: 100%;">
+                    <div class="pa-4 rounded-circle mb-6" style="background-color: rgba(40, 75, 50, 0.1);">
+                        <MudIcon Icon="@Icons.Material.Filled.SelfImprovement" Style="color: #284B32;"
+                                 Size="Size.Large"/>
+                    </div>
+                    <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 700;" Class="mb-4">
+                        Psicoterapia Individual
+                    </MudText>
+                    <MudText Typo="Typo.body1" Style="color: #666; line-height: 1.8;">
+                        Espaço de escuta ética e acolhedora, focado na compreensão da sua subjetividade e no
+                        fortalecimento da sua autonomia emocional.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                          Style="background-color: white; border: 1px solid #eee; height: 100%;">
+                    <div class="pa-4 rounded-circle mb-6" style="background-color: rgba(126, 15, 32, 0.1);">
+                        <MudIcon Icon="@Icons.Material.Filled.HistoryEdu" Style="color: #7E0F20;" Size="Size.Large"/>
+                    </div>
+                    <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 700;" Class="mb-4">
+                        Abordagem Clínica
+                    </MudText>
+                    <MudText Typo="Typo.body1" Style="color: #666; line-height: 1.8;">
+                        Atendimento fundamentado na Psicologia Histórico-Cultural, integrando sua história de vida e
+                        contexto social ao processo terapêutico.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                          Style="background-color: white; border: 1px solid #eee; height: 100%;">
+                    <div class="pa-4 rounded-circle mb-6" style="background-color: rgba(40, 75, 50, 0.1);">
+                        <MudIcon Icon="@Icons.Material.Filled.Groups" Style="color: #284B32;" Size="Size.Large"/>
+                    </div>
+                    <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 700;" Class="mb-4">
+                        Grupos e Oficinas
+                    </MudText>
+                    <MudText Typo="Typo.body1" Style="color: #666; line-height: 1.8;">
+                        Mediação de grupos terapêuticos e oficinas temáticas para desenvolvimento coletivo e
+                        compartilhamento de vivências.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <div class="d-flex justify-center mt-16">
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                       Size="Size.Large" Class="rounded-lg px-8 py-3"
+                       Style="border-width: 2px;">
+                Saiba mais sobre os atendimentos
+            </MudButton>
+        </div>
+    </MudContainer>
+</div>
+
+
+<div id="contato" class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%; padding: 80px 0;">
+    <MudContainer MaxWidth="MaxWidth.Large">
+        <MudGrid Justify="Justify.Center" AlignItems="AlignItems.Center">
+
+            <MudItem xs="12" md="5" Class="d-flex flex-column justify-center pe-md-12">
+                <MudText Typo="Typo.h6" Color="Color.Secondary" Style="letter-spacing: 3px; font-weight: 300;"
+                         Class="mb-4">
+                    VAMOS CONVERSAR?
+                </MudText>
+                <MudText Typo="Typo.h2" Color="Color.Secondary" Style="font-weight: 800; line-height: 1.1;"
+                         Class="mb-8">
+                    Dê o primeiro passo para sua transformação
+                </MudText>
+                <MudText Typo="Typo.h6" Style="color: #444; font-weight: 400; line-height: 1.6;" Class="mb-10">
+                    Estou aqui para oferecer a escuta e a mediação que você busca. Entre em contato para agendar uma
+                    consulta ou tirar dúvidas.
+                </MudText>
+
+                <div class="d-flex align-center mb-6">
+                    <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Secondary" Class="me-4"
+                             Size="Size.Medium"/>
+                    <MudText Style="color: #444; font-size: 1.1rem; font-weight: 500;">contato@isisvitoria.com.br
+                    </MudText>
+                </div>
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Custom.Brands.WhatsApp" Color="Color.Secondary" Class="me-4"
+                             Size="Size.Medium"/>
+                    <MudText Style="color: #444; font-size: 1.1rem; font-weight: 500;">(XX) 9XXXX-XXXX</MudText>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" md="6" Class="mt-12 mt-md-0">
+                <div class="pa-2">
+
+                    <style>
+                        .custom-contact-light .mud-input-label {
+                            color: #666 !important;
+                        }
+
+                        .custom-contact-light .mud-input-slot {
+                            color: #222 !important;
+                        }
+
+                        .custom-contact-light .mud-input-outlined-border {
+                            border-color: rgba(0, 0, 0, 0.1) !important;
+                        }
+
+                        .custom-contact-light:focus-within .mud-input-outlined-border {
+                            border-color: #7E0F20 !important;
+                        }
+                    </style>
+
+                    <MudTextField T="string" Label="Seu Nome" Variant="Variant.Outlined"
+                                  Class="custom-contact-light mb-6" FullWidth="true"/>
+
+                    <MudTextField T="string" Label="E-mail ou WhatsApp" Variant="Variant.Outlined"
+                                  Class="custom-contact-light mb-6" FullWidth="true"/>
+
+                    <MudTextField T="string" Label="Como posso te ajudar?" Variant="Variant.Outlined"
+                                  Class="custom-contact-light mb-8" Lines="5" FullWidth="true"/>
+
+                    <MudButton Variant="Variant.Filled"
+                               Style="background-color: #284B32; color: white; height: 60px; font-weight: 700; font-size: 1.1rem;"
+                               FullWidth="true"
+                               Class="rounded-lg shadow-xl">
+                        Enviar Mensagem
+                    </MudButton>
+                </div>
+            </MudItem>
+
+        </MudGrid>
+    </MudContainer>
+</div>
+
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    section {
+        scroll-margin-top: 80px;
+    }
+</style>

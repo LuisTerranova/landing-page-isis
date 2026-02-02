@@ -1,5 +1,8 @@
 using landing_page_isis;
 using landing_page_isis.Components;
+using landing_page_isis.Data;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +13,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 builder.Services.AddScoped<IsisTheme>();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
