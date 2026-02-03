@@ -1,4 +1,5 @@
 ﻿using landing_page_isis.core;
+using landing_page_isis.core.Interfaces;
 
 namespace landing_page_isis;
 
