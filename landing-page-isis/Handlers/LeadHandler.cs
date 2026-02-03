@@ -1,5 +1,6 @@
 ﻿using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
+using landing_page_isis.core.Models;
 
 namespace landing_page_isis;
 

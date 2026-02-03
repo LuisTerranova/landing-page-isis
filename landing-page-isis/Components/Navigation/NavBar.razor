@@ -1,27 +1,34 @@
-<MudAppBar Elevation="0" Color="Color.Transparent" Fixed="true">
+<MudAppBar Elevation="0" Fixed="true" 
+           Style="backdrop-filter: blur(5px); background-color: rgba(250, 235, 215, 0.8); border-bottom: 1px solid rgba(40, 75, 50, 0.1);">
+    
     <MudImage Src="isis-logotype.png"
               Alt="Logo Isis"
-              Height="40"
-              Class="mr-3"/>
-    <MudText Typo="Typo.h2" Color="Color.Secondary" Style="font-weight: bold">
-        Isis Vitoria
+              Height="35"
+              Class="mr-2"/>
+    
+    <MudText Typo="Typo.h5" Color="Color.Secondary" Style="font-weight: 800; letter-spacing: -0.5px;">
+        Isis Vitória
     </MudText>
-
 
     <div class="flex-grow-1 d-flex justify-center" style="position: absolute; left: 0; right: 0; pointer-events: none;">
         <div class="d-none d-md-flex" style="pointer-events: auto;">
-            <MudButton href="#sobre">Sobre</MudButton>
-            <MudButton href="#servicos">Serviços</MudButton>
-            <MudButton href="#contato">Contato</MudButton>
+            <MudButton href="#sobre" Style="font-weight: 600; color: #5D4037;" Class="mx-2">Sobre</MudButton>
+            <MudButton href="#servicos" Style="font-weight: 600; color: #5D4037;" Class="mx-2">Serviços</MudButton>
+            <MudButton href="#contato" Style="font-weight: 600; color: #5D4037;" Class="mx-2">Contato</MudButton>
         </div>
     </div>
     
     <MudSpacer/>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Login">
+    <MudButton Variant="Variant.Filled" 
+               Color="Color.Primary" 
+               EndIcon="@Icons.Material.Filled.Login"
+               Class="rounded-lg px-6"
+               Style="text-transform: none; font-weight: 600; background-color: #284B32;">
         Entrar
     </MudButton>
 </MudAppBar>
+
 
 @code {
 

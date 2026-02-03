@@ -1,0 +1,80 @@
+@rendermode InteractiveServer
+
+<div id="contato" class="d-flex align-center justify-center"
+     style="min-height: 100vh; width: 100%; background-color: #7E0F20; padding: 80px 0;">
+    <MudContainer MaxWidth="MaxWidth.Large">
+        <MudGrid Justify="Justify.Center" AlignItems="AlignItems.Center">
+            <MudItem xs="12" md="5" Class="d-flex flex-column justify-center pe-md-12">
+                <MudText Typo="Typo.h6" Style="letter-spacing: 3px; color: rgba(255,255,255,0.7); font-weight: 300;"
+                         Class="mb-4">
+                    VAMOS CONVERSAR?
+                </MudText>
+                <MudText Typo="Typo.h2" Style="color: white; font-weight: 800; line-height: 1.1;" Class="mb-8">
+                    Dê o primeiro passo para sua transformação
+                </MudText>
+                <MudText Typo="Typo.h6" Style="color: rgba(255,255,255,0.9); font-weight: 400; line-height: 1.6;"
+                         Class="mb-10">
+                    Estou aqui para oferecer a escuta e a mediação que você busca. Entre em contato para agendar uma
+                    consulta ou tirar dúvidas.
+                </MudText>
+
+                <div class="d-flex align-center mb-6">
+                    <MudIcon Icon="@Icons.Material.Filled.Email" Style="color: white;" Class="me-4" Size="Size.Medium"/>
+                    <MudText Style="color: white; font-size: 1.1rem;">contato@isisvitoria.com.br</MudText>
+                </div>
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Custom.Brands.WhatsApp" Style="color: white;" Class="me-4"
+                             Size="Size.Medium"/>
+                    <MudText Style="color: white; font-size: 1.1rem;">(XX) 9XXXX-XXXX</MudText>
+                </div>
+            </MudItem>
+            
+            <MudItem xs="12" md="6" Class="mt-12 mt-md-0">
+                <div class="pa-2">
+
+                    <style>
+                        .custom-contact-input .mud-input-label {
+                            color: rgba(255, 255, 255, 0.7) !important;
+                        }
+
+                        .custom-contact-input .mud-input-slot {
+                            color: white !important;
+                        }
+
+                        .custom-contact-input .mud-input-outlined-border {
+                            border-color: rgba(255, 255, 255, 0.3) !important;
+                        }
+
+                        .custom-contact-input:hover .mud-input-outlined-border {
+                            border-color: white !important;
+                        }
+                    </style>
+
+                    <MudTextField T="string" Label="Seu Nome" Variant="Variant.Outlined"
+                                  Class="custom-contact-input mb-6" FullWidth="true"/>
+
+                    <MudTextField T="string" Label="Celular (Whatsapp)" Variant="Variant.Outlined"
+                                  Class="custom-contact-input mb-6" FullWidth="true"/>
+                    
+                    <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
+                                  Class="custom-contact-input mb-6" FullWidth="true"/>
+
+                    <MudTextField T="string" Label="Como posso te ajudar?" Variant="Variant.Outlined"
+                                  Class="custom-contact-input mb-8" Lines="5" FullWidth="true"/>
+
+                    <MudButton Variant="Variant.Filled"
+                               Style="background-color: #284B32; color: white; height: 60px; font-weight: 700; font-size: 1.1rem;"
+                               FullWidth="true"
+                               Class="rounded-lg shadow-2xl">
+                        Enviar Mensagem
+                    </MudButton>
+                </div>
+            </MudItem>
+
+        </MudGrid>
+    </MudContainer>
+</div>
+
+@code {
+
+}

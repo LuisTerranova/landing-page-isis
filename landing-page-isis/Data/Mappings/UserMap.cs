@@ -8,6 +8,21 @@ public class UserMap : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        throw new NotImplementedException();
+        builder.ToTable("users");
+        builder.HasKey(u => u.Id);
+
+        builder.Property(u => u.Name)
+               .IsRequired()
+               .HasMaxLength(150);
+
+        builder.Property(u => u.Email)
+               .IsRequired()
+               .HasMaxLength(100);
+        
+        builder.HasIndex(u => u.Email)
+               .IsUnique();
+
+        builder.Property(u => u.PasswordHash)
+               .IsRequired();
     }
 }
