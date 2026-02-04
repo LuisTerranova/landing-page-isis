@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace landingpageisis.Migrations
 {
     /// <inheritdoc />
-    public partial class TestTables : Migration
+    public partial class InitialTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,6 +21,7 @@ namespace landingpageisis.Migrations
                     lead_email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     lead_phone = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
                     lead_intent = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    lead_created = table.Column<DateOnly>(type: "date", nullable: false),
                     lead_status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
@@ -51,9 +52,9 @@ namespace landingpageisis.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "text", nullable: false)
+                    user_name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    user_email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    password_hash = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -86,9 +87,9 @@ namespace landingpageisis.Migrations
                 column: "PacientId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_Email",
+                name: "IX_users_user_email",
                 table: "users",
-                column: "Email",
+                column: "user_email",
                 unique: true);
         }
 

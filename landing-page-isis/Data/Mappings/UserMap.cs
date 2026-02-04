@@ -13,16 +13,19 @@ public class UserMap : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.Name)
                .IsRequired()
-               .HasMaxLength(150);
+               .HasMaxLength(150)
+               .HasColumnName("user_name");
 
         builder.Property(u => u.Email)
                .IsRequired()
-               .HasMaxLength(100);
+               .HasMaxLength(100)
+               .HasColumnName("user_email");
         
         builder.HasIndex(u => u.Email)
                .IsUnique();
 
         builder.Property(u => u.PasswordHash)
-               .IsRequired();
+               .IsRequired()
+               .HasColumnName("password_hash");
     }
 }

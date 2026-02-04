@@ -1,10 +1,12 @@
 using landing_page_isis;
 using landing_page_isis.Components;
+using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
+DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
@@ -12,6 +14,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 builder.Services.AddScoped<IsisTheme>();
+builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
+builder.Services.AddScoped<IPacientHandler, PacientHandler>();
+builder.Services.AddScoped<ILeadHandler, LeadHandler>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -41,4 +46,5 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+await app.SeedAdmin();
 app.Run();
