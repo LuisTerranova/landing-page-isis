@@ -12,8 +12,8 @@ using landing_page_isis.Data;
 namespace landingpageisis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260203220317_TestTables")]
-    partial class TestTables
+    [Migration("20260204221623_InitialTables")]
+    partial class InitialTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -55,6 +55,10 @@ namespace landingpageisis.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Created")
+                        .HasColumnType("date")
+                        .HasColumnName("lead_created");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -147,16 +151,19 @@ namespace landingpageisis.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("user_email");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("user_name");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
 
                     b.HasKey("Id");
 

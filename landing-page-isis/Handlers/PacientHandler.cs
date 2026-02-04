@@ -1,33 +1,63 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
+using landing_page_isis.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis;
 
-public class PacientHandler : IPacientHandler
+public class PacientHandler(AppDbContext context) : IPacientHandler
 {
-    public Task<List<Pacient>> GetPacients()
+    public async Task<PaginatedResponse<Pacient>> GetPacients(int page, int pageSize)
     {
-        throw new NotImplementedException();
+        var query = context.Pacients.AsNoTracking();
+        var totalItems = await query.CountAsync();
+
+        var items = await query
+            .OrderBy(p => p.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResponse<Pacient>(items, totalItems, page, pageSize);
     }
 
-    public Task<Pacient> GetPacient(int id)
+    public async Task<Pacient?> GetPacient(Guid id)
     {
-        throw new NotImplementedException();
+        return await context.Pacients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    public Task<bool> CreatePacient(Pacient lead)
+    public async Task<HandlerResult> CreatePacient(Pacient? pacient)
     {
-        throw new NotImplementedException();
+        if (pacient == null) 
+            return new HandlerResult(false, "Dados inválidos.");
+
+        context.Pacients.Add(pacient);
+        await context.SaveChangesAsync();
+        return new HandlerResult(true);
     }
 
-    public Task<bool> UpdatePacient(Pacient lead)
+    public async Task<HandlerResult> UpdatePacient(Pacient pacient)
     {
-        throw new NotImplementedException();
+        var existing = await context.Pacients.FindAsync(pacient.Id);
+        if (existing == null) 
+            return new HandlerResult(false, "Paciente não encontrado.");
+
+        context.Entry(existing).CurrentValues.SetValues(pacient);
+        await context.SaveChangesAsync();
+        return new HandlerResult(true);
     }
 
-    public Task<bool> DeletePacient(int id)
+    public async Task<HandlerResult> DeletePacient(Guid id)
     {
-        throw new NotImplementedException();
+        var pacient = await context.Pacients.FindAsync(id);
+        if (pacient == null) 
+            return new HandlerResult(false, "Paciente não encontrado.");
+
+        context.Pacients.Remove(pacient);
+        await context.SaveChangesAsync();
+        return new HandlerResult(true);
     }
 }

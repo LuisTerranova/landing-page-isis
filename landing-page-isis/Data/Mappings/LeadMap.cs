@@ -32,6 +32,9 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
             .HasMaxLength(300)
             .HasColumnName("lead_intent");
         
+        builder.Property(l => l.Created)
+            .HasColumnName("lead_created");
+        
         builder.Property(l => l.LeadStatus)
             .IsRequired()
             .HasConversion<string>()
