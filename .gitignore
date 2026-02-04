@@ -3,7 +3,9 @@ bin/
 obj/
 /packages/
 TestResults/
-[Log,log]
+*.log
+logs/
+[L,l]og/
 *.user
 *.userosscache
 *.sln.docuser
@@ -26,3 +28,5 @@ _ReSharper.Caches/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.env
