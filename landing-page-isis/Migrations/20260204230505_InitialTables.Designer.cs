@@ -12,7 +12,7 @@ using landing_page_isis.Data;
 namespace landingpageisis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260204221623_InitialTables")]
+    [Migration("20260204230505_InitialTables")]
     partial class InitialTables
     {
         /// <inheritdoc />

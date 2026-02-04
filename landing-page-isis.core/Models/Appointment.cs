@@ -7,7 +7,6 @@ public class Appointment
     public Guid Id  { get; set; } = Guid.NewGuid();
     public DateTimeOffset AppointmentDate { get; set; }
     public Guid PacientId { get; set; }
-    [JsonIgnore]
     public Pacient Pacient { get; set; }
     public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Scheduled;
 }
