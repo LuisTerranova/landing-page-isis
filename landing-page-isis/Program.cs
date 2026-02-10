@@ -7,7 +7,17 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
+
+// FORÇA APENAS HTTP - DESABILITA HTTPS COMPLETAMENTE
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenLocalhost(5000, listenOptions =>
+    {
+        // Apenas HTTP, sem HTTPS
+    });
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -21,6 +31,7 @@ builder.Services.AddScoped<ILeadHandler, LeadHandler>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
@@ -28,6 +39,7 @@ builder.Services.AddAuthentication("Cookies")
         options.AccessDeniedPath = "/acesso-negado";
         options.ExpireTimeSpan = TimeSpan.FromDays(3);
     });
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -37,11 +49,11 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 }
 
-
+app.UseStaticFiles();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
