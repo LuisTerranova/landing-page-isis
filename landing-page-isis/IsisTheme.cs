@@ -31,15 +31,21 @@ public class IsisTheme : MudTheme
             },
             H1 = new H1Typography()
             {
-                FontFamily = new[] { "Angelina", "cursive" },
-                FontSize = "4.5rem",
-                FontWeight = "400"
+                FontFamily = new[] { "Glacial Indifference", "sans-serif" },
+                FontSize = "3.5rem",
+                FontWeight = "700"
             },
             H2 = new H2Typography()
             {
-                FontFamily = new[] { "Angelina", "cursive" },
-                FontSize = "3rem",
-                FontWeight = "400"
+                FontFamily = new[] { "Glacial Indifference", "sans-serif" },
+                FontSize = "2.5rem",
+                FontWeight = "700"
+            },
+            H3 = new H3Typography()
+            {
+                FontFamily = new[] { "Glacial Indifference", "sans-serif" },
+                FontSize = "2rem",
+                FontWeight = "700"
             },
             Button = new ButtonTypography()
             {

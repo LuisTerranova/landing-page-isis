@@ -1,0 +1,45 @@
+@page "/admin/leads"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@using landing_page_isis.Components.Layout
+@using landing_page_isis.core.Interfaces
+@using landing_page_isis.core.Models
+@layout AdminLayout
+@inject ILeadHandler LeadHandler
+@inject IsisTheme CustomTheme
+
+<MudText Typo="Typo.h4" Class="mb-6" Style="@($"font-weight: 800; color: {CustomTheme.PaletteLight.Secondary};")">
+    LEADS
+</MudText>
+
+<MudDataGrid T="Lead" Items="@_leads" Filterable="true" Hover="true" Striped="true">
+    <Columns>
+        <PropertyColumn Property="x => x.Name" Title="Interessado" />
+        <PropertyColumn Property="x => x.Created" Title="Data de Contato" />
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                    <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" OnClick="@(() => ConverterEmPaciente(context.Item))">Converter em Paciente</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => VerDetalhesLead(context.Item))">Ver Detalhes</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Delete" Color="Color.Error">Descartar</MudMenuItem>
+                </MudMenu>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private List<Lead> _leads = new();
+
+    protected override void OnInitialized()
+    {
+        _leads = new List<Lead>
+        {
+            new() { Id = Guid.NewGuid(), Name = "Carlos Souza", Created = DateOnly.FromDateTime(DateTime.Now.AddDays(-2)) },
+            new() { Id = Guid.NewGuid(), Name = "Ana Costa", Created = DateOnly.FromDateTime(DateTime.Now) }
+        };
+    }
+
+    private void ConverterEmPaciente(Lead lead) => Console.WriteLine($"Convertendo {lead.Name}");
+    private void VerDetalhesLead(Lead lead) => Console.WriteLine($"Detalhes de {lead.Name}");
+}
