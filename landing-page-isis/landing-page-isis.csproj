@@ -40,9 +40,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Components\Pages\Financeiro.razor" />
       <AdditionalFiles Include="Components\Pages\Home.razor" />
-      <AdditionalFiles Include="Components\Pages\Leads.razor" />
       <AdditionalFiles Include="Components\Pages\Login.razor" />
     </ItemGroup>
 

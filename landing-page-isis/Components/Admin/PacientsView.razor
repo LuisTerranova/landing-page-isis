@@ -1,60 +1,37 @@
-@page "/admin/pacients"
+@page "/admin/pacientes"
+@using landing_page_isis.Components.Layout
+@using landing_page_isis.Components.Misc
+@using landing_page_isis.core.Models
 @layout DashboardLayout
 @rendermode InteractiveServer
-@using landing_page_isis.Components.Layout
-@using landing_page_isis.core.Models
+
 
 <AdminShell>
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
         PACIENTES
     </MudText>
-
-    <MudTable Items="@_pacientes" Hover="true" Striped="true" Elevation="2">
-        <HeaderContent>
+    
+    <GenericTable TItem="Pacient" 
+                ServerData="@ServerReload" 
+                OnEdit="@(p => EditPacient(p))" 
+                OnDelete="@(p => DeletePacient(p))">
+    
+        <HeaderColumns>
             <MudTh>Nome</MudTh>
             <MudTh>E-mail</MudTh>
             <MudTh>Telefone</MudTh>
-            <MudTh Style="text-align: right">Ações</MudTh>
-        </HeaderContent>
-        <RowTemplate>
+        </HeaderColumns>
+
+        <RowColumns>
             <MudTd DataLabel="Nome">@context.Name</MudTd>
             <MudTd DataLabel="E-mail">@context.Email</MudTd>
             <MudTd DataLabel="Telefone">@context.Phone</MudTd>
-            <MudTd DataLabel="Ações" Style="text-align: right">
-                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                    <ActivatorContent>
-                        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Default" />
-                    </ActivatorContent>
-                    <ChildContent>
-                        <MudMenuItem OnClick="@(() => EditarPaciente(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> Editar
-                        </MudMenuItem>
-                        <MudMenuItem OnClick="@(() => VerHistorico(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.History" Class="me-2" /> Prontuário
-                        </MudMenuItem>
-                        <MudMenuItem Color="Color.Error" OnClick="@(() => ExcluirPaciente(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" /> Excluir
-                        </MudMenuItem>
-                    </ChildContent>
-                </MudMenu>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+        </RowColumns>
+
+        <CustomActions>
+            
+        </CustomActions>
+    </GenericTable>
+    
 </AdminShell>
 
-@code {
-    private List<Pacient> _pacientes = new();
-
-    protected override void OnInitialized()
-    {
-        _pacientes = new List<Pacient>
-        {
-            new() { Id = Guid.NewGuid(), Name = "João Silva", Email = "joao@email.com", Phone = "(69) 99999-0000" },
-            new() { Id = Guid.NewGuid(), Name = "Maria Oliveira", Email = "maria@email.com", Phone = "(69) 88888-1111" }
-        };
-    }
-
-    private void EditarPaciente(Pacient paciente) => Console.WriteLine($"Editando {paciente.Name}");
-    private void VerHistorico(Pacient paciente) => Console.WriteLine($"Histórico de {paciente.Name}");
-    private void ExcluirPaciente(Pacient paciente) => _pacientes.Remove(paciente);
-}

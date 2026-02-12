@@ -1,5 +1,7 @@
 @page "/admin/leads"
 @using landing_page_isis.Components.Layout
+@using landing_page_isis.Components.Misc
+@using landing_page_isis.core.Models
 @layout DashboardLayout
 @rendermode InteractiveServer
 
@@ -8,40 +10,24 @@
         LEADS
     </MudText>
     
-    <MudTable Items="@_leads" Hover="true" Striped="true" Elevation="2">
-        <HeaderContent>
-            <MudTh>Nome</MudTh>
-            <MudTh>E-mail</MudTh>
-            <MudTh>Telefone</MudTh>
-            <MudTh>Status</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.Name</MudTd>
-            <MudTd>@context.Email</MudTd>
-            <MudTd>@context.Phone</MudTd>
-            <MudTd>
-                <MudChip T="string" Size="Size.Small" Color="Color.Info">Novo</MudChip>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
-</AdminShell>
+<GenericTable TItem="Lead"
+              Items=""
+              OnEdit=""
+              OnDelete="">
+        
+    <HeaderColumns>
+        <MudTh>Nome</MudTh>
+        <MudTh>Telefone</MudTh>
+        <MudTh>Criado em</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderColumns>
+        
+    <RowColumns>
+        <MudTd DataLabel="Nome">@context.Name</MudTd>
+        <MudTd DataLabel="Telefone">@context.Phone</MudTd>
+        <MudTd DataLabel="Criado em">@context.Created</MudTd>
+        <MudTh DataLabel="Status">@context.LeadStatus</MudTh>
+    </RowColumns> 
 
-@code {
-    private List<Lead> _leads = new();
-    
-    protected override void OnInitialized()
-    {
-        _leads = new List<Lead>
-        {
-            new() { Name = "Ana Costa", Email = "ana@email.com", Phone = "(69) 99999-1111" },
-            new() { Name = "Carlos Lima", Email = "carlos@email.com", Phone = "(69) 88888-2222" }
-        };
-    }
-    
-    public class Lead
-    {
-        public string Name { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string Phone { get; set; } = "";
-    }
-}
+</GenericTable>
+</AdminShell>

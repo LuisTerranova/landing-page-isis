@@ -1,0 +1,52 @@
+@typeparam TItem
+
+<MudTable ServerData="@ServerData" @ref="_table" Hover="true" Elevation="2" Class="mud-theme-secondary">
+    <HeaderContent>
+        @HeaderColumns
+        <MudTh Class="d-flex justify-end">Ações</MudTh>
+    </HeaderContent>
+    
+    <RowTemplate>
+        @RowColumns(context)
+        <MudTd DataLabel="Ações" Class="d-flex justify-end">
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                <ActivatorContent>
+                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Inherit" />
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> Editar
+                    </MudMenuItem>
+                    
+                    @if (CustomActions != null)
+                    {
+                        @CustomActions(context)
+                    }
+
+                    <MudMenuItem Color="Color.Error" OnClick="@(() => OnDelete.InvokeAsync(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" /> Excluir
+                    </MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        </MudTd>
+    </RowTemplate>
+    
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Itens por página:" 
+                       InfoFormat="{first_item}-{last_item} de {all_items}"/>
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<TItem> _table;
+    
+    [Parameter] public Func<TableState, CancellationToken, Task<TableData<TItem>>> ServerData { get; set; }
+    [Parameter] public RenderFragment HeaderColumns { get; set; }
+    [Parameter] public RenderFragment<TItem> RowColumns { get; set; }
+    [Parameter] public RenderFragment<TItem>? CustomActions { get; set; }
+    
+    [Parameter] public EventCallback<TItem> OnEdit { get; set; }
+    [Parameter] public EventCallback<TItem> OnDelete { get; set; }
+    
+    public Task ReloadAsync() => _table.ReloadServerData();
+}
