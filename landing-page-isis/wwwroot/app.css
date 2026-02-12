@@ -1,13 +1,26 @@
 @font-face {
     font-family: 'Glacial Indifference';
-    src: url('../Fonts/Glacial-indifference-regular.otf') format('opentype');
+    src: url('../Fonts/GlacialIndifference-Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Glacial Indifference';
-    src: url('../Fonts/Glacial-indifference-bold.otf') format('opentype');
+    src: url('../Fonts/GlacialIndifference-Bold.otf') format('opentype');
     font-weight: bold;
     font-style: normal;
+}
+
+.mud-table.mud-theme-secondary {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+}
+
+.mud-table.mud-theme-secondary .mud-table-head {
+    border-radius: 24px 24px 0 0 !important;
+}
+
+.mud-theme-secondary, .mud-theme-secondary * {
+    color: #FFFFFF !important;
 }

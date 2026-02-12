@@ -8,16 +8,16 @@ namespace landing_page_isis;
 
 public class PacientHandler(AppDbContext context) : IPacientHandler
 {
-    public async Task<PaginatedResponse<Pacient>> GetPacients(int page, int pageSize)
+    public async Task<PaginatedResponse<Pacient>> GetPacients(int page, int pageSize, CancellationToken ct)
     {
         var query = context.Pacients.AsNoTracking();
-        var totalItems = await query.CountAsync();
+        var totalItems = await query.CountAsync(ct);
 
         var items = await query
             .OrderBy(p => p.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         return new PaginatedResponse<Pacient>(items, totalItems, page, pageSize);
     }

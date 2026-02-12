@@ -6,10 +6,10 @@ public class IsisTheme : MudTheme
 {
     public IsisTheme()
     {
-        PaletteLight = new PaletteLight()
+        PaletteLight = new PaletteLight
         {
             Primary = "#284B32",          
-            Secondary = "#7E0F20",        
+            Secondary = "#7E0F20",
             Background = "#F7EAD5",      
             Surface = "#F7EAD5",
             AppbarBackground = "#284B32",
