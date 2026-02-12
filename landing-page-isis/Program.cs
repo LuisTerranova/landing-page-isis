@@ -2,7 +2,6 @@ using landing_page_isis;
 using landing_page_isis.Components;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -10,13 +9,12 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// FORÇA APENAS HTTP - DESABILITA HTTPS COMPLETAMENTE
+//Force http, omarchy's fault perhaps.
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.ListenLocalhost(5000, listenOptions =>
-    {
-        // Apenas HTTP, sem HTTPS
-    });
+  serverOptions.ListenLocalhost(5000, listenOptions =>
+  {
+  });
 });
 
 builder.Services.AddRazorComponents()
@@ -35,9 +33,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
-        options.LoginPath = "/login";
-        options.AccessDeniedPath = "/acesso-negado";
-        options.ExpireTimeSpan = TimeSpan.FromDays(3);
+      options.LoginPath = "/login";
+      options.AccessDeniedPath = "/acesso-negado";
+      options.ExpireTimeSpan = TimeSpan.FromDays(3);
     });
 
 builder.Services.AddAuthorization();
@@ -46,7 +44,7 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+  app.UseExceptionHandler("/Error", createScopeForErrors: true);
 }
 
 app.UseStaticFiles();

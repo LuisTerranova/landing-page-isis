@@ -1,0 +1,47 @@
+@page "/admin/leads"
+@using landing_page_isis.Components.Layout
+@layout DashboardLayout
+@rendermode InteractiveServer
+
+<AdminShell>
+    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
+        LEADS
+    </MudText>
+    
+    <MudTable Items="@_leads" Hover="true" Striped="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Nome</MudTh>
+            <MudTh>E-mail</MudTh>
+            <MudTh>Telefone</MudTh>
+            <MudTh>Status</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Email</MudTd>
+            <MudTd>@context.Phone</MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">Novo</MudChip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</AdminShell>
+
+@code {
+    private List<Lead> _leads = new();
+    
+    protected override void OnInitialized()
+    {
+        _leads = new List<Lead>
+        {
+            new() { Name = "Ana Costa", Email = "ana@email.com", Phone = "(69) 99999-1111" },
+            new() { Name = "Carlos Lima", Email = "carlos@email.com", Phone = "(69) 88888-2222" }
+        };
+    }
+    
+    public class Lead
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+    }
+}

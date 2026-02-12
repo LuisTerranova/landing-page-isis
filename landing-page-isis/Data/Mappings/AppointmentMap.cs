@@ -19,5 +19,9 @@ public class AppointmentMap : IEntityTypeConfiguration<Appointment>
             .IsRequired()
             .HasConversion<string>()
             .HasColumnName("appointment_status");
+
+        builder.Property(a => a.Price)
+            .IsRequired()
+            .HasColumnName("appointment_price");
     } 
 }
