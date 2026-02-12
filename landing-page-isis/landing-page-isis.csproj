@@ -30,4 +30,20 @@
       <ProjectReference Include="..\landing-page-isis.core\landing-page-isis.core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Pages\Financeiro.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Home.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Leads.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Login.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Pacients.razor" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Admin\PacientsView.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Components\Pages\Financeiro.razor" />
+      <AdditionalFiles Include="Components\Pages\Home.razor" />
+      <AdditionalFiles Include="Components\Pages\Leads.razor" />
+      <AdditionalFiles Include="Components\Pages\Login.razor" />
+    </ItemGroup>
+
 </Project>

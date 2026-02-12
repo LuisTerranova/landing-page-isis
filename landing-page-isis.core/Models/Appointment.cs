@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace landing_page_isis.core.Models;
 
 public class Appointment
@@ -9,4 +7,5 @@ public class Appointment
     public Guid PacientId { get; set; }
     public Pacient Pacient { get; set; }
     public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Scheduled;
+    public decimal Price { get; set; }
 }
