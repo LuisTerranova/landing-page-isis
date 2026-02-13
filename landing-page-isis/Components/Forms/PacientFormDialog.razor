@@ -1,0 +1,67 @@
+@using landing_page_isis.core.Models
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-3 mb-n1"/>
+            @Titulo
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_formValido">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Nome Completo" Required="true"
+                                  @bind-Value="Model.Name" Variant="Variant.Outlined"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="CPF" Required="true"
+                                  @bind-Value="Model.Cpf" Variant="Variant.Outlined"
+                                  Mask="@(new PatternMask("000.000.000-00"))"/>    
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker T="DateTime?"
+                                   Label="Data de Nascimento"
+                                   Date="@(Model.BirthDate?.ToDateTime(TimeOnly.MinValue))"
+                                   DateChanged="@(dt => Model.BirthDate = dt.HasValue ? DateOnly.FromDateTime(dt.Value) : null)"
+                                   Required="true"
+                                   Variant="Variant.Outlined"
+                                   DateFormat="dd/MM/yyyy"
+                                   Editable="true"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="E-mail" Required="true"
+                                  @bind-Value="Model.Email" Variant="Variant.Outlined"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Telefone" Required="true"
+                                  @bind-Value="Model.Phone" Variant="Variant.Outlined"/>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   Disabled="@(!_formValido)" OnClick="Salvar">Salvar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public Pacient Model { get; set; } = new();
+    [Parameter] public string Titulo { get; set; } = "Novo Paciente";
+
+    private MudForm _form = null!;
+    private bool _formValido;
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Salvar()
+    {
+        //WIP if necessary, add extra validation
+        MudDialog.Close(DialogResult.Ok(Model));
+    }
+}

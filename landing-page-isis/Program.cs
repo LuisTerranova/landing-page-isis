@@ -2,6 +2,7 @@ using landing_page_isis;
 using landing_page_isis.Components;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
+using landing_page_isis.Handlers;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 

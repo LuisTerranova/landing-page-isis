@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-namespace landing_page_isis;
+namespace landing_page_isis.Handlers;
 
 public class AuthHandler(AppDbContext dbContext, HttpContext context) : IAuthHandler
 {

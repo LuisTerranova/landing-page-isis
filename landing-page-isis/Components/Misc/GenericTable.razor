@@ -1,5 +1,7 @@
 @typeparam TItem
 
+<MudButton Class="ma-5 pa-3 mud-theme-secondary"
+           OnClick="@(() => OnCreate.InvokeAsync())">Criar</MudButton>
 <MudTable ServerData="@ServerData" @ref="_table" Hover="true" Elevation="2" Class="mud-theme-secondary">
     <HeaderContent>
         @HeaderColumns
@@ -23,7 +25,7 @@
                         @CustomActions(context)
                     }
 
-                    <MudMenuItem Color="Color.Error" OnClick="@(() => OnDelete.InvokeAsync(context))">
+                    <MudMenuItem OnClick="@(() => OnDelete.InvokeAsync(context))">
                         <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" /> Excluir
                     </MudMenuItem>
                 </ChildContent>
@@ -47,6 +49,7 @@
     
     [Parameter] public EventCallback<TItem> OnEdit { get; set; }
     [Parameter] public EventCallback<TItem> OnDelete { get; set; }
+    [Parameter] public EventCallback OnCreate { get; set; }
     
     public Task ReloadAsync() => _table.ReloadServerData();
 }

@@ -4,23 +4,40 @@ using landing_page_isis.core.Models;
 using landing_page_isis.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace landing_page_isis;
+namespace landing_page_isis.Handlers;
 
 public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 {
-  public async Task<PaginatedResponse<Appointment?>> GetAppointments(int page, int pageSize, Guid pacientId)
+  public async Task<PaginatedResponse<Appointment?>> GetAllAppointments(int page, int pageSize, CancellationToken ct)
+  {
+    var query = context.Appointments
+      .AsNoTracking();
+    
+    var totalItems = await query.CountAsync(ct);
+
+    var items = await query
+      .OrderByDescending(a => a.AppointmentDate)
+      .Skip(page * pageSize)
+      .Take(pageSize)
+      .ToListAsync(ct);
+    
+    return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+  }
+
+  public async Task<PaginatedResponse<Appointment?>> GetAppointmentsByPacientId(int page, int pageSize
+    ,Guid pacientId, CancellationToken ct)
   {
     var query = context.Appointments
         .AsNoTracking()
         .Where(a => a.PacientId == pacientId);
 
-    var totalItems = await query.CountAsync();
+    var totalItems = await query.CountAsync(ct);
 
     var items = await query
         .OrderByDescending(a => a.AppointmentDate)
-        .Skip((page - 1) * pageSize)
+        .Skip(page * pageSize)
         .Take(pageSize)
-        .ToListAsync();
+        .ToListAsync(ct);
 
     return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
   }
