@@ -1,4 +1,6 @@
+using landing_page_isis.Components.Forms;
 using landing_page_isis.Components.Misc;
+using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -9,7 +11,7 @@ public partial class PacientsView : ComponentBase
 {
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
     [Inject] private IDialogService DialogService { get; set; } = null!;
-    [Inject] private PacientHandler PacientHandler { get; set; } = null!;
+    [Inject] private IPacientHandler PacientHandler { get; set; } = null!;
 
     private GenericTable<Pacient> _pacientsTable = null!;
     private bool _loading = true;
@@ -63,6 +65,25 @@ private async Task DeletePacient(Pacient pacient)
 private async Task EditPacient(Pacient pacient)
 {
     
+}
+
+private async Task OpenCreate()
+{
+    var parameters = new DialogParameters<PacientFormDialog> { { x => x.Titulo, "Novo Paciente" } };
+    var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    var dialog = await DialogService.ShowAsync<PacientFormDialog>("Cadastro", parameters, options);
+    var result = await dialog.Result;
+
+    if (!result.Canceled && result.Data is Pacient novoPaciente)
+    {
+        var sucesso = await PacientHandler.CreatePacient(novoPaciente);
+        if (sucesso.Success)
+        {
+            Snackbar.Add("Paciente salvo!", Severity.Success);
+            await _pacientsTable.ReloadAsync();
+        }
+    }
 }
 }
 

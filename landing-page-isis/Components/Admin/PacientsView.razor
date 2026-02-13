@@ -10,12 +10,13 @@
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
         PACIENTES
     </MudText>
-    
-    <GenericTable TItem="Pacient" 
-                ServerData="@ServerReload" 
-                OnEdit="@(p => EditPacient(p))" 
-                OnDelete="@(p => DeletePacient(p))">
-    
+
+    <GenericTable TItem="Pacient"
+                  ServerData="@ServerReload"
+                  OnCreate="@(() => OpenCreate())"
+                  OnEdit="@(p => EditPacient(p))"
+                  OnDelete="@(p => DeletePacient(p))">
+
         <HeaderColumns>
             <MudTh>Nome</MudTh>
             <MudTh>E-mail</MudTh>
@@ -29,9 +30,9 @@
         </RowColumns>
 
         <CustomActions>
-            
+
         </CustomActions>
     </GenericTable>
-    
+
 </AdminShell>
 

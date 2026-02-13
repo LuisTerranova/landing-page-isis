@@ -4,22 +4,22 @@ using landing_page_isis.core.Models;
 using landing_page_isis.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace landing_page_isis;
+namespace landing_page_isis.Handlers;
 
 public partial class LeadHandler(AppDbContext context) : ILeadHandler
 {
-    public async Task<PaginatedResponse<Lead?>> GetLeads(int page = 1, int pageSize = 5)
+    public async Task<PaginatedResponse<Lead?>> GetLeads(int page, int pageSize, CancellationToken ct)
     {
         var query = context.Leads.AsNoTracking();
-        var totalItems = await query.CountAsync();
+        var totalItems = await query.CountAsync(ct);
 
-        if (totalItems <= 0) return null;
+        if (totalItems <= 0) return new PaginatedResponse<Lead?>([], totalItems, page, pageSize);
 
         var items = await query
             .OrderByDescending(l => l.Created)
-            .Skip((page - 1) * pageSize)
+            .Skip(page * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         return new PaginatedResponse<Lead?>(items, totalItems, page, pageSize);
     }

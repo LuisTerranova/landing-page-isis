@@ -11,9 +11,9 @@
     </MudText>
     
 <GenericTable TItem="Lead"
-              Items=""
-              OnEdit=""
-              OnDelete="">
+              ServerData="@ServerReload"
+              OnEdit="@(l => EditLead(l))"
+              OnDelete="@(l => DeleteLead(l))">
         
     <HeaderColumns>
         <MudTh>Nome</MudTh>
@@ -26,7 +26,7 @@
         <MudTd DataLabel="Nome">@context.Name</MudTd>
         <MudTd DataLabel="Telefone">@context.Phone</MudTd>
         <MudTd DataLabel="Criado em">@context.Created</MudTd>
-        <MudTh DataLabel="Status">@context.LeadStatus</MudTh>
+        <MudTd DataLabel="Status">@context.LeadStatus</MudTd>
     </RowColumns> 
 
 </GenericTable>
