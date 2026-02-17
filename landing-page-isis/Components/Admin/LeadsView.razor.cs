@@ -61,9 +61,32 @@ public partial class LeadsView : ComponentBase
         }
     }
 
-    private async Task EditLead(Lead lead)
+    private async Task ApproveLead(Lead lead)
     {
-        
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var confirm = await DialogService.ShowMessageBox(
+            "Confirmar Exclusão",
+            $"Aprovar lead de {lead.Name}? Esta acao desencadeara a criacao de um paciente.",
+            yesText: "Aprovar",
+            cancelText: "Cancelar",
+            options: options
+        );
+
+        if (confirm == true)
+        {
+            var result = await LeadHandler.ApproveLead(lead.Id);
+
+            if (result.Success)
+            {
+                Snackbar.Add("Lead aprovado com sucesso.", Severity.Success);
+                await _leadsTable.ReloadAsync();
+            }
+            else
+            {
+                Snackbar.Add("Erro ao aprovar o lead.", Severity.Error);
+            }
+        }
     }
 
 }
