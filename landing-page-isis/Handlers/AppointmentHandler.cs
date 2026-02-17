@@ -31,7 +31,9 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         .AsNoTracking()
         .Where(a => a.PacientId == pacientId);
 
-    var totalItems = await query.CountAsync(ct);
+    var totalItems = await query.CountAsync(ct); 
+    
+    //WIP add return if null here, with paginatedresponse and null items if count 0.
 
     var items = await query
         .OrderByDescending(a => a.AppointmentDate)

@@ -26,6 +26,7 @@ public class PacientHandler(AppDbContext context) : IPacientHandler
 
     public async Task<Pacient?> GetPacient(Guid id)
     {
+        //WIP what if null pacient for some reason? add for other funcs too.
         return await context.Pacients
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id);

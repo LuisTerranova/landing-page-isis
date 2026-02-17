@@ -12,7 +12,7 @@
     
 <GenericTable TItem="Lead"
               ServerData="@ServerReload"
-              OnEdit="@(l => EditLead(l))"
+              OnEdit="@(l => ApproveLead(l))"
               OnDelete="@(l => DeleteLead(l))">
         
     <HeaderColumns>

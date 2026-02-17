@@ -29,4 +29,8 @@ _ReSharper.Caches/
 ehthumbs.db
 Thumbs.db
 
+## [VS Code]
+.vscode/launch.json
+.vscode/tasks.json
+
 .env
