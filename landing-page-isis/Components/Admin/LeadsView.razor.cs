@@ -13,7 +13,7 @@ public partial class LeadsView : ComponentBase
     [Inject] private ILeadHandler LeadHandler { get; set; } = null!;
 
     private GenericTable<Lead> _leadsTable = null!;
-    private bool _loading = true;
+
 
     private async Task<TableData<Lead>> ServerReload(TableState state, CancellationToken ct)
     {
@@ -24,7 +24,7 @@ public partial class LeadsView : ComponentBase
             return new TableData<Lead>
             {
                 TotalItems = result.TotalItems,
-                Items = result.Items
+                Items = result.Items.Where(l => l != null).Cast<Lead>()
             };
         }
         catch (OperationCanceledException)

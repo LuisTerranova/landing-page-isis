@@ -50,7 +50,19 @@ public partial class LeadHandler(AppDbContext context) : ILeadHandler
         var rowsAffected = await context.Leads
             .Where(l => l.Id == id)
             .ExecuteUpdateAsync(setters => setters
-                .SetProperty(l => l.LeadStatus, LeadStatusEnum.Approved));
+                .SetProperty(l => l.LeadStatus, LeadStatusEnum.Aprovado));
+        
+        if (rowsAffected > 0)
+        {
+            var lead = await context.Leads.AsNoTracking().FirstAsync(l => l.Id == id);
+            context.Pacients.Add(new Pacient
+            {
+                Name = lead.Name,
+                Email = lead.Email,
+                Phone = lead.Phone
+            });
+            await context.SaveChangesAsync();
+        }
 
         return rowsAffected == 0 
             ? new HandlerResult(false, "Lead não encontrado.") 

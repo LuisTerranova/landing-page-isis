@@ -18,12 +18,12 @@ public class PacientMap : IEntityTypeConfiguration<Pacient>
             .HasColumnName("name");
 
         builder.Property(p => p.Cpf)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(11)
             .HasColumnName("cpf");
         
         builder.Property(p => p.BirthDate)
-            .IsRequired()
+            .IsRequired(false)
             .HasColumnName("birth_date");
         
         builder.Property(p => p.Email)
@@ -37,7 +37,7 @@ public class PacientMap : IEntityTypeConfiguration<Pacient>
             .HasColumnName("phone");
         
         builder.Property(p => p.Address)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(200)
             .HasColumnName("address");
 

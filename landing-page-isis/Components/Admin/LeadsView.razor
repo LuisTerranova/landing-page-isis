@@ -10,7 +10,9 @@
         LEADS
     </MudText>
     
-<GenericTable TItem="Lead"
+<GenericTable @ref="_leadsTable"
+              TItem="Lead"
+              EditText="Aprovar"
               ServerData="@ServerReload"
               OnEdit="@(l => ApproveLead(l))"
               OnDelete="@(l => DeleteLead(l))">

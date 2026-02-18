@@ -10,4 +10,5 @@ public interface IAppointmentHandler
     Task<HandlerResult> CreateAppointment(Appointment appointment);
     Task<HandlerResult> UpdateAppointment(Appointment appointment, Guid id);
     Task<HandlerResult> DeleteAppointment(Guid id);
+    Task<List<Appointment>> GetAppointmentsByDateRange(DateTimeOffset start, DateTimeOffset end, CancellationToken ct);
 }

@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace landingpageisis.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialTables : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,11 +35,11 @@ namespace landingpageisis.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    cpf = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
-                    birth_date = table.Column<DateOnly>(type: "date", nullable: false),
+                    cpf = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: true),
+                    birth_date = table.Column<DateOnly>(type: "date", nullable: true),
                     email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     phone = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
-                    address = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                    address = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -68,7 +68,8 @@ namespace landingpageisis.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     appointment_date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     PacientId = table.Column<Guid>(type: "uuid", nullable: false),
-                    appointment_status = table.Column<string>(type: "text", nullable: false)
+                    appointment_status = table.Column<string>(type: "text", nullable: false),
+                    appointment_price = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {
