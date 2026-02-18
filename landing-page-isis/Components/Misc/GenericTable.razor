@@ -16,18 +16,24 @@
                     <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Inherit" />
                 </ActivatorContent>
                 <ChildContent>
-                    <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(context))">
-                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> Aprovar
-                    </MudMenuItem>
+                    @if (OnEdit.HasDelegate)
+                    {
+                        <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(context))">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> @EditText
+                        </MudMenuItem>
+                    }
                     
                     @if (CustomActions != null)
                     {
                         @CustomActions(context)
                     }
 
-                    <MudMenuItem OnClick="@(() => OnDelete.InvokeAsync(context))">
-                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" /> Excluir
-                    </MudMenuItem>
+                    @if (OnDelete.HasDelegate)
+                    {
+                        <MudMenuItem OnClick="@(() => OnDelete.InvokeAsync(context))">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" /> Excluir
+                        </MudMenuItem>
+                    }
                 </ChildContent>
             </MudMenu>
         </MudTd>
@@ -40,16 +46,17 @@
 </MudTable>
 
 @code {
-    private MudTable<TItem> _table;
+    private MudTable<TItem> _table = null!;
     
-    [Parameter] public Func<TableState, CancellationToken, Task<TableData<TItem>>> ServerData { get; set; }
-    [Parameter] public RenderFragment HeaderColumns { get; set; }
-    [Parameter] public RenderFragment<TItem> RowColumns { get; set; }
+    [Parameter] public Func<TableState, CancellationToken, Task<TableData<TItem>>> ServerData { get; set; } = null!;
+    [Parameter] public RenderFragment HeaderColumns { get; set; } = null!;
+    [Parameter] public RenderFragment<TItem> RowColumns { get; set; } = null!;
     [Parameter] public RenderFragment<TItem>? CustomActions { get; set; }
     
     [Parameter] public EventCallback<TItem> OnEdit { get; set; }
     [Parameter] public EventCallback<TItem> OnDelete { get; set; }
     [Parameter] public EventCallback OnCreate { get; set; }
+    [Parameter] public string EditText { get; set; } = "Editar";
     
     public Task ReloadAsync() => _table.ReloadServerData();
 }

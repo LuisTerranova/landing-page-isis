@@ -6,6 +6,6 @@ public class Appointment
     public DateTimeOffset AppointmentDate { get; set; }
     public Guid PacientId { get; set; }
     public Pacient Pacient { get; set; }
-    public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Scheduled;
+    public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Marcada;
     public decimal Price { get; set; }
 }

@@ -2,6 +2,6 @@
 
 public enum LeadStatusEnum
 {
-    Pending,
-    Approved
+    Novo,
+    Aprovado
 }

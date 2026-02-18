@@ -14,7 +14,6 @@ public partial class PacientsView : ComponentBase
     [Inject] private IPacientHandler PacientHandler { get; set; } = null!;
 
     private GenericTable<Pacient> _pacientsTable = null!;
-    private bool _loading = true;
     
 private async Task<TableData<Pacient>> ServerReload(TableState state, CancellationToken ct)
 {
@@ -25,7 +24,7 @@ private async Task<TableData<Pacient>> ServerReload(TableState state, Cancellati
         return new TableData<Pacient>
         { 
             TotalItems = result.TotalItems, 
-            Items = result.Items 
+            Items = result.Items.Where(p => p != null).Cast<Pacient>()
         };
     }
     catch (OperationCanceledException)
@@ -64,7 +63,39 @@ private async Task DeletePacient(Pacient pacient)
 
 private async Task EditPacient(Pacient pacient)
 {
-    
+    var parameters = new DialogParameters<PacientFormDialog>
+    {
+        { x => x.Titulo, "Editar Paciente" },
+        { x => x.Model, new Pacient
+            {
+                Id = pacient.Id,
+                Name = pacient.Name,
+                Cpf = pacient.Cpf,
+                BirthDate = pacient.BirthDate,
+                Email = pacient.Email,
+                Phone = pacient.Phone,
+                Address = pacient.Address
+            }
+        }
+    };
+    var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    var dialog = await DialogService.ShowAsync<PacientFormDialog>("Edição", parameters, options);
+    var result = await dialog.Result;
+
+    if (result is { Canceled: false } && result.Data is Pacient pacientEditado)
+    {
+        var sucesso = await PacientHandler.UpdatePacient(pacientEditado);
+        if (sucesso.Success)
+        {
+            Snackbar.Add("Paciente atualizado!", Severity.Success);
+            await _pacientsTable.ReloadAsync();
+        }
+        else
+        {
+            Snackbar.Add($"Erro ao atualizar: {sucesso.Message}", Severity.Error);
+        }
+    }
 }
 
 private async Task OpenCreate()
@@ -75,7 +106,7 @@ private async Task OpenCreate()
     var dialog = await DialogService.ShowAsync<PacientFormDialog>("Cadastro", parameters, options);
     var result = await dialog.Result;
 
-    if (!result.Canceled && result.Data is Pacient novoPaciente)
+    if (result is { Canceled: false } && result.Data is Pacient novoPaciente)
     {
         var sucesso = await PacientHandler.CreatePacient(novoPaciente);
         if (sucesso.Success)

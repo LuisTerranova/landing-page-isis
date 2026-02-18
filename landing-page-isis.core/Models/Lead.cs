@@ -15,5 +15,5 @@ public class Lead
     public string Phone { get; set; }
     public string Intent { get; set; }
     public DateOnly Created { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
-    public LeadStatusEnum LeadStatus { get; set; } = LeadStatusEnum.Pending;
+    public LeadStatusEnum LeadStatus { get; set; } = LeadStatusEnum.Novo;
 }

@@ -100,4 +100,14 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     await context.SaveChangesAsync();
     return new HandlerResult(true);
   }
+
+  public async Task<List<Appointment>> GetAppointmentsByDateRange(DateTimeOffset start, DateTimeOffset end, CancellationToken ct)
+  {
+    return await context.Appointments
+      .AsNoTracking()
+      .Include(a => a.Pacient)
+      .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end)
+      .OrderBy(a => a.AppointmentDate)
+      .ToListAsync(ct);
+  }
 }

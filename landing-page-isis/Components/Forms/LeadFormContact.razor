@@ -1,4 +1,8 @@
+@using landing_page_isis.core.Interfaces
+@using landing_page_isis.core.Models
 @rendermode InteractiveServer
+@inject ILeadHandler LeadHandler
+@inject ISnackbar Snackbar
 
 <div id="contato" class="d-flex align-center justify-center"
      style="min-height: 100vh; width: 100%; background-color: #7E0F20; padding: 80px 0;">
@@ -50,24 +54,41 @@
                         }
                     </style>
 
-                    <MudTextField T="string" Label="Seu Nome" Variant="Variant.Outlined"
-                                  Class="custom-contact-input mb-6" FullWidth="true"/>
+                    <EditForm Model="@_lead" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator/>
+                        
+                        <MudTextField T="string" Label="Seu Nome" Variant="Variant.Outlined"
+                                      @bind-Value="_lead.Name" For="@(() => _lead.Name)"
+                                      Class="custom-contact-input mb-6" FullWidth="true"/>
 
-                    <MudTextField T="string" Label="Celular (Whatsapp)" Variant="Variant.Outlined"
-                                  Class="custom-contact-input mb-6" FullWidth="true"/>
+                        <MudTextField T="string" Label="Celular (Whatsapp)" Variant="Variant.Outlined"
+                                      @bind-Value="_lead.Phone" For="@(() => _lead.Phone)"
+                                      Class="custom-contact-input mb-6" FullWidth="true"/>
 
-                    <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                  Class="custom-contact-input mb-6" FullWidth="true"/>
+                        <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
+                                      @bind-Value="_lead.Email" For="@(() => _lead.Email)"
+                                      Class="custom-contact-input mb-6" FullWidth="true"/>
 
-                    <MudTextField T="string" Label="Como posso te ajudar?" Variant="Variant.Outlined"
-                                  Class="custom-contact-input mb-8" Lines="5" FullWidth="true"/>
+                        <MudTextField T="string" Label="Como posso te ajudar?" Variant="Variant.Outlined"
+                                      @bind-Value="_lead.Intent" For="@(() => _lead.Intent)"
+                                      Class="custom-contact-input mb-8" Lines="5" FullWidth="true"/>
 
-                    <MudButton Variant="Variant.Filled"
-                               Style="background-color: #284B32; color: white; height: 60px; font-weight: 700; font-size: 1.1rem;"
-                               FullWidth="true"
-                               Class="rounded-lg shadow-2xl">
-                        Enviar Mensagem
-                    </MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                                   Style="background-color: #284B32; color: white; height: 60px; font-weight: 700; font-size: 1.1rem;"
+                                   FullWidth="true"
+                                   Class="rounded-lg shadow-2xl"
+                                   Disabled="_processing">
+                            @if (_processing)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                                <MudText Class="ms-2">Enviando...</MudText>
+                            }
+                            else
+                            {
+                                <MudText>Enviar Mensagem</MudText>
+                            }
+                        </MudButton>
+                    </EditForm>
                 </div>
             </MudItem>
 
@@ -76,5 +97,32 @@
 </div>
 
 @code {
+    private Lead _lead = new();
+    private bool _processing = false;
 
+    private async Task HandleSubmit()
+    {
+        _processing = true;
+        try
+        {
+            var result = await LeadHandler.CreateLead(_lead);
+            if (result.Success)
+            {
+                Snackbar.Add("Mensagem enviada com sucesso! Em breve entraremos em contato.", Severity.Success);
+                _lead = new Lead();
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao enviar mensagem: {result.Message}", Severity.Error);
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Ocorreu um erro inesperado ao enviar sua mensagem.", Severity.Error);
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
 }

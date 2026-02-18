@@ -20,10 +20,8 @@
                                   Mask="@(new PatternMask("000.000.000-00"))"/>    
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudDatePicker T="DateTime?"
-                                   Label="Data de Nascimento"
-                                   Date="@(Model.BirthDate?.ToDateTime(TimeOnly.MinValue))"
-                                   DateChanged="@(dt => Model.BirthDate = dt.HasValue ? DateOnly.FromDateTime(dt.Value) : null)"
+                    <MudDatePicker Label="Data de Nascimento"
+                                   @bind-Date="_tempBirthDate"
                                    Required="true"
                                    Variant="Variant.Outlined"
                                    DateFormat="dd/MM/yyyy"
@@ -56,12 +54,18 @@
 
     private MudForm _form = null!;
     private bool _formValido;
+    private DateTime? _tempBirthDate;
+
+    protected override void OnParametersSet()
+    {
+        _tempBirthDate = Model.BirthDate?.ToDateTime(TimeOnly.MinValue);
+    }
 
     private void Cancelar() => MudDialog.Cancel();
 
     private void Salvar()
     {
-        //WIP if necessary, add extra validation
+        Model.BirthDate = _tempBirthDate.HasValue ? DateOnly.FromDateTime(_tempBirthDate.Value) : null;
         MudDialog.Close(DialogResult.Ok(Model));
     }
 }

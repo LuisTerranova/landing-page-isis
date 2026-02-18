@@ -11,7 +11,8 @@
         PACIENTES
     </MudText>
 
-    <GenericTable TItem="Pacient"
+    <GenericTable @ref="_pacientsTable"
+                  TItem="Pacient"
                   ServerData="@ServerReload"
                   OnCreate="@(() => OpenCreate())"
                   OnEdit="@(p => EditPacient(p))"

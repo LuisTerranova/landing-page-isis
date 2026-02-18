@@ -10,6 +10,11 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Portuguese (Brazil) localization
+var culture = new System.Globalization.CultureInfo("pt-BR");
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culture;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
+
 //Force http, omarchy's fault perhaps.
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

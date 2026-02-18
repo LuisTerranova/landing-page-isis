@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
-public class PacientHandler(AppDbContext context) : IPacientHandler
+public partial class PacientHandler(AppDbContext context) : IPacientHandler
 {
     public async Task<PaginatedResponse<Pacient?>> GetPacients(int page, int pageSize, CancellationToken ct)
     {
@@ -26,7 +26,6 @@ public class PacientHandler(AppDbContext context) : IPacientHandler
 
     public async Task<Pacient?> GetPacient(Guid id)
     {
-        //WIP what if null pacient for some reason? add for other funcs too.
         return await context.Pacients
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -36,6 +35,12 @@ public class PacientHandler(AppDbContext context) : IPacientHandler
     {
         if (pacient == null) 
             return new HandlerResult(false, "Dados inválidos.");
+
+        if (!string.IsNullOrEmpty(pacient.Phone))
+            pacient.Phone = OnlyNumbersRegex().Replace(pacient.Phone, "");
+            
+        if (!string.IsNullOrEmpty(pacient.Cpf))
+            pacient.Cpf = OnlyNumbersRegex().Replace(pacient.Cpf, "");
 
         context.Pacients.Add(pacient);
         await context.SaveChangesAsync();
@@ -47,6 +52,12 @@ public class PacientHandler(AppDbContext context) : IPacientHandler
         var existing = await context.Pacients.FindAsync(pacient.Id);
         if (existing == null) 
             return new HandlerResult(false, "Paciente não encontrado.");
+
+        if (!string.IsNullOrEmpty(pacient.Phone))
+            pacient.Phone = OnlyNumbersRegex().Replace(pacient.Phone, "");
+            
+        if (!string.IsNullOrEmpty(pacient.Cpf))
+            pacient.Cpf = OnlyNumbersRegex().Replace(pacient.Cpf, "");
 
         context.Entry(existing).CurrentValues.SetValues(pacient);
         await context.SaveChangesAsync();
@@ -63,4 +74,7 @@ public class PacientHandler(AppDbContext context) : IPacientHandler
         await context.SaveChangesAsync();
         return new HandlerResult(true);
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
+    private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
 }
