@@ -1,5 +1,121 @@
-<h3>AppointmentFormDialog</h3>
+@using landing_page_isis.core.Models
+@using landing_page_isis.core.Interfaces
+@using landing_page_isis.core
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-3 mb-n1"/>
+            @Titulo
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_formValido">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudSelect T="Guid" Label="Paciente" @bind-Value="Model.PacientId" Required="true" Variant="Variant.Outlined">
+                        @if (_pacients != null)
+                        {
+                            @foreach (var pacient in _pacients)
+                            {
+                                <MudSelectItem Value="@pacient.Id">@pacient.Name - @pacient.Cpf</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudDatePicker Label="Data da Consulta"
+                                   @bind-Date="_tempDate"
+                                   Required="true"
+                                   Variant="Variant.Outlined"
+                                   Editable="true"/>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTimePicker Label="Hora da Consulta"
+                                   @bind-Time="_tempTime"
+                                   Required="true"
+                                   Variant="Variant.Outlined"
+                                   Editable="true" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudNumericField T="decimal" Label="Preço (R$)"
+                                     @bind-Value="Model.Price"
+                                     Format="N2"
+                                     Variant="Variant.Outlined"
+                                     Required="true" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudSelect T="AppointmentStatusEnum" Label="Status" @bind-Value="Model.AppointmentStatus" Required="true" Variant="Variant.Outlined">
+                        @foreach (AppointmentStatusEnum status in Enum.GetValues(typeof(AppointmentStatusEnum)))
+                        {
+                            <MudSelectItem Value="@status">@status.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   Disabled="@(!_formValido)" OnClick="Salvar">Salvar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
-    
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Inject] private IPacientHandler PacientHandler { get; set; } = null!;
+
+    [Parameter] public Appointment Model { get; set; } = new();
+    [Parameter] public string Titulo { get; set; } = "Novo Agendamento";
+
+    private MudForm _form = null!;
+    private bool _formValido;
+    private DateTime? _tempDate;
+    private TimeSpan? _tempTime;
+    private List<Pacient> _pacients = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch all pacients for the select list
+        var result = await PacientHandler.GetPacients(0, 1000, default);
+        if (result != null && result.Items != null)
+        {
+            _pacients = result.Items.Where(p => p != null).Cast<Pacient>().OrderBy(p => p.Name).ToList();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Model.Id != Guid.Empty && Model.AppointmentDate != default)
+        {
+            // For editing, convert the model's UTC DateTimeOffset to Local for the pickers
+            var localTime = Model.AppointmentDate.ToLocalTime();
+            _tempDate = localTime.Date;
+            _tempTime = localTime.TimeOfDay;
+            Console.WriteLine($"[EditForm] Loaded existing appointment: LocalTime={localTime}, Date={_tempDate}, Time={_tempTime}");
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Salvar()
+    {
+        if (_tempDate.HasValue && _tempTime.HasValue)
+        {
+            // Combine Date and Time into a single local DateTime
+            var combinedLocalDateTime = _tempDate.Value.Date + _tempTime.Value;
+
+            // Ensure kind is explicit (Local) to prevent Npgsql crash or bad UTC calculation
+            var explicitLocal = DateTime.SpecifyKind(combinedLocalDateTime, DateTimeKind.Local);
+
+            // Assign exactly the explicit Local offset to our model
+            Model.AppointmentDate = new DateTimeOffset(explicitLocal);
+            
+            Console.WriteLine($"[SalvarForm] Extracted: Date={_tempDate}, Time={_tempTime} | Combined Local: {explicitLocal} | Assigned To Model: {Model.AppointmentDate}");
+        }
+
+        MudDialog.Close(DialogResult.Ok(Model));
+    }
 }

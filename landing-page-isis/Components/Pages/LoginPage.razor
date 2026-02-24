@@ -1,6 +1,119 @@
 @page "/admin/login"
-<h3>Login</h3>
+@using landing_page_isis.Components.Layout
+@layout BlankLayout
+@inject NavigationManager NavigationManager
+@inject IAuthHandler AuthHandler
+@inject IsisTheme CustomTheme
+@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+
+<MudThemeProvider Theme="CustomTheme"/>
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="d-flex align-center justify-center" Style="height: 100vh;">
+    <MudPaper Elevation="25" Class="pa-8" Style="width: 100%; max-width: 400px;">
+        <MudStack Spacing="3" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Primary" Size="Size.Large" />
+            <MudText Typo="Typo.h4" GutterBottom="true">Login</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                Entre com suas credenciais para acessar o painel administrativo
+            </MudText>
+
+            <EditForm Model="@LoginForm" OnValidSubmit="HandleLogin" FormName="login-form" Enhance class="w-full">
+                <DataAnnotationsValidator />
+                <MudStack Spacing="3">
+                    <div class="mud-input-control mud-textfield mud-input-control-boolean-input">
+                        <div class="mud-input-control-input-container">
+                            <div class="mud-input mud-input-outlined mud-input-adorned-end mud-select-input">
+                                <InputText @bind-Value="LoginForm.Email" 
+                                           placeholder="Email"
+                                           class="mud-input-slot mud-input-root mud-input-root-outlined" />
+                            </div>
+                        </div>
+                        <ValidationMessage For="@(() => LoginForm.Email)" />
+                    </div>
+                    
+                    <div class="mud-input-control mud-textfield mud-input-control-boolean-input">
+                        <div class="mud-input-control-input-container">
+                            <div class="mud-input mud-input-outlined mud-input-adorned-end mud-select-input">
+                                <InputText @bind-Value="LoginForm.Password" 
+                                           type="password"
+                                           placeholder="Senha"
+                                           class="mud-input-slot mud-input-root mud-input-root-outlined" />
+                            </div>
+                        </div>
+                        <ValidationMessage For="@(() => LoginForm.Password)" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Text">@_errorMessage</MudAlert>
+                    }
+
+                    <MudButton ButtonType="ButtonType.Submit" 
+                               Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               Size="Size.Large" 
+                               FullWidth="true"
+                               Class="mt-2">
+                        Entrar
+                    </MudButton>
+                </MudStack>
+            </EditForm>
+
+            <MudDivider Class="w-full my-4" />
+
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mb-2">
+                Acesso restrito a administradores.
+            </MudAlert>
+
+            <MudLink href="/" Color="Color.Secondary" Underline="Underline.None" Class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Class="mr-2" />
+                Voltar para o Início
+            </MudLink>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+
 
 @code {
-    
+    [SupplyParameterFromForm]
+    private LoginFormModel LoginForm { get; set; } = new();
+
+    private string _errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo("/admin");
+        }
+    }
+
+    private record LoginFormModel
+    {
+        [Required(ErrorMessage = "O email é obrigatório")]
+        [EmailAddress(ErrorMessage = "Email inválido")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "A senha é obrigatória")]
+        public string Password { get; set; } = "";
+    }
+
+    private async Task HandleLogin()
+    {
+        var result = await AuthHandler.Login(LoginForm.Email, LoginForm.Password);
+
+        if(!result)
+        {
+            _errorMessage = "Email ou senha inválidos";
+            return;
+        }
+        
+        NavigationManager.NavigateTo("/admin/dashboard");
+    }
 }

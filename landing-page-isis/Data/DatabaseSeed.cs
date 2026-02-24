@@ -12,20 +12,25 @@ public static class DatabaseSeed
             await context.Database.EnsureCreatedAsync();
             var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-            if (!context.Users.Any())
+            if (context.Users.Any())
+            {
                 return;
+            }
 
             var email = configuration["ADMIN_EMAIL"];
             var password = configuration["ADMIN_PASSWORD"];
             var name = configuration["ADMIN_NAME"];
 
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                Console.WriteLine("Admin email or password not found in configuration");
                 return;
+            }
 
             var admin = new User
             {
                 Email = email,
-                Name = name,
+                Name = name ?? "Admin",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
             };
 

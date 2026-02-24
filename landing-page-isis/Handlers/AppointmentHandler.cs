@@ -11,6 +11,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
   public async Task<PaginatedResponse<Appointment?>> GetAllAppointments(int page, int pageSize, CancellationToken ct)
   {
     var query = context.Appointments
+      .Include(a => a.Pacient)
       .AsNoTracking();
     
     var totalItems = await query.CountAsync(ct);
@@ -28,6 +29,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     ,Guid pacientId, CancellationToken ct)
   {
     var query = context.Appointments
+        .Include(a => a.Pacient)
         .AsNoTracking()
         .Where(a => a.PacientId == pacientId);
 
@@ -56,6 +58,9 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     if (appointment == null)
       return new HandlerResult(false, "Dados inválidos.");
 
+    // Normalize to UTC for PostgreSQL compatibility
+    appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
+
     var isOccupied = await context.Appointments
         .AnyAsync(a => a.AppointmentDate == appointment.AppointmentDate);
 
@@ -77,6 +82,9 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 
     if (existing == null)
       return new HandlerResult(false, "Agendamento não encontrado.");
+
+    // Normalize to UTC for PostgreSQL compatibility
+    appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
     var isOccupied = await context.Appointments
         .AnyAsync(a => a.Id != appointment.Id && a.AppointmentDate == appointment.AppointmentDate);

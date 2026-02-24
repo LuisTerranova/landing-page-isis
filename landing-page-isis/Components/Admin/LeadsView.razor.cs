@@ -1,4 +1,4 @@
-using landing_page_isis.Components.Misc;
+using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using Microsoft.AspNetCore.Components;
@@ -8,12 +8,16 @@ namespace landing_page_isis.Components.Admin;
 
 public partial class LeadsView : ComponentBase
 {
-    [Inject] private ISnackbar Snackbar { get; set; } = null!;
-    [Inject] private IDialogService DialogService { get; set; } = null!;
-    [Inject] private ILeadHandler LeadHandler { get; set; } = null!;
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject]
+    private IDialogService DialogService { get; set; } = null!;
+
+    [Inject]
+    private ILeadHandler LeadHandler { get; set; } = null!;
 
     private GenericTable<Lead> _leadsTable = null!;
-
 
     private async Task<TableData<Lead>> ServerReload(TableState state, CancellationToken ct)
     {
@@ -24,7 +28,7 @@ public partial class LeadsView : ComponentBase
             return new TableData<Lead>
             {
                 TotalItems = result.TotalItems,
-                Items = result.Items.Where(l => l != null).Cast<Lead>()
+                Items = result.Items.Where(l => l != null).Cast<Lead>(),
             };
         }
         catch (OperationCanceledException)
@@ -88,5 +92,4 @@ public partial class LeadsView : ComponentBase
             }
         }
     }
-
 }

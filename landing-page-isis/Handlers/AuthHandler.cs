@@ -1,17 +1,19 @@
 ﻿using System.Security.Claims;
-using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace landing_page_isis.Handlers;
 
-public class AuthHandler(AppDbContext dbContext, HttpContext context) : IAuthHandler
+public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor) : IAuthHandler
 {
+    private HttpContext? _context => httpContextAccessor.HttpContext;
+
     public async Task<bool> Login(string username, string password)
     {
+        if (_context == null) return false;
+
         var user = await dbContext.Users
             .FirstOrDefaultAsync(u => u.Email == username);
 
@@ -38,7 +40,7 @@ public class AuthHandler(AppDbContext dbContext, HttpContext context) : IAuthHan
             ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3)
         };
 
-        await context.SignInAsync(
+        await _context.SignInAsync(
             "Cookies",
             new ClaimsPrincipal(claimsIdentity),
             authProperties);
@@ -48,7 +50,8 @@ public class AuthHandler(AppDbContext dbContext, HttpContext context) : IAuthHan
 
     public async Task<bool> Logout()
     {
-        await context.SignOutAsync();
+        if (_context == null) return false;
+        await _context.SignOutAsync();
         return true;
     }
 }
