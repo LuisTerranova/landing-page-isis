@@ -83,3 +83,18 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     padding: 0 12px;
 }
+
+.status-marcada {
+    background-color: #E67E22 !important;
+    color: white !important;
+}
+
+.status-realizada {
+    background-color: #2ECC71 !important;
+    color: white !important;
+}
+
+.status-cancelada {
+    background-color: #1A1A1A !important;
+    color: white !important;
+}

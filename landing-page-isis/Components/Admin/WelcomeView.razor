@@ -1,8 +1,6 @@
 ﻿@page "/admin"
+@attribute [Authorize]
 @using landing_page_isis.Components.Layout
-@using landing_page_isis.Components.Misc
-@using landing_page_isis.core
-@using landing_page_isis.core.Models
 @layout DashboardLayout
 @rendermode InteractiveServer
 
@@ -10,31 +8,31 @@
     <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
         <MudGrid>
             <MudItem xs="12" class="d-flex align-end justify-space-between mb-8">
-                <div>
+                <div> 
                     <MudText Typo="Typo.h3" Color="Color.Secondary" Style="font-weight: 800; text-transform: uppercase; line-height: 1.2">
                         AGENDA DE @GetViewTitle()
                     </MudText>
                 </div>
                 <div class="d-flex align-center gap-4">
                     <div class="custom-button-group">
-                        <MudButton OnClick="@(() => ToggleView(ViewMode.Day))" 
+                        <MudButton OnClick="@(async () => await ToggleView(ViewMode.Day))" 
                                    Variant="@(_currentView == ViewMode.Day ? Variant.Filled : Variant.Text)"
                                    Color="@(_currentView == ViewMode.Day ? Color.Primary : Color.Default)"
                                    Class="px-6 rounded-l-xl">
                             Dia
-                        </MudButton>
-                        <MudButton OnClick="@(() => ToggleView(ViewMode.Week))"
+                        </MudButton> 
+                        <MudButton OnClick="@(async () => await ToggleView(ViewMode.Week))"
                                    Variant="@(_currentView == ViewMode.Week ? Variant.Filled : Variant.Text)"
                                    Color="@(_currentView == ViewMode.Week ? Color.Primary : Color.Default)"
                                    Class="px-6 rounded-r-xl">
-                            Semana
+                            
                         </MudButton>
                     </div>
                     
                     <div class="d-flex align-center ml-2">
-                        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Color="Color.Primary" OnClick="@(() => ChangeDate(_currentView == ViewMode.Day ? -1 : -7))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Today" Color="Color.Primary" OnClick="@(() => { _selectedDate = DateTime.Today; LoadAppointments(); })" />
-                        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="@(() => ChangeDate(_currentView == ViewMode.Day ? 1 : 7))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? -1 : -7))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Today" Color="Color.Primary" OnClick="@(async () => { _selectedDate = DateTime.Today; await LoadAppointments(); })" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? 1 : 7))" />
                     </div>
                 </div>
             </MudItem>
@@ -55,7 +53,7 @@
                     </MudPaper>
                 </MudItem>
             }
-            else
+            else   
             {
                 @foreach (var app in _appointments)
                 {
@@ -70,7 +68,7 @@
                                     <MudChip T="string" 
                                              Variant="Variant.Filled" 
                                              Size="Size.Small" 
-                                             Style="@GetStatusChipStyle(app.Status)">
+                                             Class="@($"status-{app.Status.ToString().ToLower()}")">
                                         @app.Status.ToString().ToUpper()
                                     </MudChip>
                                 </div>
@@ -103,11 +101,4 @@
 
 
 @code {
-    private string GetStatusChipStyle(AppointmentStatusEnum status) => status switch
-    {
-        AppointmentStatusEnum.Marcada => "background-color: #E67E22; color: white;", // Dark Orange
-        AppointmentStatusEnum.Realizada => "background-color: #2ECC71; color: white;", // Bright Green
-        AppointmentStatusEnum.Cancelada => "background-color: #1A1A1A; color: white;", // Deep Black
-        _ => "background-color: #F7EAD5; color: #7E0F20;"
-    };
 }

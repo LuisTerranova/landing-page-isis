@@ -1,6 +1,43 @@
-@page "/admin/agenda"
-<h3>ScheduleView</h3>
+@page "/admin/consultas"
+@attribute [Authorize]
+@using landing_page_isis.Components.Layout
+@using landing_page_isis.core.Models
+@layout DashboardLayout
+@rendermode InteractiveServer
 
-@code {
+<AdminShell>
+    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
+        AGENDAMENTOS
+    </MudText>
     
-}
+    <GenericTable @ref="_appointmentsTable"
+                  TItem="Appointment"
+                  ServerData="@ServerReload"
+                  OnCreate="@(() => OpenCreate())"
+                  OnEdit="@(a => EditAppointment(a))"
+                  OnDelete="@(a => DeleteAppointment(a))">
+
+        <HeaderColumns>
+            <MudTh>Paciente</MudTh>
+            <MudTh>Data e Hora (Local)</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Preço (R$)</MudTh>
+        </HeaderColumns>
+
+        <RowColumns>
+            <MudTd DataLabel="Paciente">@context.Pacient?.Name</MudTd>
+            <MudTd DataLabel="Data e Hora">
+                @context.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.AppointmentStatus.ToString().ToLower()}")">
+                    @context.AppointmentStatus.ToString().ToUpper()
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Preço">@context.Price.ToString("C")</MudTd>
+        </RowColumns>
+
+        <CustomActions>
+        </CustomActions>
+    </GenericTable>
+</AdminShell>
