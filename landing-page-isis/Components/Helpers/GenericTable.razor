@@ -1,29 +1,34 @@
 @namespace landing_page_isis.Components.Helpers
 @typeparam TItem
 
-<MudButton Class="ma-5 pa-3 mud-theme-secondary"
-           OnClick="@(() => OnCreate.InvokeAsync())">Criar</MudButton>
+@if (ShowCreateButton)
+{
+    <MudButton Class="ma-5 pa-3 mud-theme-secondary"
+               OnClick="@(() => OnCreate.InvokeAsync())">
+        Criar
+    </MudButton>
+}
 <MudTable ServerData="@ServerData" @ref="_table" Hover="true" Elevation="2" Class="mud-theme-secondary">
     <HeaderContent>
         @HeaderColumns
-        <MudTh Class="d-flex justify-end">Ações</MudTh>
+        <MudTh Style="text-align: right;">Ações</MudTh>
     </HeaderContent>
-    
+
     <RowTemplate>
         @RowColumns(context)
-        <MudTd DataLabel="Ações" Class="d-flex justify-end">
+        <MudTd DataLabel="Ações" Style="text-align: right;">
             <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
                 <ActivatorContent>
-                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Inherit" />
+                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Inherit"/>
                 </ActivatorContent>
                 <ChildContent>
                     @if (OnEdit.HasDelegate)
                     {
                         <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> @EditText
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2"/> @EditText
                         </MudMenuItem>
                     }
-                    
+
                     @if (CustomActions != null)
                     {
                         @CustomActions(context)
@@ -32,32 +37,33 @@
                     @if (OnDelete.HasDelegate)
                     {
                         <MudMenuItem OnClick="@(() => OnDelete.InvokeAsync(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" /> Excluir
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2"/> Excluir
                         </MudMenuItem>
                     }
                 </ChildContent>
             </MudMenu>
         </MudTd>
     </RowTemplate>
-    
+
     <PagerContent>
-        <MudTablePager RowsPerPageString="Itens por página:" 
+        <MudTablePager RowsPerPageString="Itens por página:"
                        InfoFormat="{first_item}-{last_item} de {all_items}"/>
     </PagerContent>
 </MudTable>
 
 @code {
     private MudTable<TItem> _table = null!;
-    
+
     [Parameter] public Func<TableState, CancellationToken, Task<TableData<TItem>>> ServerData { get; set; } = null!;
     [Parameter] public RenderFragment HeaderColumns { get; set; } = null!;
     [Parameter] public RenderFragment<TItem> RowColumns { get; set; } = null!;
     [Parameter] public RenderFragment<TItem>? CustomActions { get; set; }
-    
+
     [Parameter] public EventCallback<TItem> OnEdit { get; set; }
     [Parameter] public EventCallback<TItem> OnDelete { get; set; }
     [Parameter] public EventCallback OnCreate { get; set; }
     [Parameter] public string EditText { get; set; } = "Editar";
-    
+    [Parameter] public bool ShowCreateButton { get; set; } = true;
+
     public Task ReloadAsync() => _table.ReloadServerData();
 }

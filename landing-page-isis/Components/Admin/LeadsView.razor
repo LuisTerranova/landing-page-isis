@@ -1,7 +1,6 @@
 @page "/admin/leads"
 @attribute [Authorize]
 @using landing_page_isis.Components.Layout
-@using landing_page_isis.Components.Misc
 @using landing_page_isis.core.Models
 @layout DashboardLayout
 @rendermode InteractiveServer
@@ -10,27 +9,32 @@
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
         LEADS
     </MudText>
-    
-<GenericTable @ref="_leadsTable"
-              TItem="Lead"
-              EditText="Aprovar"
-              ServerData="@ServerReload"
-              OnEdit="@(l => ApproveLead(l))"
-              OnDelete="@(l => DeleteLead(l))">
-        
-    <HeaderColumns>
-        <MudTh>Nome</MudTh>
-        <MudTh>Telefone</MudTh>
-        <MudTh>Criado em</MudTh>
-        <MudTh>Status</MudTh>
-    </HeaderColumns>
-        
-    <RowColumns>
-        <MudTd DataLabel="Nome">@context.Name</MudTd>
-        <MudTd DataLabel="Telefone">@context.Phone</MudTd>
-        <MudTd DataLabel="Criado em">@context.Created</MudTd>
-        <MudTd DataLabel="Status">@context.LeadStatus</MudTd>
-    </RowColumns> 
 
-</GenericTable>
+    <GenericTable @ref="_leadsTable"
+                  TItem="Lead"
+                  EditText="Aprovar"
+                  ShowCreateButton="@false"
+                  ServerData="@ServerReload"
+                  OnEdit="@(ApproveLead)"
+                  OnDelete="@(DeleteLead)">
+
+        <HeaderColumns>
+            <MudTh>Nome</MudTh>
+            <MudTh>Telefone</MudTh>
+            <MudTh>Criado em</MudTh>
+            <MudTh>Status</MudTh>
+        </HeaderColumns>
+
+        <RowColumns>
+            <MudTd DataLabel="Nome">@context.Name</MudTd>
+            <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+            <MudTd DataLabel="Criado em">@context.Created</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.LeadStatus.ToString().ToLower()}")">
+                    @context.LeadStatus.ToString().ToUpper()
+                </MudChip>
+            </MudTd>
+        </RowColumns>
+
+    </GenericTable>
 </AdminShell>

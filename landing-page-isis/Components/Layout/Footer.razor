@@ -1,0 +1,71 @@
+<MudPaper Class="mt-16 py-12 px-8" Elevation="0"
+          Style="background-color: var(--mud-palette-primary); color: var(--mud-palette-background); border-radius: 40px 40px 0 0;">
+    <MudContainer MaxWidth="MaxWidth.Large">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.h5" Style="font-weight: 800; color: white;" Class="mb-4">
+                    Isis Vitória
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.7); line-height: 1.8;">
+                    Dra. Isis Vitória - Especialista em Odontologia Estética e Funcional.
+                    Transformando sorrisos e devolvendo a autoestima de nossos pacientes com
+                    tecnologia e humanização.
+                </MudText>
+                <div class="mt-6">
+                    <MudIconButton Icon="@Icons.Custom.Brands.Instagram" Color="Color.Inherit"/>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4" Class="px-md-10">
+                <MudText Typo="Typo.h6" Style="font-weight: 700; color: white;" Class="mb-4">
+                    Links Rápidos
+                </MudText>
+                <div class="d-flex flex-column gap-2">
+                    <MudLink href="#sobre" Class="footer-link" Underline="Underline.None">Sobre Mim</MudLink>
+                    <MudLink href="#servicos" Class="footer-link" Underline="Underline.None">Serviços</MudLink>
+                    <MudLink href="#contato" Class="footer-link" Underline="Underline.None">Contato</MudLink>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudText Typo="Typo.h6" Style="font-weight: 700; color: white;" Class="mb-4">
+                    Contato & Localização
+                </MudText>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
+                        <MudText Typo="Typo.body2" Class="footer-link">
+                            Porto Velho - Rondônia
+                        </MudText>
+                    </div>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
+                        <MudText Typo="Typo.body2" Class="footer-link">
+                            (69) 99999-9999
+                        </MudText>
+                    </div>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
+                        <MudText Typo="Typo.body2" Class="footer-link">
+                            contato@isisvitoria.com.br
+                        </MudText>
+                    </div>
+                </div>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-8" Style="background-color: rgba(255,255,255,0.1);"/>
+
+        <div class="d-flex flex-column flex-md-row justify-space-between align-center">
+            <MudText Typo="Typo.body2" Class="footer-link">
+                &copy; @DateTime.Now.Year Isis Vitória. Todos os direitos reservados.
+            </MudText>
+            <MudText Typo="Typo.body2" Class="footer-link mt-2 mt-md-0">
+                Desenvolvedor: <MudLink Href="https://github.com/LuisTerranova" Target="_blank" Color="Color.Inherit" Class="footer-link" Underline="Underline.Always" Style="font-weight: bold;">Luis Terranova</MudLink> | Stack: Blazor e .NET 9
+            </MudText>
+        </div>
+    </MudContainer>
+</MudPaper>
+
+@code {
+}

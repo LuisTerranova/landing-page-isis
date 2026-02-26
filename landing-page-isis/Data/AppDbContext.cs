@@ -1,5 +1,6 @@
 using System.Reflection;
 using landing_page_isis.core;
+using landing_page_isis.core.ApplicationUser;
 using landing_page_isis.core.Models;
 using Microsoft.EntityFrameworkCore;
 

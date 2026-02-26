@@ -8,12 +8,17 @@ namespace landing_page_isis.Handlers;
 
 public partial class LeadHandler(AppDbContext context) : ILeadHandler
 {
-    public async Task<PaginatedResponse<Lead?>> GetLeads(int page, int pageSize, CancellationToken ct)
+    public async Task<PaginatedResponse<Lead?>> GetLeads(
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
     {
         var query = context.Leads.AsNoTracking();
         var totalItems = await query.CountAsync(ct);
 
-        if (totalItems <= 0) return new PaginatedResponse<Lead?>([], totalItems, page, pageSize);
+        if (totalItems <= 0)
+            return new PaginatedResponse<Lead?>([], totalItems, page, pageSize);
 
         var items = await query
             .OrderByDescending(l => l.Created)
@@ -26,9 +31,7 @@ public partial class LeadHandler(AppDbContext context) : ILeadHandler
 
     public async Task<Lead?> GetLead(Guid id)
     {
-        return await context.Leads
-            .AsNoTracking()
-            .FirstOrDefaultAsync(l => l.Id == id);
+        return await context.Leads.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
     }
 
     public async Task<HandlerResult> CreateLead(Lead lead)
@@ -47,25 +50,28 @@ public partial class LeadHandler(AppDbContext context) : ILeadHandler
 
     public async Task<HandlerResult> ApproveLead(Guid id)
     {
-        var rowsAffected = await context.Leads
-            .Where(l => l.Id == id)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(l => l.LeadStatus, LeadStatusEnum.Aprovado));
-        
+        var rowsAffected = await context
+            .Leads.Where(l => l.Id == id)
+            .ExecuteUpdateAsync(setters =>
+                setters.SetProperty(l => l.LeadStatus, LeadStatusEnum.Aprovado)
+            );
+
         if (rowsAffected > 0)
         {
             var lead = await context.Leads.AsNoTracking().FirstAsync(l => l.Id == id);
-            context.Pacients.Add(new Pacient
-            {
-                Name = lead.Name,
-                Email = lead.Email,
-                Phone = lead.Phone
-            });
+            context.Pacients.Add(
+                new Pacient
+                {
+                    Name = lead.Name,
+                    Email = lead.Email,
+                    Phone = lead.Phone,
+                }
+            );
             await context.SaveChangesAsync();
         }
 
-        return rowsAffected == 0 
-            ? new HandlerResult(false, "Lead não encontrado.") 
+        return rowsAffected == 0
+            ? new HandlerResult(false, "Lead não encontrado.")
             : new HandlerResult(true);
     }
 

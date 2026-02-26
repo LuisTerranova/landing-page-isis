@@ -13,9 +13,9 @@
     <GenericTable @ref="_appointmentsTable"
                   TItem="Appointment"
                   ServerData="@ServerReload"
-                  OnCreate="@(() => OpenCreate())"
-                  OnEdit="@(a => EditAppointment(a))"
-                  OnDelete="@(a => DeleteAppointment(a))">
+                  OnCreate="@(OpenCreate)"
+                  OnEdit="@(EditAppointment)"
+                  OnDelete="@(DeleteAppointment)">
 
         <HeaderColumns>
             <MudTh>Paciente</MudTh>

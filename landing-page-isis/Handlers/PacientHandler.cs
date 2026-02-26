@@ -8,12 +8,17 @@ namespace landing_page_isis.Handlers;
 
 public partial class PacientHandler(AppDbContext context) : IPacientHandler
 {
-    public async Task<PaginatedResponse<Pacient?>> GetPacients(int page, int pageSize, CancellationToken ct)
+    public async Task<PaginatedResponse<Pacient?>> GetPacients(
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
     {
         var query = context.Pacients.AsNoTracking();
         var totalItems = await query.CountAsync(ct);
-        
-        if (totalItems <= 0) return new PaginatedResponse<Pacient?>([], totalItems, page, pageSize); 
+
+        if (totalItems <= 0)
+            return new PaginatedResponse<Pacient?>([], totalItems, page, pageSize);
 
         var items = await query
             .OrderBy(p => p.Name)
@@ -26,19 +31,17 @@ public partial class PacientHandler(AppDbContext context) : IPacientHandler
 
     public async Task<Pacient?> GetPacient(Guid id)
     {
-        return await context.Pacients
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == id);
+        return await context.Pacients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<HandlerResult> CreatePacient(Pacient? pacient)
     {
-        if (pacient == null) 
+        if (pacient == null)
             return new HandlerResult(false, "Dados inválidos.");
 
         if (!string.IsNullOrEmpty(pacient.Phone))
             pacient.Phone = OnlyNumbersRegex().Replace(pacient.Phone, "");
-            
+
         if (!string.IsNullOrEmpty(pacient.Cpf))
             pacient.Cpf = OnlyNumbersRegex().Replace(pacient.Cpf, "");
 
@@ -50,12 +53,12 @@ public partial class PacientHandler(AppDbContext context) : IPacientHandler
     public async Task<HandlerResult> UpdatePacient(Pacient pacient)
     {
         var existing = await context.Pacients.FindAsync(pacient.Id);
-        if (existing == null) 
+        if (existing == null)
             return new HandlerResult(false, "Paciente não encontrado.");
 
         if (!string.IsNullOrEmpty(pacient.Phone))
             pacient.Phone = OnlyNumbersRegex().Replace(pacient.Phone, "");
-            
+
         if (!string.IsNullOrEmpty(pacient.Cpf))
             pacient.Cpf = OnlyNumbersRegex().Replace(pacient.Cpf, "");
 
@@ -67,7 +70,7 @@ public partial class PacientHandler(AppDbContext context) : IPacientHandler
     public async Task<HandlerResult> DeletePacient(Guid id)
     {
         var pacient = await context.Pacients.FindAsync(id);
-        if (pacient == null) 
+        if (pacient == null)
             return new HandlerResult(false, "Paciente não encontrado.");
 
         context.Pacients.Remove(pacient);

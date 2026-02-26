@@ -8,6 +8,8 @@ namespace landing_page_isis.Components.Admin;
 
 public partial class LeadsView : ComponentBase
 {
+    #region Services
+
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
@@ -17,7 +19,15 @@ public partial class LeadsView : ComponentBase
     [Inject]
     private ILeadHandler LeadHandler { get; set; } = null!;
 
+    #endregion
+
+    #region Properties
+
     private GenericTable<Lead> _leadsTable = null!;
+
+    #endregion
+
+    #region Methods
 
     private async Task<TableData<Lead>> ServerReload(TableState state, CancellationToken ct)
     {
@@ -92,4 +102,6 @@ public partial class LeadsView : ComponentBase
             }
         }
     }
+
+    #endregion
 }

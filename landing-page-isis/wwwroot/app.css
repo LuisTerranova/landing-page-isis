@@ -15,6 +15,7 @@
 .mud-table.mud-theme-secondary {
     border-radius: 24px !important;
     overflow: hidden !important;
+    font-size: 1.1rem !important;
 }
 
 .mud-table.mud-theme-secondary .mud-table-head {
@@ -87,14 +88,52 @@
 .status-marcada {
     background-color: #E67E22 !important;
     color: white !important;
+    font-weight: bold !important;
 }
 
 .status-realizada {
     background-color: #2ECC71 !important;
     color: white !important;
+    font-weight: bold !important;
 }
 
 .status-cancelada {
     background-color: #1A1A1A !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.status-novo {
+    background-color: #111184 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.status-aprovado {
+    background-color: #2ECC71 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.mud-charts-xaxis text {
+    fill: white !important;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.mud-charts-yaxis text {
+    fill: rgba(255, 255, 255, 0.8) !important;
+}
+
+.mud-charts-gridlines {
+    stroke: rgba(255, 255, 255, 0.2) !important;
+}
+
+.footer-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
     color: white !important;
 }

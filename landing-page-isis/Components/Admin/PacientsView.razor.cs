@@ -9,6 +9,8 @@ namespace landing_page_isis.Components.Admin;
 
 public partial class PacientsView : ComponentBase
 {
+    #region Services
+
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
@@ -18,7 +20,15 @@ public partial class PacientsView : ComponentBase
     [Inject]
     private IPacientHandler PacientHandler { get; set; } = null!;
 
+    #endregion
+
+    #region Properties
+
     private GenericTable<Pacient> _pacientsTable = null!;
+
+    #endregion
+
+    #region Methods
 
     private async Task<TableData<Pacient>> ServerReload(TableState state, CancellationToken ct)
     {
@@ -144,4 +154,6 @@ public partial class PacientsView : ComponentBase
             }
         }
     }
+
+    #endregion
 }
