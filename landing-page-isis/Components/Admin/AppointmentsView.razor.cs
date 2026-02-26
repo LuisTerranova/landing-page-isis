@@ -1,5 +1,5 @@
-using landing_page_isis.Components.Helpers;
 using landing_page_isis.Components.Forms;
+using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using Microsoft.AspNetCore.Components;
@@ -7,7 +7,7 @@ using MudBlazor;
 
 namespace landing_page_isis.Components.Admin;
 
-public partial class ScheduleView : ComponentBase
+public partial class AppointmentsView : ComponentBase
 {
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
@@ -20,7 +20,7 @@ public partial class ScheduleView : ComponentBase
 
     private GenericTable<Appointment> _appointmentsTable = null!;
 
-   private async Task<TableData<Appointment>> ServerReload(TableState state, CancellationToken ct)
+    private async Task<TableData<Appointment>> ServerReload(TableState state, CancellationToken ct)
     {
         try
         {
@@ -61,7 +61,7 @@ public partial class ScheduleView : ComponentBase
         );
         var result = await dialog.Result;
 
-        if (result is { Canceled: false } && result.Data is Appointment model)
+        if (result is { Canceled: false, Data: Appointment model })
         {
             var success = await AppointmentHandler.CreateAppointment(model);
             if (success.Success)
@@ -71,7 +71,7 @@ public partial class ScheduleView : ComponentBase
             }
             else
             {
-                Snackbar.Add(success.Message, Severity.Error);
+                Snackbar.Add(success.Message ?? "Erro ao criar agendamento.", Severity.Error);
             }
         }
     }
@@ -107,7 +107,7 @@ public partial class ScheduleView : ComponentBase
         );
         var result = await dialog.Result;
 
-        if (result is { Canceled: false } && result.Data is Appointment editedModel)
+        if (result is { Canceled: false, Data: Appointment editedModel })
         {
             var success = await AppointmentHandler.UpdateAppointment(editedModel, editedModel.Id);
             if (success.Success)

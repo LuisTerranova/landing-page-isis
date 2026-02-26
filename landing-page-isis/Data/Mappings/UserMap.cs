@@ -1,4 +1,5 @@
 using landing_page_isis.core;
+using landing_page_isis.core.ApplicationUser;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

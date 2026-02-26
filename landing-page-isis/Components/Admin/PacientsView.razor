@@ -14,9 +14,9 @@
     <GenericTable @ref="_pacientsTable"
                   TItem="Pacient"
                   ServerData="@ServerReload"
-                  OnCreate="@(() => OpenCreate())"
-                  OnEdit="@(p => EditPacient(p))"
-                  OnDelete="@(p => DeletePacient(p))">
+                  OnCreate="@(OpenCreate)"
+                  OnEdit="@(EditPacient)"
+                  OnDelete="@(DeletePacient)">
 
         <HeaderColumns>
             <MudTh>Nome</MudTh>
@@ -27,7 +27,7 @@
         <RowColumns>
             <MudTd DataLabel="Nome">@context.Name</MudTd>
             <MudTd DataLabel="E-mail">@context.Email</MudTd>
-            <MudTd DataLabel="Telefone">@context.Phone</MudTd>
+            <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
         </RowColumns>
 
         <CustomActions>

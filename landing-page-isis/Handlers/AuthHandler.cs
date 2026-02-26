@@ -6,16 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
-public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor) : IAuthHandler
+public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor)
+    : IAuthHandler
 {
-    private HttpContext? _context => httpContextAccessor.HttpContext;
+    private HttpContext? Context => httpContextAccessor.HttpContext;
 
     public async Task<bool> Login(string username, string password)
     {
-        if (_context == null) return false;
+        if (Context == null)
+            return false;
 
-        var user = await dbContext.Users
-            .FirstOrDefaultAsync(u => u.Email == username);
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == username);
 
         if (user == null)
             return false;
@@ -29,7 +30,7 @@ public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContex
         {
             new Claim(ClaimTypes.Name, user.Name),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim("UsuarioId", user.Id.ToString())
+            new Claim("UserId", user.Id.ToString()),
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
@@ -37,21 +38,19 @@ public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContex
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3)
+            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(3),
         };
 
-        await _context.SignInAsync(
-            "Cookies",
-            new ClaimsPrincipal(claimsIdentity),
-            authProperties);
+        await Context.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
 
         return true;
     }
 
     public async Task<bool> Logout()
     {
-        if (_context == null) return false;
-        await _context.SignOutAsync();
+        if (Context == null)
+            return false;
+        await Context.SignOutAsync();
         return true;
     }
 }
