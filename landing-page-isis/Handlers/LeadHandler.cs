@@ -65,6 +65,7 @@ public partial class LeadHandler(AppDbContext context) : ILeadHandler
                     Name = lead.Name,
                     Email = lead.Email,
                     Phone = lead.Phone,
+                    PolicySigned = lead.PolicySigned
                 }
             );
             await context.SaveChangesAsync();

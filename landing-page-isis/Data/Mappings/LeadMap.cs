@@ -12,33 +12,27 @@ public class LeadMap : IEntityTypeConfiguration<Lead>
         builder.ToTable("leads");
         builder.HasKey(l => l.Id);
 
-        builder.Property(l => l.Name)
-            .IsRequired()
-            .HasMaxLength(150)
-            .HasColumnName("lead_name");
+        builder.Property(l => l.Name).IsRequired().HasMaxLength(150).HasColumnName("lead_name");
 
-        builder.Property(l => l.Phone)
-            .IsRequired()
-            .HasMaxLength(11)
-            .HasColumnName("lead_phone");
-        
-        builder.Property(l => l.Email)
-            .IsRequired()
-            .HasMaxLength(150)
-            .HasColumnName("lead_email");
-        
-        builder.Property(l => l.Intent)
-            .IsRequired()
-            .HasMaxLength(300)
-            .HasColumnName("lead_intent");
-        
-        builder.Property(l => l.Created)
-            .HasColumnName("lead_created");
-        
-        builder.Property(l => l.LeadStatus)
+        builder.Property(l => l.Phone).IsRequired().HasMaxLength(11).HasColumnName("lead_phone");
+
+        builder.Property(l => l.Email).IsRequired().HasMaxLength(150).HasColumnName("lead_email");
+
+        builder.Property(l => l.Intent).IsRequired().HasMaxLength(300).HasColumnName("lead_intent");
+
+        builder.Property(l => l.Created).HasColumnName("lead_created");
+
+        builder
+            .Property(l => l.LeadStatus)
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(20)
-            .HasColumnName("lead_status");;
+            .HasColumnName("lead_status");
+
+        builder
+            .Property(l => l.PolicySigned)
+            .IsRequired()
+            .HasDefaultValue(false)
+            .HasColumnName("policy_signed");
     }
 }

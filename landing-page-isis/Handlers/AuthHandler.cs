@@ -28,9 +28,9 @@ public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContex
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim("UserId", user.Id.ToString()),
+            new(ClaimTypes.Name, user.Name),
+            new(ClaimTypes.Email, user.Email),
+            new("UserId", user.Id.ToString()),
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, "Cookies");

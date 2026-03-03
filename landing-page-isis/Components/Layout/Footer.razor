@@ -41,13 +41,13 @@
                     <div class="d-flex align-center gap-2">
                         <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
                         <MudText Typo="Typo.body2" Class="footer-link">
-                            (69) 99999-9999
+                            @Environment.GetEnvironmentVariable("CONTACT_PHONE")
                         </MudText>
                     </div>
                     <div class="d-flex align-center gap-2">
                         <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
                         <MudText Typo="Typo.body2" Class="footer-link">
-                            contato@isisvitoria.com.br
+                            @Environment.GetEnvironmentVariable("EMAIL_ADDRESS")
                         </MudText>
                     </div>
                 </div>

@@ -1,3 +1,4 @@
+using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
@@ -47,11 +48,25 @@ public partial class LeadsView : ComponentBase
         }
     }
 
+    private async Task ViewIntent(Lead lead)
+    {
+        var parameters = new DialogParameters<LeadIntentDialog> { { x => x.Lead, lead } };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+        };
+
+        await DialogService.ShowAsync<LeadIntentDialog>("Visualizar Intenção", parameters, options);
+    }
+
     private async Task DeleteLead(Lead lead)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var confirm = await DialogService.ShowMessageBox(
+        var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
             $"Tem certeza que deseja apagar os dados de {lead.Name}?",
             yesText: "Excluir",
@@ -79,7 +94,7 @@ public partial class LeadsView : ComponentBase
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var confirm = await DialogService.ShowMessageBox(
+        var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
             $"Aprovar lead de {lead.Name}? Esta acao desencadeara a criacao de um paciente.",
             yesText: "Aprovar",

@@ -1,3 +1,4 @@
+@namespace landing_page_isis.Components.Dialogs
 @using landing_page_isis.core.Models
 
 <MudDialog>
@@ -17,7 +18,7 @@
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF" Required="true"
                                   @bind-Value="Model.Cpf" Variant="Variant.Outlined"
-                                  Mask="@(new PatternMask("000.000.000-00"))"/>    
+                                  Mask="@(new PatternMask("000.000.000-00"))"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudDatePicker Label="Data de Nascimento"
@@ -41,7 +42,8 @@
     <DialogActions>
         <MudButton OnClick="Cancelar">Cancelar</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
-                   Disabled="@(!_formValido)" OnClick="Salvar">Salvar
+                   Disabled="@(!_formValido)" OnClick="Salvar">
+            Salvar
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -68,4 +70,5 @@
         Model.BirthDate = _tempBirthDate.HasValue ? DateOnly.FromDateTime(_tempBirthDate.Value) : null;
         MudDialog.Close(DialogResult.Ok(Model));
     }
+
 }

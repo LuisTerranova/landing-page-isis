@@ -1,0 +1,42 @@
+@namespace landing_page_isis.Components.Dialogs
+@using landing_page_isis.core.Models
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="mr-3 mb-n1"/>
+            Detalhes do Lead: @Lead.Name.ToUpper()
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer Style="max-height: 400px; overflow-y: auto" Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Style="font-weight: bold;" Class="mb-2">Intenção:</MudText>
+            <MudPaper Outlined="true" Class="pa-4" Style="background-color: #F7EAD5; color: #7E0F20; height: auto; min-height: 100px;">
+                <MudText Typo="Typo.body1" Style="white-space: pre-wrap; word-break: break-word; font-weight: 500;">
+                    @Lead.Intent
+                </MudText>
+            </MudPaper>
+
+            <MudStack Row="true" Class="mt-4" Spacing="4">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">E-mail</MudText>
+                    <MudText Typo="Typo.body2">@Lead.Email</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Telefone</MudText>
+                    <MudText Typo="Typo.body2">@Lead.Phone.FormatPhone()</MudText>
+                </div>
+            </MudStack>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Fechar">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Lead Lead { get; set; } = new();
+
+    private void Fechar() => MudDialog.Close();
+}

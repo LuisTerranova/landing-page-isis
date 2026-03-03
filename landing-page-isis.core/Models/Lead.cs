@@ -22,4 +22,5 @@ public class Lead
     public string Intent { get; set; } = string.Empty;
     public DateOnly Created { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public LeadStatusEnum LeadStatus { get; set; } = LeadStatusEnum.Novo;
+    public bool PolicySigned { get; set; } = false;
 }

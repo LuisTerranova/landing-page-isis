@@ -18,6 +18,12 @@
                   OnEdit="@(ApproveLead)"
                   OnDelete="@(DeleteLead)">
 
+        <CustomActions>
+            <MudMenuItem OnClick="@(() => ViewIntent(context))">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2"/> Ver Intenção
+            </MudMenuItem>
+        </CustomActions>
+
         <HeaderColumns>
             <MudTh>Nome</MudTh>
             <MudTh>Telefone</MudTh>

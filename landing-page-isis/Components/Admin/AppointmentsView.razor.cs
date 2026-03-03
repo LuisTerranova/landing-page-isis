@@ -1,4 +1,4 @@
-using landing_page_isis.Components.Forms;
+using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
@@ -43,7 +43,7 @@ public partial class AppointmentsView : ComponentBase
 
     private async Task OpenCreate()
     {
-        var parameters = new DialogParameters<AppointmentFormDialog>
+        var parameters = new DialogParameters<AppointmentDialog>
         {
             { x => x.Titulo, "Novo Agendamento" },
         };
@@ -54,7 +54,7 @@ public partial class AppointmentsView : ComponentBase
             FullWidth = true,
         };
 
-        var dialog = await DialogService.ShowAsync<AppointmentFormDialog>(
+        var dialog = await DialogService.ShowAsync<AppointmentDialog>(
             "Novo Agendamento",
             parameters,
             options
@@ -78,7 +78,7 @@ public partial class AppointmentsView : ComponentBase
 
     private async Task EditAppointment(Appointment appointment)
     {
-        var parameters = new DialogParameters<AppointmentFormDialog>
+        var parameters = new DialogParameters<AppointmentDialog>
         {
             { x => x.Titulo, "Editar Agendamento" },
             {
@@ -100,7 +100,7 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Small,
             FullWidth = true,
         };
-        var dialog = await DialogService.ShowAsync<AppointmentFormDialog>(
+        var dialog = await DialogService.ShowAsync<AppointmentDialog>(
             "Editar Agendamento",
             parameters,
             options
@@ -126,7 +126,7 @@ public partial class AppointmentsView : ComponentBase
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var confirm = await DialogService.ShowMessageBox(
+        var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
             $"Tem certeza que deseja apagar o agendamento de {appointment.AppointmentDate.ToLocalTime():dd/MM/yyyy HH:mm}?",
             yesText: "Excluir",

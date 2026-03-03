@@ -1,5 +1,5 @@
-using landing_page_isis.core;
 using landing_page_isis.core.Models;
+using landing_page_isis.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,37 +11,37 @@ public class PacientMap : IEntityTypeConfiguration<Pacient>
     {
         builder.ToTable("pacients");
         builder.HasKey(p => p.Id);
-        
-        builder.Property(p => p.Name)
-            .IsRequired()
-            .HasMaxLength(150)
-            .HasColumnName("name");
 
-        builder.Property(p => p.Cpf)
-            .IsRequired(false)
-            .HasMaxLength(11)
-            .HasColumnName("cpf");
-        
-        builder.Property(p => p.BirthDate)
-            .IsRequired(false)
-            .HasColumnName("birth_date");
-        
-        builder.Property(p => p.Email)
-            .IsRequired()
-            .HasMaxLength(150)
-            .HasColumnName("email");
-        
-        builder.Property(p => p.Phone)
-            .IsRequired()
-            .HasMaxLength(11)
-            .HasColumnName("phone");
-        
-        builder.Property(p => p.Address)
-            .IsRequired(false)
-            .HasMaxLength(200)
-            .HasColumnName("address");
+        builder.Property(p => p.Name).IsRequired().HasMaxLength(150).HasColumnName("name");
 
-        builder.HasMany(p => p.Appointments)
-            .WithOne(p => p.Pacient);
+        builder
+            .Property(p => p.Cpf)
+            .IsRequired(false)
+            .HasMaxLength(255)
+            .HasColumnName("cpf")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
+
+        builder.Property(p => p.BirthDate).IsRequired(false).HasColumnName("birth_date");
+
+        builder.Property(p => p.Email).IsRequired().HasMaxLength(150).HasColumnName("email");
+
+        builder.Property(p => p.Phone).IsRequired().HasMaxLength(11).HasColumnName("phone");
+
+        builder
+            .Property(p => p.StateOfResidency)
+            .IsRequired(false)
+            .HasMaxLength(2)
+            .HasColumnName("state_of_residency");
+
+        builder
+            .Property(p => p.PolicySigned)
+            .IsRequired()
+            .HasDefaultValue(false)
+            .HasColumnName("policy_signed");
+
+        builder.HasMany(p => p.Appointments).WithOne(p => p.Pacient);
     }
 }
