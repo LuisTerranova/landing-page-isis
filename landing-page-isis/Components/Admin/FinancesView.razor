@@ -65,7 +65,7 @@
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
-                        <MudChart ChartType="ChartType.Bar" ChartSeries="@_monthlyRevenueSeries" XAxisLabels="@_monthlyRevenueLabels" Width="100%" Height="350px"/>
+                        <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_monthlyRevenueSeries" xaxis-labels="@_monthlyRevenueLabels" Width="100%" Height="350px"/>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -78,7 +78,7 @@
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent Class="d-flex justify-center">
-                        <MudChart ChartType="ChartType.Donut" InputData="@_statusChartData" InputLabels="@_statusChartLabels" Width="100%" Height="350px"/>
+                        <MudChart T="double" ChartType="ChartType.Donut" input-data="@_statusChartData" input-labels="@_statusChartLabels" Width="100%" Height="350px"/>
                     </MudCardContent>
                 </MudCard>
             </MudItem>

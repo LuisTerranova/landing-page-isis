@@ -1,0 +1,47 @@
+@using System.IO
+@using Markdig
+@namespace landing_page_isis.Components.Dialogs
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Policy" Class="mr-3 mb-n1"/>
+            Termo de Consentimento de Tratamento de Dados
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer Style="max-height: 400px; overflow-y: scroll" Class="pa-4">
+            <MudText Typo="Typo.body1">
+                @((MarkupString)_policyHtml)
+            </MudText>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Accept">Eu Li e Aceito</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private string _policyHtml = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "PRIVACY_POLICY.md");
+        if (File.Exists(path))
+        {
+            var md = await File.ReadAllTextAsync(path);
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            _policyHtml = Markdown.ToHtml(md, pipeline);
+        }
+        else
+        {
+            _policyHtml = "<p>Política de privacidade não encontrada.</p>";
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+    void Accept() => MudDialog.Close(DialogResult.Ok(true));
+}

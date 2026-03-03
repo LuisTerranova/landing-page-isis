@@ -3,10 +3,16 @@
 
 @if (ShowCreateButton)
 {
-    <MudButton Class="ma-5 pa-3 mud-theme-secondary"
-               OnClick="@(() => OnCreate.InvokeAsync())">
-        Criar
-    </MudButton>
+    <div class="d-flex justify-end mb-4">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Secondary"
+                   Size="Size.Large"
+                   Class="px-10 py-3"
+                   Style="font-weight: bold; border-radius: 8px;"
+                   OnClick="@(() => OnCreate.InvokeAsync())">
+            Criar
+        </MudButton>
+    </div>
 }
 <MudTable ServerData="@ServerData" @ref="_table" Hover="true" Elevation="2" Class="mud-theme-secondary">
     <HeaderContent>
@@ -14,33 +20,28 @@
         <MudTh Style="text-align: right;">Ações</MudTh>
     </HeaderContent>
 
-    <RowTemplate>
-        @RowColumns(context)
+    <RowTemplate Context="item">
+        @RowColumns(item)
         <MudTd DataLabel="Ações" Style="text-align: right;">
-            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                <ActivatorContent>
-                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Inherit"/>
-                </ActivatorContent>
-                <ChildContent>
-                    @if (OnEdit.HasDelegate)
-                    {
-                        <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2"/> @EditText
-                        </MudMenuItem>
-                    }
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                @if (OnEdit.HasDelegate)
+                {
+                    <MudMenuItem OnClick="@(() => OnEdit.InvokeAsync(item))">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2"/> @EditText
+                    </MudMenuItem>
+                }
 
-                    @if (CustomActions != null)
-                    {
-                        @CustomActions(context)
-                    }
+                @if (CustomActions != null)
+                {
+                    @CustomActions(item)
+                }
 
-                    @if (OnDelete.HasDelegate)
-                    {
-                        <MudMenuItem OnClick="@(() => OnDelete.InvokeAsync(context))">
-                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2"/> Excluir
-                        </MudMenuItem>
-                    }
-                </ChildContent>
+                @if (OnDelete.HasDelegate)
+                {
+                    <MudMenuItem OnClick="@(() => OnDelete.InvokeAsync(item))">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2"/> Excluir
+                    </MudMenuItem>
+                }
             </MudMenu>
         </MudTd>
     </RowTemplate>

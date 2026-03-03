@@ -1,5 +1,5 @@
+@namespace landing_page_isis.Components.Dialogs
 @using landing_page_isis.core.Models
-@using landing_page_isis.core.Interfaces
 @using landing_page_isis.core
 
 <MudDialog>
@@ -35,14 +35,14 @@
                                    @bind-Time="_tempTime"
                                    Required="true"
                                    Variant="Variant.Outlined"
-                                   Editable="true" />
+                                   Editable="true"/>
                 </MudItem>
                 <MudItem xs="6">
                     <MudNumericField T="decimal" Label="Preço (R$)"
                                      @bind-Value="Model.Price"
                                      Format="N2"
                                      Variant="Variant.Outlined"
-                                     Required="true" />
+                                     Required="true"/>
                 </MudItem>
                 <MudItem xs="6">
                     <MudSelect T="AppointmentStatusEnum" Label="Status" @bind-Value="Model.AppointmentStatus" Required="true" Variant="Variant.Outlined">
@@ -58,7 +58,8 @@
     <DialogActions>
         <MudButton OnClick="Cancelar">Cancelar</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
-                   Disabled="@(!_formValido)" OnClick="Salvar">Salvar
+                   Disabled="@(!_formValido)" OnClick="Salvar">
+            Salvar
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -112,10 +113,11 @@
 
             // Assign exactly the explicit Local offset to our model
             Model.AppointmentDate = new DateTimeOffset(explicitLocal);
-            
+
             Console.WriteLine($"[SalvarForm] Extracted: Date={_tempDate}, Time={_tempTime} | Combined Local: {explicitLocal} | Assigned To Model: {Model.AppointmentDate}");
         }
 
         MudDialog.Close(DialogResult.Ok(Model));
     }
+
 }

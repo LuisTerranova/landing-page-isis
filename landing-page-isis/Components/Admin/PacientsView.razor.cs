@@ -1,4 +1,4 @@
-using landing_page_isis.Components.Forms;
+using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
@@ -52,7 +52,7 @@ public partial class PacientsView : ComponentBase
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
 
-        var confirm = await DialogService.ShowMessageBox(
+        var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
             $"Tem certeza que deseja apagar os dados de {pacient.Name}?",
             yesText: "Excluir",
@@ -78,7 +78,7 @@ public partial class PacientsView : ComponentBase
 
     private async Task EditPacient(Pacient pacient)
     {
-        var parameters = new DialogParameters<PacientFormDialog>
+        var parameters = new DialogParameters<PacientDialog>
         {
             { x => x.Titulo, "Editar Paciente" },
             {
@@ -91,7 +91,7 @@ public partial class PacientsView : ComponentBase
                     BirthDate = pacient.BirthDate,
                     Email = pacient.Email,
                     Phone = pacient.Phone,
-                    Address = pacient.Address,
+                    StateOfResidency = pacient.StateOfResidency,
                 }
             },
         };
@@ -102,11 +102,7 @@ public partial class PacientsView : ComponentBase
             FullWidth = true,
         };
 
-        var dialog = await DialogService.ShowAsync<PacientFormDialog>(
-            "Edição",
-            parameters,
-            options
-        );
+        var dialog = await DialogService.ShowAsync<PacientDialog>("Edição", parameters, options);
         var result = await dialog.Result;
 
         if (result is { Canceled: false } && result.Data is Pacient pacientEditado)
@@ -126,10 +122,7 @@ public partial class PacientsView : ComponentBase
 
     private async Task OpenCreate()
     {
-        var parameters = new DialogParameters<PacientFormDialog>
-        {
-            { x => x.Titulo, "Novo Paciente" },
-        };
+        var parameters = new DialogParameters<PacientDialog> { { x => x.Titulo, "Novo Paciente" } };
         var options = new DialogOptions
         {
             CloseOnEscapeKey = true,
@@ -137,11 +130,7 @@ public partial class PacientsView : ComponentBase
             FullWidth = true,
         };
 
-        var dialog = await DialogService.ShowAsync<PacientFormDialog>(
-            "Cadastro",
-            parameters,
-            options
-        );
+        var dialog = await DialogService.ShowAsync<PacientDialog>("Cadastro", parameters, options);
         var result = await dialog.Result;
 
         if (result is { Canceled: false } && result.Data is Pacient novoPaciente)

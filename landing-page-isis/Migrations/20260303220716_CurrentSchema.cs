@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace landingpageisis.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class CurrentSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,7 +22,8 @@ namespace landingpageisis.Migrations
                     lead_phone = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
                     lead_intent = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     lead_created = table.Column<DateOnly>(type: "date", nullable: false),
-                    lead_status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
+                    lead_status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    policy_signed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -35,11 +36,12 @@ namespace landingpageisis.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    cpf = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: true),
+                    cpf = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     birth_date = table.Column<DateOnly>(type: "date", nullable: true),
                     email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     phone = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
-                    address = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
+                    state_of_residency = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
+                    policy_signed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {

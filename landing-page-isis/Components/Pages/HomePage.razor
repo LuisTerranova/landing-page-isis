@@ -14,7 +14,7 @@
                     </MudText>
 
                     <MudText Typo="Typo.h1" Color="Color.Secondary" Style="font-weight: 900; line-height: 1.1;"
-                             Class="mb-8">
+                             Class="mb-8 hero-title">
                         Sua saúde em boas mãos
                     </MudText>
 
@@ -25,7 +25,8 @@
                     </MudText>
 
                     <div class="d-flex flex-column align-center">
-                        <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 400; color: #666;">Agende sua consulta
+                        <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 400; color: #666;">
+                            Agende sua consulta
                             agora mesmo
                         </MudText>
                         <MudButton Variant="Variant.Filled"
@@ -48,7 +49,7 @@
     <MudContainer MaxWidth="MaxWidth.Large">
         <MudPaper Elevation="0" Class="bg-transparent">
             <MudGrid Spacing="10">
-                <MudItem xs="12" md="7" Class="d-flex flex-column justify-center pe-md-12">
+                <MudItem xs="12" md="7" Class="d-flex flex-column justify-center align-center align-md-start text-center text-md-start pe-md-12">
                     <MudText Typo="Typo.h6" Color="Color.Secondary"
                              Style="letter-spacing: 2px; font-weight: 300; margin-bottom: 10px">
                         CONHEÇA MINHA TRAJETÓRIA
@@ -58,9 +59,10 @@
                     </MudText>
 
                     <div style="width: 60px; height: 4px; background-color: #284B32; border-radius: 2px;"
-                         class="mb-8"></div>
+                         class="mb-8 mx-auto mx-md-0">
+                    </div>
 
-                    <MudText Typo="Typo.h6" Class="text-justify mb-6"
+                    <MudText Typo="Typo.h6" Class="mb-6"
                              Style="font-weight: 400; line-height: 1.8; color: #444; font-size: 1.2rem;">
                         Acredito que o desenvolvimento humano é um processo contínuo e profundamente enraizado nas
                         interações sociais e na cultura que nos rodeia. Pautada na <b>Abordagem Histórico-Cultural</b>,
@@ -68,23 +70,24 @@
                         história de vida e das mediações que moldaram sua subjetividade.
                     </MudText>
 
-                    <MudStack Row="true" Spacing="3" Class="mt-4 flex-wrap">
+                    <MudStack Row="true" Spacing="3" Class="mt-4 flex-wrap justify-center justify-md-start">
                         <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Secondary"
-                                 Variant="Variant.Text" Style="font-weight: 500;">Ética
+                                 Variant="Variant.Text" Style="font-weight: 500;">
+                            Ética
                         </MudChip>
                         <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Secondary"
-                                 Variant="Variant.Text" Style="font-weight: 500;">Acolhimento
+                                 Variant="Variant.Text" Style="font-weight: 500;">
+                            Acolhimento
                         </MudChip>
                         <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Secondary"
-                                 Variant="Variant.Text" Style="font-weight: 500;">Ciência
+                                 Variant="Variant.Text" Style="font-weight: 500;">
+                            Ciência
                         </MudChip>
                     </MudStack>
                 </MudItem>
 
-                <MudItem xs="12" md="5" Style="background-color: #7E0F20; overflow: hidden;"
-                         Class="rounded-xl d-flex align-end justify-center pa-0">
-                    <MudImage Src="isis-photo.png" Alt="Isis Vitória" Class="rounded-xl" Fluid="true"
-                              Style="width: 100%; object-fit: cover; display: block;"/>
+                <MudItem xs="12" md="5" Class="isis-photo photo-bg rounded-xl d-flex align-end justify-center pa-0">
+                    <MudImage Src="isis-photo.png" Alt="Isis Vitória" Class="rounded-xl isis-photo" Fluid="true"/>
                 </MudItem>
             </MudGrid>
         </MudPaper>
@@ -95,7 +98,8 @@
      style="min-height: 100vh; width: 100%; background-color: #284B32; padding: 60px 0;">
     <MudContainer MaxWidth="MaxWidth.Large">
         <div class="d-flex flex-column align-center text-center mb-12">
-            <MudText Typo="Typo.h6" Style="letter-spacing: 3px; color: rgba(255,255,255,0.7); font-weight: 300;">COMO
+            <MudText Typo="Typo.h6" Style="letter-spacing: 3px; color: rgba(255,255,255,0.7); font-weight: 300;">
+                COMO
                 POSSO AJUDAR
             </MudText>
             <MudText Typo="Typo.h2" Style="color: white; font-weight: 800; line-height: 1.1;">Meus Serviços</MudText>
@@ -108,7 +112,8 @@
                           Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
                     <MudIcon Icon="@Icons.Material.Filled.SelfImprovement" Style="color: white;" Size="Size.Large"
                              Class="mb-4"/>
-                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">Psicoterapia
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">
+                        Psicoterapia
                         Individual
                     </MudText>
                     <MudText Typo="Typo.body1" Style="color: rgba(255,255,255,0.8); line-height: 1.7;">
@@ -123,7 +128,8 @@
                           Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
                     <MudIcon Icon="@Icons.Material.Filled.AutoGraph" Style="color: white;" Size="Size.Large"
                              Class="mb-4"/>
-                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">Desenvolvimento e
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">
+                        Desenvolvimento e
                         Autonomia
                     </MudText>
                     <MudText Typo="Typo.body1" Style="color: rgba(255,255,255,0.8); line-height: 1.7;">
@@ -137,7 +143,8 @@
                 <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
                           Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
                     <MudIcon Icon="@Icons.Material.Filled.Groups" Style="color: white;" Size="Size.Large" Class="mb-4"/>
-                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">Grupos de Estudos
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">
+                        Grupos de Estudos
                     </MudText>
                     <MudText Typo="Typo.body1" Style="color: rgba(255,255,255,0.8); line-height: 1.7;">
                         Mediação de conhecimento e discussões sobre a psicologia histórico-cultural e suas aplicações
@@ -150,13 +157,3 @@
 </div>
 
 <LeadFormContact/>
-
-<style>
-    html {
-        scroll-behavior: smooth;
-    }
-
-    section {
-        scroll-margin-top: 80px;
-    }
-</style>

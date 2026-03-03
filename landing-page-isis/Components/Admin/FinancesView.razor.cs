@@ -27,7 +27,7 @@ public partial class FinancesView : ComponentBase
     private double[] _statusChartData = [];
     private string[] _statusChartLabels = [];
 
-    private List<ChartSeries> _monthlyRevenueSeries = [];
+    private List<ChartSeries<double>> _monthlyRevenueSeries = [];
     private string[] _monthlyRevenueLabels = [];
 
     #endregion
@@ -110,7 +110,10 @@ public partial class FinancesView : ComponentBase
                 "Nov",
                 "Dez",
             ];
-            _monthlyRevenueSeries = [new() { Name = "Receita Realizada (R$)", Data = monthlyData }];
+            _monthlyRevenueSeries =
+            [
+                new ChartSeries<double> { Name = "Receita Realizada (R$)", Data = monthlyData },
+            ];
         }
         catch (Exception ex)
         {

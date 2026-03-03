@@ -137,3 +137,72 @@
 .footer-link:hover {
     color: white !important;
 }
+
+/* Page Components Styles */
+html {
+    scroll-behavior: smooth;
+}
+
+section {
+    scroll-margin-top: 80px;
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 6vw, 5rem) !important;
+    text-align: center;
+    width: 100%;
+}
+
+.photo-bg {
+    background-color: transparent;
+    overflow: hidden;
+}
+
+.isis-photo {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: 0 auto;
+}
+
+@media (min-width: 960px) {
+    .photo-bg {
+        background-color: #7E0F20;
+    }
+
+    .isis-photo {
+        max-width: 100%;
+        /* Restaura no Desktop */
+    }
+}
+
+/* Contact Form Input Styles */
+.custom-contact-input .mud-input-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.custom-contact-input .mud-input-slot {
+    color: white !important;
+}
+
+.custom-contact-input .mud-input-outlined-border {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.custom-contact-input:hover .mud-input-outlined-border {
+    border-color: white !important;
+}
+
+/* Validation Message Color for Dark Backgrounds */
+.validation-message {
+    color: #FFCDD2 !important;
+    /* Soft light red/pink that contrasts well on dark red */
+    font-weight: 500;
+}
+
+.custom-contact-input .mud-input-helper-text {
+    color: #FFCDD2 !important;
+}
