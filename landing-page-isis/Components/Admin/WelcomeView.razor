@@ -8,31 +8,36 @@
     <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
         <MudGrid>
             <MudItem xs="12" class="d-flex align-end justify-space-between mb-8">
-                <div> 
+                <div>
                     <MudText Typo="Typo.h3" Color="Color.Secondary" Style="font-weight: 800; text-transform: uppercase; line-height: 1.2">
                         AGENDA DE @GetViewTitle()
                     </MudText>
                 </div>
                 <div class="d-flex align-center gap-4">
                     <div class="custom-button-group">
-                        <MudButton OnClick="@(async () => await ToggleView(ViewMode.Day))" 
+                        <MudButton OnClick="@(async () => await ToggleView(ViewMode.Day))"
                                    Variant="@(_currentView == ViewMode.Day ? Variant.Filled : Variant.Text)"
                                    Color="@(_currentView == ViewMode.Day ? Color.Primary : Color.Default)"
                                    Class="px-6 rounded-l-xl">
                             Dia
-                        </MudButton> 
+                        </MudButton>
                         <MudButton OnClick="@(async () => await ToggleView(ViewMode.Week))"
                                    Variant="@(_currentView == ViewMode.Week ? Variant.Filled : Variant.Text)"
                                    Color="@(_currentView == ViewMode.Week ? Color.Primary : Color.Default)"
                                    Class="px-6 rounded-r-xl">
-                            Semana 
+                            Semana
                         </MudButton>
                     </div>
-                    
+
                     <div class="d-flex align-center ml-2">
-                        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? -1 : -7))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Today" Color="Color.Primary" OnClick="@(async () => { _selectedDate = DateTime.Today; await LoadAppointments(); })" />
-                        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? 1 : 7))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? -1 : -7))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Today" Color="Color.Primary" OnClick="@(async () =>
+                                                                                                          {
+                                                                                                              var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+                                                                                                              _selectedDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, pvhTimeZone).Date;
+                                                                                                              await LoadAppointments();
+                                                                                                          })"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? 1 : 7))"/>
                     </div>
                 </div>
             </MudItem>
@@ -40,20 +45,20 @@
             @if (_loading)
             {
                 <MudItem xs="12" class="d-flex justify-center py-12">
-                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true"/>
                 </MudItem>
             }
             else if (!_appointments.Any())
             {
                 <MudItem xs="12">
                     <MudPaper Elevation="0" Class="pa-12 d-flex flex-column align-center justify-center" Style="background: rgba(40, 75, 50, 0.05); border-radius: 24px; border: 2px dashed rgba(40, 75, 50, 0.2)">
-                        <MudIcon Icon="@Icons.Material.Filled.EventBusy" Color="Color.Primary" Style="font-size: 4rem;" Class="mb-4" />
+                        <MudIcon Icon="@Icons.Material.Filled.EventBusy" Color="Color.Primary" Style="font-size: 4rem;" Class="mb-4"/>
                         <MudText Typo="Typo.h6" Color="Color.Primary">Nenhum agendamento para este período</MudText>
                         <MudText Typo="Typo.body2" Class="mud-text-secondary">Tudo tranquilo por enquanto!</MudText>
                     </MudPaper>
                 </MudItem>
             }
-            else   
+            else
             {
                 @foreach (var app in _appointments)
                 {
@@ -61,19 +66,23 @@
                         <MudPaper Elevation="4" Class="pa-6 hover-elevate transition-all schedule-card" Style="border-radius: 20px;">
                             <div class="d-flex justify-space-between align-start mb-4">
                                 <div>
-                                    <MudText Typo="Typo.h6" Class="white-text" Style="font-weight: 700">@app.Date.ToLocalTime().ToString("HH:mm")</MudText>
-                                    <MudText Typo="Typo.caption" Class="white-text-70 uppercase">@app.Date.ToLocalTime().ToString("dddd, d MMM")</MudText>
+                                    @{
+                                        var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+                                        var pvhTime = TimeZoneInfo.ConvertTime(app.Date, pvhTimeZone);
+                                    }
+                                    <MudText Typo="Typo.h6" Class="white-text" Style="font-weight: 700">@pvhTime.ToString("HH:mm")</MudText>
+                                    <MudText Typo="Typo.caption" Class="white-text-70 uppercase">@pvhTime.ToString("dddd, d MMM")</MudText>
                                 </div>
                                 <div class="status-chip-container">
-                                    <MudChip T="string" 
-                                             Variant="Variant.Filled" 
-                                             Size="Size.Small" 
+                                    <MudChip T="string"
+                                             Variant="Variant.Filled"
+                                             Size="Size.Small"
                                              Class="@($"status-{app.Status.ToString().ToLower()}")">
                                         @app.Status.ToString().ToUpper()
                                     </MudChip>
                                 </div>
                             </div>
-                            
+
                             <div class="d-flex align-center gap-3 mb-4">
                                 <MudAvatar Color="Color.Primary" Size="Size.Medium" Style="border: 2px solid rgba(255,255,255,0.2)">@app.PatientName[0]</MudAvatar>
                                 <div>
@@ -81,9 +90,9 @@
                                     <MudText Typo="Typo.body2" Class="white-text-70">Consulta Terapêutica</MudText>
                                 </div>
                             </div>
-                            
-                            <MudDivider DividerType="DividerType.Middle" Class="my-4" Style="background-color: rgba(255,255,255,0.1);" />
-                            
+
+                            <MudDivider DividerType="DividerType.Middle" Class="my-4" Style="background-color: rgba(255,255,255,0.1);"/>
+
                             <div class="d-flex justify-space-between align-center">
                                 <MudText Typo="Typo.subtitle1" Class="white-text" Style="font-weight: 800">
                                     @app.Price.ToString("C")
@@ -97,7 +106,6 @@
         </MudGrid>
     </MudContainer>
 </AdminShell>
-
 
 
 @code {

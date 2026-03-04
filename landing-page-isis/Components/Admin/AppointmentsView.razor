@@ -9,7 +9,7 @@
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
         AGENDAMENTOS
     </MudText>
-    
+
     <GenericTable @ref="_appointmentsTable"
                   TItem="Appointment"
                   ServerData="@ServerReload"
@@ -27,7 +27,11 @@
         <RowColumns>
             <MudTd DataLabel="Paciente">@context.Pacient?.Name</MudTd>
             <MudTd DataLabel="Data e Hora">
-                @context.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                @{
+                    var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+                    var pvhTime = TimeZoneInfo.ConvertTime(context.AppointmentDate, pvhTimeZone);
+                }
+                @pvhTime.ToString("dd/MM/yyyy HH:mm")
             </MudTd>
             <MudTd DataLabel="Status">
                 <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.AppointmentStatus.ToString().ToLower()}")">

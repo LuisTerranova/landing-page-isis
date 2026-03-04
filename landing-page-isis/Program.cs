@@ -1,3 +1,4 @@
+using FluentEmail.Core.Interfaces;
 using landing_page_isis;
 using landing_page_isis.Authentication;
 using landing_page_isis.Components;
@@ -20,22 +21,37 @@ System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
+// MudBlazor Configuration
 builder.Services.AddMudServices();
 builder.Services.AddScoped<IsisTheme>();
+
+// Handlers Configuration
 builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
 builder.Services.AddScoped<IPacientHandler, PacientHandler>();
 builder.Services.AddScoped<ILeadHandler, LeadHandler>();
 builder.Services.AddScoped<IAuthHandler, AuthHandler>();
 builder.Services.AddHostedService<LeadsCleaningService>();
 
+// Email Service Configuration
+builder
+    .Services.AddFluentEmail(
+        Environment.GetEnvironmentVariable("RESEND_SENDER_EMAIL") ?? "onboarding@resend.dev"
+    )
+    .AddRazorRenderer()
+    .AddResend();
+builder.Services.AddHostedService<EmailService>();
+
+// Authentication Configuration
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, AuthProvider>();
 
+// Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
+// Authentication Configuration
 builder
     .Services.AddAuthentication("Cookies")
     .AddCookie(
@@ -66,4 +82,5 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 await app.SeedAdmin();
+
 app.Run();
