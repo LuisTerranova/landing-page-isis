@@ -26,6 +26,8 @@ public partial class WelcomeView : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+        _selectedDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, pvhTimeZone).Date;
         await LoadAppointments();
     }
 
@@ -35,33 +37,49 @@ public partial class WelcomeView : ComponentBase
         StateHasChanged();
         try
         {
+            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
             DateTimeOffset start,
                 end;
 
             if (_currentView == ViewMode.Day)
             {
                 var date = _selectedDate.Date;
-                var startLocal = DateTime.SpecifyKind(date, DateTimeKind.Local);
-                var endLocal = DateTime.SpecifyKind(
-                    date.AddDays(1).AddTicks(-1),
-                    DateTimeKind.Local
-                );
-                start = new DateTimeOffset(startLocal).ToUniversalTime();
-                end = new DateTimeOffset(endLocal).ToUniversalTime();
+                // Calculate start and end of day in Porto Velho
+                var startPvh = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0);
+                var endPvh = startPvh.AddDays(1).AddTicks(-1);
+
+                start = new DateTimeOffset(
+                    startPvh,
+                    pvhTimeZone.GetUtcOffset(startPvh)
+                ).ToUniversalTime();
+                end = new DateTimeOffset(
+                    endPvh,
+                    pvhTimeZone.GetUtcOffset(endPvh)
+                ).ToUniversalTime();
             }
             else
             {
                 int diff = (7 + (_selectedDate.DayOfWeek - DayOfWeek.Monday)) % 7;
-                var monday = DateTime.SpecifyKind(
-                    _selectedDate.AddDays(-1 * diff).Date,
-                    DateTimeKind.Local
+                var mondayDate = _selectedDate.AddDays(-1 * diff).Date;
+
+                var startPvh = new DateTime(
+                    mondayDate.Year,
+                    mondayDate.Month,
+                    mondayDate.Day,
+                    0,
+                    0,
+                    0
                 );
-                var endLocal = DateTime.SpecifyKind(
-                    monday.AddDays(7).AddTicks(-1),
-                    DateTimeKind.Local
-                );
-                start = new DateTimeOffset(monday).ToUniversalTime();
-                end = new DateTimeOffset(endLocal).ToUniversalTime();
+                var endPvh = startPvh.AddDays(7).AddTicks(-1);
+
+                start = new DateTimeOffset(
+                    startPvh,
+                    pvhTimeZone.GetUtcOffset(startPvh)
+                ).ToUniversalTime();
+                end = new DateTimeOffset(
+                    endPvh,
+                    pvhTimeZone.GetUtcOffset(endPvh)
+                ).ToUniversalTime();
             }
 
             var results = await AppointmentHandler.GetAppointmentsByDateRange(start, end, default);

@@ -81,7 +81,7 @@
     {
         // Fetch all pacients for the select list
         var result = await PacientHandler.GetPacients(0, 1000, default);
-        if (result != null && result.Items != null)
+        if (result.Items != null)
         {
             _pacients = result.Items.Where(p => p != null).Cast<Pacient>().OrderBy(p => p.Name).ToList();
         }
@@ -91,8 +91,9 @@
     {
         if (Model.Id != Guid.Empty && Model.AppointmentDate != default)
         {
-            // For editing, convert the model's UTC DateTimeOffset to Local for the pickers
-            var localTime = Model.AppointmentDate.ToLocalTime();
+            // For editing, convert the model's UTC DateTimeOffset to Porto Velho time for the pickers
+            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+            var localTime = TimeZoneInfo.ConvertTime(Model.AppointmentDate, pvhTimeZone);
             _tempDate = localTime.Date;
             _tempTime = localTime.TimeOfDay;
             Console.WriteLine($"[EditForm] Loaded existing appointment: LocalTime={localTime}, Date={_tempDate}, Time={_tempTime}");
@@ -106,15 +107,16 @@
         if (_tempDate.HasValue && _tempTime.HasValue)
         {
             // Combine Date and Time into a single local DateTime
-            var combinedLocalDateTime = _tempDate.Value.Date + _tempTime.Value;
+            var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
 
-            // Ensure kind is explicit (Local) to prevent Npgsql crash or bad UTC calculation
-            var explicitLocal = DateTime.SpecifyKind(combinedLocalDateTime, DateTimeKind.Local);
+            // Explicitly treat this combined date/time as Porto Velho time
+            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
 
-            // Assign exactly the explicit Local offset to our model
-            Model.AppointmentDate = new DateTimeOffset(explicitLocal);
+            // Create a DateTimeOffset assuming this is Porto Velho time
+            // This will correctly calculate the UTC offset (-04:00)
+            Model.AppointmentDate = new DateTimeOffset(combinedDateTime, pvhTimeZone.GetUtcOffset(combinedDateTime));
 
-            Console.WriteLine($"[SalvarForm] Extracted: Date={_tempDate}, Time={_tempTime} | Combined Local: {explicitLocal} | Assigned To Model: {Model.AppointmentDate}");
+            Console.WriteLine($"[SalvarForm] Extracted: Date={_tempDate}, Time={_tempTime} | Combined: {combinedDateTime} | Assigned To Model (PVH Offset): {Model.AppointmentDate}");
         }
 
         MudDialog.Close(DialogResult.Ok(Model));
