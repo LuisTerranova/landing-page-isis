@@ -65,7 +65,7 @@ public partial class LeadHandler(AppDbContext context) : ILeadHandler
                     Name = lead.Name,
                     Email = lead.Email,
                     Phone = lead.Phone,
-                    PolicySigned = lead.PolicySigned
+                    PolicySigned = lead.PolicySigned,
                 }
             );
             await context.SaveChangesAsync();
@@ -86,6 +86,30 @@ public partial class LeadHandler(AppDbContext context) : ILeadHandler
         context.Leads.Remove(lead);
         await context.SaveChangesAsync();
         return new HandlerResult(true);
+    }
+
+    public async Task<HandlerResult> CleanLeads(CancellationToken ct)
+    {
+        var markAsExpiredDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-15));
+        var deleteDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-3));
+
+        // Mark 15 days old leads as expired
+        var leadsExpirados = await context
+            .Leads.Where(l => l.LeadStatus == LeadStatusEnum.Novo && l.Created <= markAsExpiredDate)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(l => l.LeadStatus, LeadStatusEnum.Expirado),
+                ct
+            );
+
+        // Delete leads that are expired for more than 3 months
+        var leadsDeletados = await context
+            .Leads.Where(l => l.LeadStatus == LeadStatusEnum.Expirado && l.Created <= deleteDate)
+            .ExecuteDeleteAsync(ct);
+
+        var message =
+            $"{leadsExpirados} leads marcados como expirados e {leadsDeletados} leads removidos permanentemente.";
+
+        return new HandlerResult(true, message);
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]

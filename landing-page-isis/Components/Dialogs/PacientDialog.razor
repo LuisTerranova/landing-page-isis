@@ -36,6 +36,11 @@
                     <MudTextField T="string" Label="Telefone" Required="true"
                                   @bind-Value="Model.Phone" Variant="Variant.Outlined"/>
                 </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Estado"
+                                  @bind-Value="Model.StateOfResidency" Variant="Variant.Outlined"
+                                  MaxLength="2" HelperText="Sigla do estado"/>
+                </MudItem>
             </MudGrid>
         </MudForm>
     </DialogContent>

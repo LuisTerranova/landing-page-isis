@@ -3,5 +3,6 @@
 public enum LeadStatusEnum
 {
     Novo,
-    Aprovado
+    Aprovado,
+    Expirado,
 }
