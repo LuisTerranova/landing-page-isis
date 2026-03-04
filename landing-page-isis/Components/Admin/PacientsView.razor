@@ -22,12 +22,14 @@
             <MudTh>Nome</MudTh>
             <MudTh>E-mail</MudTh>
             <MudTh>Telefone</MudTh>
+            <MudTh>Estado</MudTh>
         </HeaderColumns>
 
         <RowColumns>
             <MudTd DataLabel="Nome">@context.Name</MudTd>
             <MudTd DataLabel="E-mail">@context.Email</MudTd>
             <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+            <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
         </RowColumns>
 
         <CustomActions>

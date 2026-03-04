@@ -4,6 +4,7 @@ using landing_page_isis.Components;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
 using landing_page_isis.Handlers;
+using landing_page_isis.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -25,6 +26,7 @@ builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
 builder.Services.AddScoped<IPacientHandler, PacientHandler>();
 builder.Services.AddScoped<ILeadHandler, LeadHandler>();
 builder.Services.AddScoped<IAuthHandler, AuthHandler>();
+builder.Services.AddHostedService<LeadsCleaningService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddCascadingAuthenticationState();
