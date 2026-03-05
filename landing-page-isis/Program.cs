@@ -1,4 +1,3 @@
-using FluentEmail.Core.Interfaces;
 using landing_page_isis;
 using landing_page_isis.Authentication;
 using landing_page_isis.Components;
@@ -8,7 +7,10 @@ using landing_page_isis.Handlers;
 using landing_page_isis.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MudBlazor.Services;
+using RazorLight;
+using Resend;
 
 DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 
@@ -33,12 +35,28 @@ builder.Services.AddScoped<IAuthHandler, AuthHandler>();
 builder.Services.AddHostedService<LeadsCleaningService>();
 
 // Email Service Configuration
-builder
-    .Services.AddFluentEmail(
-        Environment.GetEnvironmentVariable("RESEND_SENDER_EMAIL") ?? "onboarding@resend.dev"
-    )
-    .AddRazorRenderer()
-    .AddResend();
+builder.Services.AddHttpClient(
+    "resend",
+    client =>
+    {
+        client.BaseAddress = new Uri("https://api.resend.com/");
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                Environment.GetEnvironmentVariable("RESEND_API_KEY") ?? ""
+            );
+    }
+);
+
+builder.Services.AddHostedService<EmailService>();
+
+builder.Services.AddSingleton<RazorLightEngine>(sp =>
+    new RazorLightEngineBuilder()
+        .UseFileSystemProject(Path.Combine(Directory.GetCurrentDirectory(), "Templates"))
+        .UseMemoryCachingProvider()
+        .Build()
+);
+
 builder.Services.AddHostedService<EmailService>();
 
 // Authentication Configuration

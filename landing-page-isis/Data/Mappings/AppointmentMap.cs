@@ -10,18 +10,17 @@ public class AppointmentMap : IEntityTypeConfiguration<Appointment>
     {
         builder.ToTable("appointments");
         builder.HasKey(a => a.Id);
-        
-        builder.Property(a => a.AppointmentDate)
-            .IsRequired()
-            .HasColumnName("appointment_date");
-        
-        builder.Property(a => a.AppointmentStatus)
+
+        builder.Property(a => a.AppointmentDate).IsRequired().HasColumnName("appointment_date");
+
+        builder
+            .Property(a => a.AppointmentStatus)
             .IsRequired()
             .HasConversion<string>()
             .HasColumnName("appointment_status");
 
-        builder.Property(a => a.Price)
-            .IsRequired()
-            .HasColumnName("appointment_price");
-    } 
+        builder.Property(a => a.Price).IsRequired().HasColumnName("appointment_price");
+
+        builder.Property(a => a.ReminderSent).IsRequired().HasColumnName("reminder_sent");
+    }
 }

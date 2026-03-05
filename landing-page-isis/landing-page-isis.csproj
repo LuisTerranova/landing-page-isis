@@ -6,6 +6,7 @@
     <RootNamespace>landing-page-isis</RootNamespace>
     <AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,12 +18,12 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
-    <PackageReference Include="FluentEmail.Razor" Version="3.0.2" />
     <PackageReference Include="Markdig" Version="1.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.13" />
     <PackageReference Include="mudblazor" Version="9.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-    <PackageReference Include="Resend.FluentEmail" Version="0.2.1" />
+    <PackageReference Include="RazorLight" Version="2.3.1" />
+    <PackageReference Include="Resend" Version="0.2.1" />
   </ItemGroup>
 
   <ItemGroup>
