@@ -1,22 +1,30 @@
-using FluentEmail.Core;
-using FluentEmail.Core.Interfaces;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
+using RazorLight;
 
 namespace landing_page_isis.Services;
 
-public class EmailService(IServiceProvider services) : BackgroundService
+public class EmailService(
+    IServiceProvider services,
+    IHttpClientFactory httpFactory,
+    ILogger<EmailService> logger
+) : BackgroundService
 {
     private static readonly TimeZoneInfo BrTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
         "America/Sao_Paulo"
     );
-    private readonly TimeSpan _period = TimeSpan.FromHours(24);
+    private readonly TimeSpan _period = TimeSpan.FromHours(1);
+    private readonly RazorLightEngine _razor = new RazorLightEngineBuilder()
+        .UseFileSystemProject(Path.Combine(Directory.GetCurrentDirectory(), "Templates"))
+        .UseMemoryCachingProvider()
+        .Build();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation("EmailService started. Executing initial check...");
+        await ProcessReminders(stoppingToken);
         using PeriodicTimer timer = new(_period);
-
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             await ProcessReminders(stoppingToken);
@@ -30,13 +38,10 @@ public class EmailService(IServiceProvider services) : BackgroundService
             using var scope = services.CreateScope();
             var appointmentHandler =
                 scope.ServiceProvider.GetRequiredService<IAppointmentHandler>();
-            var localSender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-            // Calculate tomorrow in Brasilia time
             var nowInBr = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BrTimeZone);
             var tomorrowBrDate = nowInBr.Date.AddDays(1);
 
-            // Map the BR date boundaries to UTC offsets for database query
             var startOfTomorrowBrInUtc = new DateTimeOffset(
                 tomorrowBrDate,
                 BrTimeZone.GetUtcOffset(tomorrowBrDate)
@@ -49,56 +54,51 @@ public class EmailService(IServiceProvider services) : BackgroundService
                 ct
             );
 
-            foreach (
-                var appointment in appointments.Where(a =>
-                    a.AppointmentStatus == AppointmentStatusEnum.Marcada
-                )
-            )
+            var toProcess = appointments
+                .Where(a => a.AppointmentStatus == AppointmentStatusEnum.Marcada && !a.ReminderSent)
+                .ToList();
+
+            logger.LogInformation(
+                "Found {Count} appointments to notify for tomorrow (BR Time).",
+                toProcess.Count
+            );
+
+            foreach (var appointment in toProcess)
             {
-                await SendAppointmentReminder(appointment, localSender, ct);
+                await SendAppointmentReminder(appointment, ct);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error processing email reminders: {ex.Message}");
+            logger.LogError(ex, "Error processing email reminders");
         }
     }
 
-    private async Task SendAppointmentReminder(
-        Appointment appointment,
-        ISender localSender,
-        CancellationToken ct
-    )
+    private async Task SendAppointmentReminder(Appointment appointment, CancellationToken ct)
     {
         try
         {
             if (appointment.Pacient == null || string.IsNullOrEmpty(appointment.Pacient.Email))
                 return;
 
-            var templatePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "Templates",
-                "AppointmentReminder.cshtml"
+            var html = await _razor.CompileRenderAsync("AppointmentReminder.cshtml", appointment);
+
+            var http = httpFactory.CreateClient("resend");
+            await http.PostAsJsonAsync(
+                "emails",
+                new
+                {
+                    from = $"Isis Vitória <{Environment.GetEnvironmentVariable("RESEND_SENDER_EMAIL") ?? "onboarding@resend.dev"}>",
+                    to = new[] { appointment.Pacient.Email },
+                    subject = "Lembrete de Sessão - Psicoterapia",
+                    html,
+                },
+                ct
             );
-
-            var email = Email
-                .From(
-                    Environment.GetEnvironmentVariable("RESEND_SENDER_EMAIL")
-                        ?? "onboarding@resend.dev",
-                    "Isis Vitória"
-                )
-                .To(appointment.Pacient.Email)
-                .Subject("Lembrete de Sessão - Psicoterapia")
-                .UsingTemplateFromFile(templatePath, appointment);
-
-            email.Sender = localSender;
-            await email.SendAsync(ct);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(
-                $"Error sending reminder to {appointment.Pacient?.Email}: {ex.Message}"
-            );
+            logger.LogError(ex, "Error sending reminder to {Email}", appointment.Pacient?.Email);
         }
     }
 }
