@@ -22,12 +22,38 @@ public class EmailService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("EmailService started. Executing initial check...");
-        await ProcessReminders(stoppingToken);
-        using PeriodicTimer timer = new(_period);
-        while (await timer.WaitForNextTickAsync(stoppingToken))
+        logger.LogInformation("EmailService started.");
+
+        while (!stoppingToken.IsCancellationRequested)
         {
-            await ProcessReminders(stoppingToken);
+            var nowInBr = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BrTimeZone);
+            var currentHour = nowInBr.Hour;
+
+            // Only process between 08:00 and 18:00
+            if (currentHour is >= 8 and < 18)
+            {
+                await ProcessReminders(stoppingToken);
+                await Task.Delay(_period, stoppingToken);
+            }
+            else
+            {
+                // Calculate the time remaining until 08:00 the next day
+                var nextRun = nowInBr.Date;
+
+                if (currentHour >= 18)
+                    nextRun = nextRun.AddDays(1);
+
+                nextRun = nextRun.AddHours(8);
+
+                var delay = nextRun - nowInBr;
+                logger.LogInformation(
+                    "Fora do horário comercial ({Now}). Aguardando {Delay} até as 08:00.",
+                    nowInBr,
+                    delay
+                );
+
+                await Task.Delay(delay, stoppingToken);
+            }
         }
     }
 
@@ -64,9 +90,7 @@ public class EmailService(
             );
 
             foreach (var appointment in toProcess)
-            {
                 await SendAppointmentReminder(appointment, ct);
-            }
         }
         catch (Exception ex)
         {

@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject IAuthHandler AuthHandler
 
 <CascadingValue Value="this">
     <MudLayout>
@@ -25,8 +27,8 @@
                             Match="NavLinkMatch.All">
                     Pacientes
                 </MudNavLink>
-                <MudNavLink Icon="@Icons.Material.Filled.Event" 
-                            Href="/admin/consultas" 
+                <MudNavLink Icon="@Icons.Material.Filled.Event"
+                            Href="/admin/consultas"
                             Match="NavLinkMatch.All">
                     Consultas
                 </MudNavLink>
@@ -41,7 +43,7 @@
                     Financeiro
                 </MudNavLink>
                 <MudDivider Class="my-4"/>
-                <MudNavLink Icon="@Icons.Material.Filled.AllOut" Href="/logout">
+                <MudNavLink Icon="@Icons.Material.Filled.Logout" Href="/logout">
                     Sair
                 </MudNavLink>
             </MudNavMenu>

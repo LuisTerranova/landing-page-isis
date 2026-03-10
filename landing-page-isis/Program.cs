@@ -7,10 +7,8 @@ using landing_page_isis.Handlers;
 using landing_page_isis.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using RazorLight;
-using Resend;
 
 DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 

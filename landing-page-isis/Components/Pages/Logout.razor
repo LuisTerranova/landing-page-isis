@@ -1,0 +1,14 @@
+@page "/logout"
+@using landing_page_isis.core.Interfaces
+@inject IAuthHandler AuthHandler
+@inject NavigationManager NavigationManager
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthHandler.Logout();
+        NavigationManager.NavigateTo("/admin/login", forceLoad: true);
+    }
+
+}
