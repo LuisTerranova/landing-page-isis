@@ -10,7 +10,11 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using RazorLight;
 
-DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+if (File.Exists(envPath))
+{
+    DotNetEnv.Env.Load(envPath);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,8 +49,6 @@ builder.Services.AddHttpClient(
             );
     }
 );
-
-builder.Services.AddHostedService<EmailService>();
 
 builder.Services.AddSingleton<RazorLightEngine>(sp =>
     new RazorLightEngineBuilder()

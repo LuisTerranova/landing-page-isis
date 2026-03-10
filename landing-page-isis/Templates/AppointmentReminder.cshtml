@@ -1,0 +1,108 @@
+@using landing_page_isis.core.Models
+@model Appointment
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Lembrete de Sessão</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #eeeeee;
+        }
+
+        .header {
+            background-color: #7E0F20;
+            color: #ffffff;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .appointment-info {
+            background-color: #fef1f2;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px dashed #7E0F20;
+        }
+
+        .date-time {
+            font-size: 22px;
+            color: #7E0F20;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .footer {
+            background-color: #f4f4f4;
+            color: #777777;
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Lembrete de Próxima Sessão</h1>
+    </div>
+    <div class="content">
+        <p>Olá, <strong>@(Model.Pacient?.Name ?? "Paciente")</strong>,</p>
+        <p>Este é um lembrete para nossa sessão agendada para amanhã. Estou passando para confirmar o seu horário:</p>
+
+        <div class="appointment-info">
+            @{
+                var brTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+                var brDateTime = TimeZoneInfo.ConvertTime(Model.AppointmentDate, brTimeZone);
+            }
+            <div class="date-time">
+                @brDateTime.ToString("dd/MM/yyyy 'às' HH:mm")
+            </div>
+            <p>Horário de Brasília</p>
+        </div>
+
+        <p>Se precisar reagendar ou cancelar, por favor, me avise com antecedência (preferencialmente em até 24h).</p>
+
+        <p>
+            Estou ansiosa para nosso próximo encontro.<br>
+            <strong>Isis Vitória</strong><br>
+            Psicóloga Clínica
+        </p>
+    </div>
+    <div class="footer">
+        <p>
+            Este e-mail é um serviço automático de lembretes.<br>
+            &copy; @DateTime.Now.Year Isis Vitória - Todos os direitos reservados.
+        </p>
+    </div>
+</div>
+</body>
+</html>

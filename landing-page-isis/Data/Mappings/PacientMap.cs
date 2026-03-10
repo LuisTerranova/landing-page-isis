@@ -26,9 +26,25 @@ public class PacientMap : IEntityTypeConfiguration<Pacient>
 
         builder.Property(p => p.BirthDate).IsRequired(false).HasColumnName("birth_date");
 
-        builder.Property(p => p.Email).IsRequired().HasMaxLength(150).HasColumnName("email");
+        builder
+            .Property(p => p.Email)
+            .IsRequired()
+            .HasMaxLength(255)
+            .HasColumnName("email")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
 
-        builder.Property(p => p.Phone).IsRequired().HasMaxLength(11).HasColumnName("phone");
+        builder
+            .Property(p => p.Phone)
+            .IsRequired()
+            .HasMaxLength(255)
+            .HasColumnName("phone")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
 
         builder
             .Property(p => p.StateOfResidency)

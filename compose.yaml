@@ -5,12 +5,44 @@
     restart: always
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=isis-db
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=landing-page-isis-db
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d landing-page-isis-db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: landing-page-isis/Dockerfile
+    container_name: landing_page_app
+    restart: always
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db-postgres;Database=landing-page-isis-db;Username=postgres;Password=${DB_PASSWORD}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_NAME=${ADMIN_NAME}
+      - EMAIL_ADDRESS=${EMAIL_ADDRESS}
+      - CONTACT_PHONE=${CONTACT_PHONE}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_SENDER_EMAIL=${RESEND_SENDER_EMAIL}
+    depends_on:
+        db-postgres:
+          condition: service_healthy
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
 
 volumes:
   pgdata:
