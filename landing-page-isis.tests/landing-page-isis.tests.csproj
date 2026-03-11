@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>landing_page_isis.tests</RootNamespace>
@@ -25,5 +24,4 @@
     <ProjectReference Include="..\landing-page-isis.core\landing-page-isis.core.csproj" />
     <ProjectReference Include="..\landing-page-isis\landing-page-isis.csproj" />
   </ItemGroup>
-
 </Project>

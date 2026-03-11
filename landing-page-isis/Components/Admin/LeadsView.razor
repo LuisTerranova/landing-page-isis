@@ -5,7 +5,6 @@
 @layout DashboardLayout
 @rendermode InteractiveServer
 
-<AdminShell>
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
         LEADS
     </MudText>
@@ -19,6 +18,9 @@
                   OnDelete="@(DeleteLead)">
 
         <CustomActions>
+            <MudMenuItem OnClick="@(() => ContactViaWhatsApp(context))">
+                <MudIcon Icon="@Icons.Material.Filled.Message" Class="me-2"/> Contato
+            </MudMenuItem>
             <MudMenuItem OnClick="@(() => ViewIntent(context))">
                 <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2"/> Ver Intenção
             </MudMenuItem>
@@ -43,4 +45,3 @@
         </RowColumns>
 
     </GenericTable>
-</AdminShell>

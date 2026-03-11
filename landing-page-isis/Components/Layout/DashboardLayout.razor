@@ -1,6 +1,10 @@
 @inherits LayoutComponentBase
-@inject NavigationManager NavigationManager
-@inject IAuthHandler AuthHandler
+@inject IsisTheme CustomTheme
+
+<MudThemeProvider Theme="CustomTheme" />
+<MudPopoverProvider @rendermode="InteractiveServer" />
+<MudDialogProvider @rendermode="InteractiveServer" />
+<MudSnackbarProvider @rendermode="InteractiveServer" />
 
 <CascadingValue Value="this">
     <MudLayout>
@@ -50,7 +54,9 @@
         </MudDrawer>
 
         <MudMainContent Class="pa-8">
-            @Body
+            <MudContainer MaxWidth="MaxWidth.Large" Class="mt-16">
+                @Body
+            </MudContainer>
         </MudMainContent>
     </MudLayout>
 </CascadingValue>

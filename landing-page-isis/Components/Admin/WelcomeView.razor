@@ -1,11 +1,9 @@
-﻿@page "/admin"
+@page "/admin"
 @attribute [Authorize]
 @using landing_page_isis.Components.Layout
 @layout DashboardLayout
 @rendermode InteractiveServer
 
-<AdminShell>
-    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
         <MudGrid>
             <MudItem xs="12" class="d-flex align-end justify-space-between mb-8">
                 <div>
@@ -104,8 +102,6 @@
                 }
             }
         </MudGrid>
-    </MudContainer>
-</AdminShell>
 
 
 @code {

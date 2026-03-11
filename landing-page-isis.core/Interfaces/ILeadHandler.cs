@@ -10,4 +10,5 @@ public interface ILeadHandler
     Task<HandlerResult> ApproveLead(Guid id);
     Task<HandlerResult> DeleteLead(Guid id);
     Task<HandlerResult> CleanLeads(CancellationToken ct);
+    string GetWhatsAppUrl(Lead lead);
 }

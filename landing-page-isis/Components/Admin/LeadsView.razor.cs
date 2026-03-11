@@ -3,6 +3,7 @@ using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace landing_page_isis.Components.Admin;
@@ -19,6 +20,9 @@ public partial class LeadsView : ComponentBase
 
     [Inject]
     private ILeadHandler LeadHandler { get; set; } = null!;
+
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = null!;
 
     #endregion
 
@@ -45,6 +49,19 @@ public partial class LeadsView : ComponentBase
         catch (OperationCanceledException)
         {
             return new TableData<Lead>();
+        }
+    }
+
+    private async Task ContactViaWhatsApp(Lead lead)
+    {
+        var url = LeadHandler.GetWhatsAppUrl(lead);
+        if (!string.IsNullOrEmpty(url))
+        {
+            await JsRuntime.InvokeVoidAsync("open", url, "_blank");
+        }
+        else
+        {
+            Snackbar.Add("Este lead não possui um número de telefone válido.", Severity.Warning);
         }
     }
 
@@ -95,8 +112,8 @@ public partial class LeadsView : ComponentBase
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
-            "Confirmar Exclusão",
-            $"Aprovar lead de {lead.Name}? Esta acao desencadeara a criacao de um paciente.",
+            "Confirmar Aprovação",
+            $"Aprovar lead de {lead.Name}? Esta ação desencadeará a criação de um paciente.",
             yesText: "Aprovar",
             cancelText: "Cancelar",
             options: options
