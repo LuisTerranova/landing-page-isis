@@ -1,13 +1,11 @@
 using System.Reflection;
-using landing_page_isis.core;
 using landing_page_isis.core.ApplicationUser;
 using landing_page_isis.core.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Pacient> Pacients { get; set; }
     public DbSet<Lead> Leads { get; set; }

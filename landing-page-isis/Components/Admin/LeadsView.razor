@@ -5,43 +5,43 @@
 @layout DashboardLayout
 @rendermode InteractiveServer
 
-    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
-        LEADS
-    </MudText>
+<MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
+    LEADS
+</MudText>
 
-    <GenericTable @ref="_leadsTable"
-                  TItem="Lead"
-                  EditText="Aprovar"
-                  ShowCreateButton="@false"
-                  ServerData="@ServerReload"
-                  OnEdit="@(ApproveLead)"
-                  OnDelete="@(DeleteLead)">
+<GenericTable @ref="_leadsTable"
+              TItem="Lead"
+              EditText="Aprovar"
+              ShowCreateButton="@false"
+              ServerData="@ServerReload"
+              OnEdit="@(ApproveLead)"
+              OnDelete="@(DeleteLead)">
 
-        <CustomActions>
-            <MudMenuItem OnClick="@(() => ContactViaWhatsApp(context))">
-                <MudIcon Icon="@Icons.Material.Filled.Message" Class="me-2"/> Contato
-            </MudMenuItem>
-            <MudMenuItem OnClick="@(() => ViewIntent(context))">
-                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2"/> Ver Intenção
-            </MudMenuItem>
-        </CustomActions>
+    <CustomActions>
+        <MudMenuItem OnClick="@(() => ContactViaWhatsApp(context))">
+            <MudIcon Icon="@Icons.Material.Filled.Message" Class="me-2"/> Contato
+        </MudMenuItem>
+        <MudMenuItem OnClick="@(() => ViewIntent(context))">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2"/> Ver Intenção
+        </MudMenuItem>
+    </CustomActions>
 
-        <HeaderColumns>
-            <MudTh>Nome</MudTh>
-            <MudTh>Telefone</MudTh>
-            <MudTh>Criado em</MudTh>
-            <MudTh>Status</MudTh>
-        </HeaderColumns>
+    <HeaderColumns>
+        <MudTh>Nome</MudTh>
+        <MudTh>Telefone</MudTh>
+        <MudTh>Criado em</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderColumns>
 
-        <RowColumns>
-            <MudTd DataLabel="Nome">@context.Name</MudTd>
-            <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
-            <MudTd DataLabel="Criado em">@context.Created</MudTd>
-            <MudTd DataLabel="Status">
-                <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.LeadStatus.ToString().ToLower()}")">
-                    @context.LeadStatus.ToString().ToUpper()
-                </MudChip>
-            </MudTd>
-        </RowColumns>
+    <RowColumns>
+        <MudTd DataLabel="Nome">@context.Name</MudTd>
+        <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+        <MudTd DataLabel="Criado em">@context.Created</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.LeadStatus.ToString().ToLower()}")">
+                @context.LeadStatus.ToString().ToUpper()
+            </MudChip>
+        </MudTd>
+    </RowColumns>
 
-    </GenericTable>
+</GenericTable>

@@ -6,33 +6,33 @@
 @rendermode InteractiveServer
 
 
-    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
-        PACIENTES
-    </MudText>
+<MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
+    PACIENTES
+</MudText>
 
-    <GenericTable @ref="_pacientsTable"
-                  TItem="Pacient"
-                  ServerData="@ServerReload"
-                  OnCreate="@(OpenCreate)"
-                  OnEdit="@(EditPacient)"
-                  OnDelete="@(DeletePacient)">
+<GenericTable @ref="_pacientsTable"
+              TItem="Pacient"
+              ServerData="@ServerReload"
+              OnCreate="@(OpenCreate)"
+              OnEdit="@(EditPacient)"
+              OnDelete="@(DeletePacient)">
 
-        <HeaderColumns>
-            <MudTh>Nome</MudTh>
-            <MudTh>E-mail</MudTh>
-            <MudTh>Telefone</MudTh>
-            <MudTh>Estado</MudTh>
-        </HeaderColumns>
+    <HeaderColumns>
+        <MudTh>Nome</MudTh>
+        <MudTh>E-mail</MudTh>
+        <MudTh>Telefone</MudTh>
+        <MudTh>Estado</MudTh>
+    </HeaderColumns>
 
-        <RowColumns>
-            <MudTd DataLabel="Nome">@context.Name</MudTd>
-            <MudTd DataLabel="E-mail">@context.Email</MudTd>
-            <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
-            <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
-        </RowColumns>
+    <RowColumns>
+        <MudTd DataLabel="Nome">@context.Name</MudTd>
+        <MudTd DataLabel="E-mail">@context.Email</MudTd>
+        <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+        <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
+    </RowColumns>
 
-        <CustomActions>
+    <CustomActions>
 
-        </CustomActions>
-    </GenericTable>
+    </CustomActions>
+</GenericTable>
 

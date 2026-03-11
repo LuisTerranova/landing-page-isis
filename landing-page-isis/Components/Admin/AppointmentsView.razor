@@ -5,41 +5,41 @@
 @layout DashboardLayout
 @rendermode InteractiveServer
 
-    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
-        AGENDAMENTOS
-    </MudText>
+<MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
+    AGENDAMENTOS
+</MudText>
 
-    <GenericTable @ref="_appointmentsTable"
-                  TItem="Appointment"
-                  ServerData="@ServerReload"
-                  OnCreate="@(OpenCreate)"
-                  OnEdit="@(EditAppointment)"
-                  OnDelete="@(DeleteAppointment)">
+<GenericTable @ref="_appointmentsTable"
+              TItem="Appointment"
+              ServerData="@ServerReload"
+              OnCreate="@(OpenCreate)"
+              OnEdit="@(EditAppointment)"
+              OnDelete="@(DeleteAppointment)">
 
-        <HeaderColumns>
-            <MudTh>Paciente</MudTh>
-            <MudTh>Data e Hora (Local)</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Preço (R$)</MudTh>
-        </HeaderColumns>
+    <HeaderColumns>
+        <MudTh>Paciente</MudTh>
+        <MudTh>Data e Hora (Local)</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Preço (R$)</MudTh>
+    </HeaderColumns>
 
-        <RowColumns>
-            <MudTd DataLabel="Paciente">@context.Pacient?.Name</MudTd>
-            <MudTd DataLabel="Data e Hora">
-                @{
-                    var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-                    var pvhTime = TimeZoneInfo.ConvertTime(context.AppointmentDate, pvhTimeZone);
-                }
-                @pvhTime.ToString("dd/MM/yyyy HH:mm")
-            </MudTd>
-            <MudTd DataLabel="Status">
-                <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.AppointmentStatus.ToString().ToLower()}")">
-                    @context.AppointmentStatus.ToString().ToUpper()
-                </MudChip>
-            </MudTd>
-            <MudTd DataLabel="Preço">@context.Price.ToString("C")</MudTd>
-        </RowColumns>
+    <RowColumns>
+        <MudTd DataLabel="Paciente">@context.Pacient?.Name</MudTd>
+        <MudTd DataLabel="Data e Hora">
+            @{
+                var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+                var pvhTime = TimeZoneInfo.ConvertTime(context.AppointmentDate, pvhTimeZone);
+            }
+            @pvhTime.ToString("dd/MM/yyyy HH:mm")
+        </MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Variant="Variant.Filled" Size="Size.Small" Class="@($"status-{context.AppointmentStatus.ToString().ToLower()}")">
+                @context.AppointmentStatus.ToString().ToUpper()
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Preço">@context.Price.ToString("C")</MudTd>
+    </RowColumns>
 
-        <CustomActions>
-        </CustomActions>
-    </GenericTable>
+    <CustomActions>
+    </CustomActions>
+</GenericTable>
