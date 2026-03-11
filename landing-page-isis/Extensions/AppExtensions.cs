@@ -6,6 +6,7 @@ public static class AppExtensions
 {
     public static void ConfigurePipeline(this WebApplication app)
     {
+        app.UseResponseCompression();
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error", createScopeForErrors: true);

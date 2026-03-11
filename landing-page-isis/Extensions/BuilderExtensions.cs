@@ -72,6 +72,7 @@ public static class BuilderExtensions
         // MudBlazor Configuration
         builder.Services.AddMudServices();
         builder.Services.AddMemoryCache();
+        builder.Services.AddResponseCompression();
         builder.Services.AddScoped<IsisTheme>();
 
         // Handlers Configuration
