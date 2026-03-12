@@ -6,6 +6,7 @@ using landing_page_isis.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 using MudBlazor.Services;
 using RazorLight;
 
@@ -62,6 +63,25 @@ public static class BuilderExtensions
             );
 
         builder.Services.AddAuthorization();
+
+        // Forwarded Headers (needed for HTTPS behind Proxy/Cloudflare)
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
+        // HSTS Configuration
+        if (!builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddHsts(options =>
+            {
+                options.Preload = true;
+                options.IncludeSubDomains = true;
+                options.MaxAge = TimeSpan.FromDays(365);
+            });
+        }
     }
 
     public static void AddApplicationServices(this WebApplicationBuilder builder)

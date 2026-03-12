@@ -6,12 +6,16 @@ public static class AppExtensions
 {
     public static void ConfigurePipeline(this WebApplication app)
     {
+        app.UseForwardedHeaders();
+
         app.UseResponseCompression();
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
+            app.UseHsts();
         }
 
+        app.UseHttpsRedirection();
         app.UseStaticFiles();
         app.UseRouting();
         app.UseAuthentication();
