@@ -1,0 +1,30 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+<div class="whatsapp-float">
+    <a href="@WhatsAppLink" target="_blank" rel="noopener noreferrer" aria-label="Fale conosco pelo WhatsApp" class="whatsapp-link">
+        <MudIcon Icon="@Icons.Custom.Brands.WhatsApp" Size="Size.Large" Color="Color.Inherit" />
+    </a>
+</div>
+
+@code {
+    private string WhatsAppLink => GetWhatsAppLink();
+
+    private string GetWhatsAppLink()
+    {
+        var phone = Environment.GetEnvironmentVariable("CONTACT_PHONE") ?? Configuration["CONTACT_PHONE"] ?? "(69) 99223-4931";
+        
+        // Remove non-digits
+        var digitsOnly = new string(phone.Where(char.IsDigit).ToArray());
+        
+        if (string.IsNullOrEmpty(digitsOnly)) return "#";
+
+        // Brazil country code assumed if not present (as per number provided)
+        if (digitsOnly.Length <= 11 && !digitsOnly.StartsWith("55"))
+        {
+            digitsOnly = "55" + digitsOnly;
+        }
+
+        return $"https://wa.me/{digitsOnly}";
+    }
+}

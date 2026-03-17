@@ -202,13 +202,105 @@ section {
     border-color: white !important;
 }
 
-/* Validation Message Color for Dark Backgrounds */
+/* Validation Message settings */
 .validation-message {
-    color: #FFCDD2 !important;
-    /* Soft light red/pink that contrasts well on dark red */
+    color: #FFCDD2 !important; /* Soft light red/pink for dark red backgrounds (contact form) */
     font-weight: 500;
 }
 
 .custom-contact-input .mud-input-helper-text {
     color: #FFCDD2 !important;
+}
+
+/*Login Page Styles*/
+.login-input-wrapper .mud-input-outlined {
+    border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
+    border-radius: 12px !important;
+    background-color: #fafafa;
+    transition: all 0.2s ease;
+}
+
+.login-input-wrapper .mud-input-outlined:focus-within {
+    border-color: var(--mud-palette-primary) !important;
+    background-color: #fff;
+    box-shadow: 0 0 0 1px var(--mud-palette-primary);
+}
+
+.login-page-validation {
+    color: #ff4d00 !important; /* High intensity Orange/Red for login validation */
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-top: 2px;
+    margin-left: 8px;
+}
+
+
+/*WhatsApp Floating Button Styles*/
+.whatsapp-float {
+    position: fixed;
+    width: 65px;
+    height: 65px;
+    bottom: 30px;
+    right: 30px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50%;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.whatsapp-float:hover {
+    background-color: #128c7e;
+    transform: scale(1.15);
+    color: #FFF;
+}
+
+.whatsapp-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Pulsing effect to draw attention to the WhatsApp contact button */
+.whatsapp-float::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #25d366;
+    opacity: 0.5;
+    z-index: -1;
+    animation: pulse-whatsapp 2s infinite;
+}
+
+@keyframes pulse-whatsapp {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .whatsapp-float {
+        width: 55px;
+        height: 55px;
+        bottom: 20px;
+        right: 20px;
+    }
 }

@@ -28,7 +28,7 @@ public class PacientMap : IEntityTypeConfiguration<Pacient>
 
         builder
             .Property(p => p.Email)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(255)
             .HasColumnName("email")
             .HasConversion(

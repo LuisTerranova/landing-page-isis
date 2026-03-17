@@ -2,6 +2,6 @@
 
 public interface IAuthHandler
 {
-    Task<bool> Login(string username, string password);
+    Task<HandlerResult> Login(string username, string password);
     Task<bool> Logout();
 }

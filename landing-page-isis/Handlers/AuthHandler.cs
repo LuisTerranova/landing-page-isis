@@ -1,30 +1,41 @@
 ﻿using System.Security.Claims;
+using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace landing_page_isis.Handlers;
 
-public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContextAccessor)
-    : IAuthHandler
+public class AuthHandler(
+    AppDbContext dbContext,
+    IHttpContextAccessor httpContextAccessor,
+    IMemoryCache cache
+) : IAuthHandler
 {
     private HttpContext? Context => httpContextAccessor.HttpContext;
 
-    public async Task<bool> Login(string username, string password)
+    public async Task<HandlerResult> Login(string username, string password)
     {
         if (Context == null)
-            return false;
+            return new HandlerResult(false, "Erro de conexão.");
+
+        var ip = Context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var cacheKey = $"login_attempts_{ip}";
+
+        if (cache.TryGetValue(cacheKey, out int attempts) && attempts >= 5)
+            return new HandlerResult(false, "Muitas tentativas. Aguarde 5 minutos.");
 
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == username);
 
-        if (user == null)
-            return false;
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            cache.Set(cacheKey, attempts + 1, TimeSpan.FromMinutes(5));
+            return new HandlerResult(false, "Credenciais inválidas.");
+        }
 
-        var senhaValida = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-
-        if (!senhaValida)
-            return false;
+        cache.Remove(cacheKey);
 
         var claims = new List<Claim>
         {
@@ -43,7 +54,7 @@ public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContex
 
         await Context.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
 
-        return true;
+        return new HandlerResult(true);
     }
 
     public async Task<bool> Logout()

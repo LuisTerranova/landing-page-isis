@@ -1,12 +1,13 @@
+using System.Threading.RateLimiting;
 using landing_page_isis.Authentication;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Data;
 using landing_page_isis.Handlers;
 using landing_page_isis.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.HttpOverrides;
 using MudBlazor.Services;
 using RazorLight;
 
@@ -30,21 +31,6 @@ public static class BuilderExtensions
 
     public static void AddApplicationSecurity(this WebApplicationBuilder builder)
     {
-        // Rate Limiting Configuration
-        builder.Services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.AddFixedWindowLimiter(
-                policyName: "contact-form",
-                limiterOptions =>
-                {
-                    limiterOptions.PermitLimit = 3;
-                    limiterOptions.Window = TimeSpan.FromMinutes(1);
-                    limiterOptions.QueueLimit = 0;
-                }
-            );
-        });
-
         // Authentication Configuration
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddCascadingAuthenticationState();
@@ -67,7 +53,8 @@ public static class BuilderExtensions
         // Forwarded Headers (needed for HTTPS behind Proxy/Cloudflare)
         builder.Services.Configure<ForwardedHeadersOptions>(options =>
         {
-            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             options.KnownNetworks.Clear();
             options.KnownProxies.Clear();
         });

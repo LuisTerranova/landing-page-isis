@@ -9,7 +9,7 @@ public class Pacient
     public string? Cpf { get; set; }
     public DateOnly? BirthDate { get; set; }
     public int? Age => BirthDate.HasValue ? DateTime.Today.Year - BirthDate.Value.Year : null;
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
 
     [Required(ErrorMessage = "O telefone e obrigatorio")]
     [RegularExpression(

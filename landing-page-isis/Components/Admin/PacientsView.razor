@@ -28,7 +28,7 @@
 
     <RowColumns>
         <MudTd DataLabel="Nome">@context.Name</MudTd>
-        <MudTd DataLabel="E-mail">@context.Email</MudTd>
+        <MudTd DataLabel="E-mail">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
         <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
         <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
     </RowColumns>

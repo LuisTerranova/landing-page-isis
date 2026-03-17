@@ -1,18 +1,19 @@
 @page "/admin/login"
 @using landing_page_isis.Components.Layout
+@using System.ComponentModel.DataAnnotations
 @layout BlankLayout
 @inject NavigationManager NavigationManager
 @inject IAuthHandler AuthHandler
 @inject IsisTheme CustomTheme
 @inject AuthenticationStateProvider AuthStateProvider
-@using System.ComponentModel.DataAnnotations
+
 
 <PageTitle>Login | Isis Vitória</PageTitle>
 
 <MudThemeProvider Theme="CustomTheme"/>
 
 <MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="d-flex align-center justify-center" Style="height: 100vh;">
-    <MudPaper Elevation="25" Class="pa-8" Style="width: 100%; max-width: 400px;">
+    <MudPaper Elevation="25" Class="pa-8" Style="width: 100%; max-width: 400px; border-radius: 16px;">
         <MudStack Spacing="3" AlignItems="AlignItems.Center">
             <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Primary" Size="Size.Large" />
             <MudText Typo="Typo.h4" GutterBottom="true">Login</MudText>
@@ -20,10 +21,10 @@
                 Entre com suas credenciais para acessar o painel administrativo
             </MudText>
 
-            <EditForm Model="@LoginForm" OnValidSubmit="HandleLogin" FormName="login-form" Enhance class="w-full">
+            <EditForm Model="@LoginForm" OnValidSubmit="HandleLogin" FormName="login-form" class="w-full">
                 <DataAnnotationsValidator />
-                <MudStack Spacing="3">
-                    <div class="mud-input-control mud-textfield mud-input-control-boolean-input">
+                <MudStack Spacing="3" Class="login-input-wrapper">
+                    <div class="mud-input-control mud-textfield">
                         <div class="mud-input-control-input-container">
                             <div class="mud-input mud-input-outlined mud-input-adorned-end mud-select-input">
                                 <InputText @bind-Value="LoginForm.Email" 
@@ -31,19 +32,24 @@
                                            class="mud-input-slot mud-input-root mud-input-root-outlined" />
                             </div>
                         </div>
-                        <ValidationMessage For="@(() => LoginForm.Email)" />
+                        <ValidationMessage For="@(() => LoginForm.Email)" class="login-page-validation" />
                     </div>
                     
-                    <div class="mud-input-control mud-textfield mud-input-control-boolean-input">
+                    <div id="password-container" class="mud-input-control mud-textfield" style="position: relative;">
                         <div class="mud-input-control-input-container">
                             <div class="mud-input mud-input-outlined mud-input-adorned-end mud-select-input">
                                 <InputText @bind-Value="LoginForm.Password" 
-                                           type="password"
                                            placeholder="Senha"
+                                           type="password"
                                            class="mud-input-slot mud-input-root mud-input-root-outlined" />
                             </div>
+                            <button type="button" 
+                                    onclick="togglePassword()" 
+                                    style="position: absolute; right: 10px; top: 15px; border: none; background: none; z-index: 10;">
+                                <MudIcon Icon="@Icons.Material.Filled.Visibility" />
+                            </button>
                         </div>
-                        <ValidationMessage For="@(() => LoginForm.Password)" />
+                        <ValidationMessage For="@(() => LoginForm.Password)" class="login-page-validation" />
                     </div>
 
                     @if (!string.IsNullOrEmpty(_errorMessage))
@@ -56,6 +62,7 @@
                                Color="Color.Primary" 
                                Size="Size.Large" 
                                FullWidth="true"
+                               Style="border-radius: 12px;"
                                Class="mt-2">
                         Entrar
                     </MudButton>
@@ -82,7 +89,7 @@
     [SupplyParameterFromForm]
     private LoginFormModel LoginForm { get; set; } = new();
 
-    private string _errorMessage = "";
+    private string? _errorMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -109,9 +116,9 @@
     {
         var result = await AuthHandler.Login(LoginForm.Email, LoginForm.Password);
 
-        if(!result)
+        if(!result.Success)
         {
-            _errorMessage = "Email ou senha inválidos";
+            _errorMessage = result.Message;
             return;
         }
         

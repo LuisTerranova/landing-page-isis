@@ -21,7 +21,6 @@ public static class AppExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseAntiforgery();
-        app.UseRateLimiter();
         app.MapStaticAssets();
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
     }
