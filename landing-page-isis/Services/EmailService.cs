@@ -14,6 +14,9 @@ public class EmailService(
     private static readonly TimeZoneInfo BrTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
         "America/Sao_Paulo"
     );
+    private static readonly TimeZoneInfo PvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+        "America/Porto_Velho"
+    );
     private readonly TimeSpan _period = TimeSpan.FromHours(1);
     private readonly RazorLightEngine _razor = new RazorLightEngineBuilder()
         .UseFileSystemProject(Path.Combine(Directory.GetCurrentDirectory(), "Templates"))
@@ -22,14 +25,14 @@ public class EmailService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("EmailService started.");
+        logger.LogInformation("EmailService started (Operating in Porto Velho Time).");
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var nowInBr = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BrTimeZone);
-            var currentHour = nowInBr.Hour;
+            var nowInPvh = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, PvhTimeZone);
+            var currentHour = nowInPvh.Hour;
 
-            // Only process between 08:00 and 18:00
+            // Only process between 08:00 and 18:00 PORTO VELHO time
             if (currentHour is >= 8 and < 18)
             {
                 await ProcessReminders(stoppingToken);
@@ -37,18 +40,18 @@ public class EmailService(
             }
             else
             {
-                // Calculate the time remaining until 08:00 the next day
-                var nextRun = nowInBr.Date;
+                // Calculate the time remaining until 08:00 the next day in Porto Velho
+                var nextRun = nowInPvh.Date;
 
                 if (currentHour >= 18)
                     nextRun = nextRun.AddDays(1);
 
                 nextRun = nextRun.AddHours(8);
 
-                var delay = nextRun - nowInBr;
+                var delay = nextRun - nowInPvh;
                 logger.LogInformation(
-                    "Fora do horário comercial ({Now}). Aguardando {Delay} até as 08:00.",
-                    nowInBr,
+                    "Fora do horário comercial de PVH ({NowPvh}). Aguardando {Delay} até as 08:00 PVH.",
+                    nowInPvh,
                     delay
                 );
 
@@ -90,7 +93,15 @@ public class EmailService(
             );
 
             foreach (var appointment in toProcess)
-                await SendAppointmentReminder(appointment, ct);
+            {
+                var success = await SendAppointmentReminder(appointment, ct);
+                if (success)
+                {
+                    appointment.ReminderSent = true;
+                    await appointmentHandler.UpdateAppointment(appointment, appointment.Id);
+                    logger.LogInformation("Lembrete enviado e marcado para consulta {Id}", appointment.Id);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -98,17 +109,17 @@ public class EmailService(
         }
     }
 
-    private async Task SendAppointmentReminder(Appointment appointment, CancellationToken ct)
+    private async Task<bool> SendAppointmentReminder(Appointment appointment, CancellationToken ct)
     {
         try
         {
             if (appointment.Pacient == null || string.IsNullOrEmpty(appointment.Pacient.Email))
-                return;
+                return false;
 
             var html = await _razor.CompileRenderAsync("AppointmentReminder.cshtml", appointment);
 
             var http = httpFactory.CreateClient("resend");
-            await http.PostAsJsonAsync(
+            var response = await http.PostAsJsonAsync(
                 "emails",
                 new
                 {
@@ -119,10 +130,13 @@ public class EmailService(
                 },
                 ct
             );
+
+            return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error sending reminder to {Email}", appointment.Pacient?.Email);
+            return false;
         }
     }
 }
