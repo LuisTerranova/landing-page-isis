@@ -1,5 +1,5 @@
-using landing_page_isis.Extensions;
 using landing_page_isis.Data;
+using landing_page_isis.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

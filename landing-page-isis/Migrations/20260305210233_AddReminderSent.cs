@@ -15,15 +15,14 @@ namespace landingpageisis.Migrations
                 table: "appointments",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "reminder_sent",
-                table: "appointments");
+            migrationBuilder.DropColumn(name: "reminder_sent", table: "appointments");
         }
     }
 }

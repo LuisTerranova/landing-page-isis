@@ -17,61 +17,127 @@ namespace landingpageisis.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    lead_name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    lead_email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    lead_phone = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
-                    lead_intent = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    lead_name = table.Column<string>(
+                        type: "character varying(150)",
+                        maxLength: 150,
+                        nullable: false
+                    ),
+                    lead_email = table.Column<string>(
+                        type: "character varying(150)",
+                        maxLength: 150,
+                        nullable: false
+                    ),
+                    lead_phone = table.Column<string>(
+                        type: "character varying(11)",
+                        maxLength: 11,
+                        nullable: false
+                    ),
+                    lead_intent = table.Column<string>(
+                        type: "character varying(300)",
+                        maxLength: 300,
+                        nullable: false
+                    ),
                     lead_created = table.Column<DateOnly>(type: "date", nullable: false),
-                    lead_status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    policy_signed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                    lead_status = table.Column<string>(
+                        type: "character varying(20)",
+                        maxLength: 20,
+                        nullable: false
+                    ),
+                    policy_signed = table.Column<bool>(
+                        type: "boolean",
+                        nullable: false,
+                        defaultValue: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_leads", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "pacients",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    cpf = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    name = table.Column<string>(
+                        type: "character varying(150)",
+                        maxLength: 150,
+                        nullable: false
+                    ),
+                    cpf = table.Column<string>(
+                        type: "character varying(255)",
+                        maxLength: 255,
+                        nullable: true
+                    ),
                     birth_date = table.Column<DateOnly>(type: "date", nullable: true),
-                    email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    phone = table.Column<string>(type: "character varying(11)", maxLength: 11, nullable: false),
-                    state_of_residency = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
-                    policy_signed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                    email = table.Column<string>(
+                        type: "character varying(150)",
+                        maxLength: 150,
+                        nullable: false
+                    ),
+                    phone = table.Column<string>(
+                        type: "character varying(11)",
+                        maxLength: 11,
+                        nullable: false
+                    ),
+                    state_of_residency = table.Column<string>(
+                        type: "character varying(2)",
+                        maxLength: 2,
+                        nullable: true
+                    ),
+                    policy_signed = table.Column<bool>(
+                        type: "boolean",
+                        nullable: false,
+                        defaultValue: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_pacients", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    user_name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    user_email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    password_hash = table.Column<string>(type: "text", nullable: false)
+                    Id = table
+                        .Column<long>(type: "bigint", nullable: false)
+                        .Annotation(
+                            "Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                        ),
+                    user_name = table.Column<string>(
+                        type: "character varying(150)",
+                        maxLength: 150,
+                        nullable: false
+                    ),
+                    user_email = table.Column<string>(
+                        type: "character varying(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
+                    password_hash = table.Column<string>(type: "text", nullable: false),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "appointments",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    appointment_date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    appointment_date = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                     PacientId = table.Column<Guid>(type: "uuid", nullable: false),
                     appointment_status = table.Column<string>(type: "text", nullable: false),
-                    appointment_price = table.Column<decimal>(type: "numeric", nullable: false)
+                    appointment_price = table.Column<decimal>(type: "numeric", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -81,35 +147,35 @@ namespace landingpageisis.Migrations
                         column: x => x.PacientId,
                         principalTable: "pacients",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_appointments_PacientId",
                 table: "appointments",
-                column: "PacientId");
+                column: "PacientId"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_user_email",
                 table: "users",
                 column: "user_email",
-                unique: true);
+                unique: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "appointments");
+            migrationBuilder.DropTable(name: "appointments");
 
-            migrationBuilder.DropTable(
-                name: "leads");
+            migrationBuilder.DropTable(name: "leads");
 
-            migrationBuilder.DropTable(
-                name: "users");
+            migrationBuilder.DropTable(name: "users");
 
-            migrationBuilder.DropTable(
-                name: "pacients");
+            migrationBuilder.DropTable(name: "pacients");
         }
     }
 }

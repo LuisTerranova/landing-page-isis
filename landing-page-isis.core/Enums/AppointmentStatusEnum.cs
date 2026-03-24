@@ -4,5 +4,5 @@ public enum AppointmentStatusEnum
 {
     Marcada,
     Realizada,
-    Cancelada
+    Cancelada,
 }

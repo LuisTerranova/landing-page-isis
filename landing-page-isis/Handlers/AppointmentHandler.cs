@@ -64,12 +64,18 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (appointment == null)
             return new HandlerResult(false, "Dados inválidos.");
 
+        if (appointment.Price < 0)
+            return new HandlerResult(false, "O preço não pode ser negativo.");
+
+        if (appointment.PacientId == Guid.Empty)
+            return new HandlerResult(false, "Selecione um paciente válido.");
+
         // Normalize to UTC for PostgreSQL compatibility
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
-        var isOccupied = await context.Appointments.AnyAsync(a =>
-            a.AppointmentDate == appointment.AppointmentDate
-        );
+        var isOccupied = await context
+            .Appointments.AsNoTracking()
+            .AnyAsync(a => a.AppointmentDate == appointment.AppointmentDate);
 
         if (isOccupied)
             return new HandlerResult(false, "Este horário já possui um agendamento.");
@@ -87,14 +93,22 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         var existing = await context.Appointments.FindAsync(id);
 
         if (existing == null)
-            return new HandlerResult(false, "Agendamento não encontrado.");
+            return new HandlerResult(false, "Consulta não encontrada.");
+
+        if (appointment.Price < 0)
+            return new HandlerResult(false, "O preço não pode ser negativo.");
+
+        if (appointment.PacientId == Guid.Empty)
+            return new HandlerResult(false, "Selecione um paciente válido.");
 
         // Normalize to UTC for PostgreSQL compatibility
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
-        var isOccupied = await context.Appointments.AnyAsync(a =>
-            a.Id != appointment.Id && a.AppointmentDate == appointment.AppointmentDate
-        );
+        var isOccupied = await context
+            .Appointments.AsNoTracking()
+            .AnyAsync(a =>
+                a.Id != appointment.Id && a.AppointmentDate == appointment.AppointmentDate
+            );
 
         if (isOccupied)
             return new HandlerResult(false, "Horario indisponivel");
@@ -106,17 +120,17 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 
     public async Task<HandlerResult> DeleteAppointment(Guid id)
     {
-        var appointment = await context.Appointments.FindAsync(id);
+        var app = await context.Appointments.FindAsync(id);
+        if (app == null)
+            return new HandlerResult(false, "Consulta não encontrada.");
 
-        if (appointment == null)
-            return new HandlerResult(false, "Agendamento não encontrado.");
-
-        context.Appointments.Remove(appointment);
+        context.Appointments.Remove(app);
         await context.SaveChangesAsync();
+
         return new HandlerResult(true);
     }
 
-    public async Task<List<Appointment>> GetAppointmentsByDateRange(
+    public async Task<List<Appointment>> GetAllAppointmentsByDateRange(
         DateTimeOffset start,
         DateTimeOffset end,
         CancellationToken ct
@@ -128,5 +142,55 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end)
             .OrderBy(a => a.AppointmentDate)
             .ToListAsync(ct);
+    }
+
+    public async Task<PaginatedResponse<Appointment?>> GetAppointmentsByDateRange(
+        DateTimeOffset start,
+        DateTimeOffset end,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
+    {
+        var query = context
+            .Appointments.AsNoTracking()
+            .Include(a => a.Pacient)
+            .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end);
+
+        var totalItems = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(a => a.AppointmentDate)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+    }
+
+    public async Task<PaginatedResponse<Appointment?>> QueryAppointments(
+        string query,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
+    {
+        var queryable = context.Appointments.Include(a => a.Pacient).AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query))
+            queryable = queryable.Where(a => a.Pacient != null && a.Pacient.Name.Contains(query));
+
+        var totalItems = await queryable.CountAsync(ct);
+
+        if (totalItems <= 0)
+            return new PaginatedResponse<Appointment?>([], totalItems, page, pageSize);
+
+        var items = await queryable
+            .OrderByDescending(a => a.AppointmentDate)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
     }
 }

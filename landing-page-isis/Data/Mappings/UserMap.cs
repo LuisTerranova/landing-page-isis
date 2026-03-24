@@ -12,21 +12,12 @@ public class UserMap : IEntityTypeConfiguration<User>
         builder.ToTable("users");
         builder.HasKey(u => u.Id);
 
-        builder.Property(u => u.Name)
-               .IsRequired()
-               .HasMaxLength(150)
-               .HasColumnName("user_name");
+        builder.Property(u => u.Name).IsRequired().HasMaxLength(150).HasColumnName("user_name");
 
-        builder.Property(u => u.Email)
-               .IsRequired()
-               .HasMaxLength(100)
-               .HasColumnName("user_email");
-        
-        builder.HasIndex(u => u.Email)
-               .IsUnique();
+        builder.Property(u => u.Email).IsRequired().HasMaxLength(100).HasColumnName("user_email");
 
-        builder.Property(u => u.PasswordHash)
-               .IsRequired()
-               .HasColumnName("password_hash");
+        builder.HasIndex(u => u.Email).IsUnique();
+
+        builder.Property(u => u.PasswordHash).IsRequired().HasColumnName("password_hash");
     }
 }

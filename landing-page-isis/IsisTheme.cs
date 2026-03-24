@@ -8,9 +8,9 @@ public class IsisTheme : MudTheme
     {
         PaletteLight = new PaletteLight
         {
-            Primary = "#284B32",          
+            Primary = "#284B32",
             Secondary = "#7E0F20",
-            Background = "#F7EAD5",      
+            Background = "#F7EAD5",
             Surface = "#F7EAD5",
             AppbarBackground = "#284B32",
             AppbarText = "#F7EAD5",
@@ -18,7 +18,7 @@ public class IsisTheme : MudTheme
             TextSecondary = "#7E0F20",
             DrawerBackground = "#F7EAD5",
             DrawerText = "#284B32",
-            ActionDefault = "#560414"
+            ActionDefault = "#560414",
         };
 
         Typography = new Typography()
@@ -27,37 +27,34 @@ public class IsisTheme : MudTheme
             {
                 FontFamily = new[] { "Glacial Indifference", "sans-serif" },
                 FontSize = "1rem",
-                LineHeight = "1.6"
+                LineHeight = "1.6",
             },
             H1 = new H1Typography()
             {
                 FontFamily = new[] { "Glacial Indifference", "sans-serif" },
                 FontSize = "3.5rem",
-                FontWeight = "700"
+                FontWeight = "700",
             },
             H2 = new H2Typography()
             {
                 FontFamily = new[] { "Glacial Indifference", "sans-serif" },
                 FontSize = "2.5rem",
-                FontWeight = "700"
+                FontWeight = "700",
             },
             H3 = new H3Typography()
             {
                 FontFamily = new[] { "Glacial Indifference", "sans-serif" },
                 FontSize = "2rem",
-                FontWeight = "700"
+                FontWeight = "700",
             },
             Button = new ButtonTypography()
             {
                 FontFamily = new[] { "Glacial Indifference", "sans-serif" },
                 FontWeight = "700",
-                TextTransform = "uppercase"
-            }
+                TextTransform = "uppercase",
+            },
         };
 
-        LayoutProperties = new LayoutProperties()
-        {
-            DefaultBorderRadius = "24px"
-        };
+        LayoutProperties = new LayoutProperties() { DefaultBorderRadius = "24px" };
     }
 }

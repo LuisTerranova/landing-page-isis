@@ -13,15 +13,19 @@
         <MudForm @ref="_form" @bind-IsValid="@_formValido">
             <MudGrid>
                 <MudItem xs="12">
-                    <MudSelect T="Guid" Label="Paciente" @bind-Value="Model.PacientId" Required="true" Variant="Variant.Outlined">
-                        @if (_pacients != null)
-                        {
-                            @foreach (var pacient in _pacients)
-                            {
-                                <MudSelectItem Value="@pacient.Id">@pacient.Name - @pacient.Cpf</MudSelectItem>
-                            }
-                        }
-                    </MudSelect>
+                    <MudAutocomplete T="Pacient"
+                                    Label="Paciente"
+                                    @bind-Value="_selectedPacient"
+                                    SearchFunc="@SearchPacient"
+                                    ToStringFunc="@(p => p == null ? "" : p.Name)"
+                                    Required="true"
+                                    Variant="Variant.Outlined"
+                                    ResetValueOnEmptyText="true"
+                                    CoerceText="true" 
+                                    CoerceValue="true"
+                                    ShowProgressIndicator="true"
+                                    ProgressIndicatorColor="Color.Primary"
+                                    Placeholder="Comece a digitar o nome do paciente..." />
                 </MudItem>
                 <MudItem xs="6">
                     <MudDatePicker Label="Data da Consulta"
@@ -75,16 +79,22 @@
     private bool _formValido;
     private DateTime? _tempDate;
     private TimeSpan? _tempTime;
-    private List<Pacient> _pacients = new();
+    private Pacient? _selectedPacient;
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch all pacients for the select list
-        var result = await PacientHandler.GetPacients(0, 1000, default);
-        if (result.Items != null)
+        // For editing, load the specific pacient object
+        if (Model.PacientId != Guid.Empty)
         {
-            _pacients = result.Items.Where(p => p != null).Cast<Pacient>().OrderBy(p => p.Name).ToList();
+            _selectedPacient = await PacientHandler.GetPacient(Model.PacientId);
         }
+    }
+
+    private async Task<IEnumerable<Pacient>> SearchPacient(string? value, CancellationToken ct)
+    {
+        // Use our existing paginated query handler to find matching pacients (top 10)
+        var result = await PacientHandler.QueryPacients(value ?? "", 0, 10, ct);
+        return result.Items.Where(p => p != null).Cast<Pacient>();
     }
 
     protected override void OnParametersSet()
@@ -118,6 +128,8 @@
 
             Console.WriteLine($"[SalvarForm] Extracted: Date={_tempDate}, Time={_tempTime} | Combined: {combinedDateTime} | Assigned To Model (PVH Offset): {Model.AppointmentDate}");
         }
+
+        Model.PacientId = _selectedPacient?.Id ?? Guid.Empty;
 
         MudDialog.Close(DialogResult.Ok(Model));
     }

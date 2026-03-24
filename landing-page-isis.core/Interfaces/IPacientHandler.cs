@@ -1,4 +1,4 @@
-﻿using landing_page_isis.core.Models;
+using landing_page_isis.core.Models;
 
 namespace landing_page_isis.core.Interfaces;
 
@@ -9,4 +9,10 @@ public interface IPacientHandler
     Task<HandlerResult> CreatePacient(Pacient lead);
     Task<HandlerResult> UpdatePacient(Pacient lead);
     Task<HandlerResult> DeletePacient(Guid id);
+    Task<PaginatedResponse<Pacient?>> QueryPacients(
+        string query,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    );
 }

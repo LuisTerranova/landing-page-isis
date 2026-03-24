@@ -77,7 +77,7 @@ public class EmailService(
             ).ToUniversalTime();
             var endOfTomorrowBrInUtc = startOfTomorrowBrInUtc.AddDays(1).AddTicks(-1);
 
-            var appointments = await appointmentHandler.GetAppointmentsByDateRange(
+            var appointments = await appointmentHandler.GetAllAppointmentsByDateRange(
                 startOfTomorrowBrInUtc,
                 endOfTomorrowBrInUtc,
                 ct
@@ -99,7 +99,10 @@ public class EmailService(
                 {
                     appointment.ReminderSent = true;
                     await appointmentHandler.UpdateAppointment(appointment, appointment.Id);
-                    logger.LogInformation("Lembrete enviado e marcado para consulta {Id}", appointment.Id);
+                    logger.LogInformation(
+                        "Lembrete enviado e marcado para consulta {Id}",
+                        appointment.Id
+                    );
                 }
             }
         }

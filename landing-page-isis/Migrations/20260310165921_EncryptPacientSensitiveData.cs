@@ -18,7 +18,8 @@ namespace landingpageisis.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(11)",
-                oldMaxLength: 11);
+                oldMaxLength: 11
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "email",
@@ -28,7 +29,8 @@ namespace landingpageisis.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(150)",
-                oldMaxLength: 150);
+                oldMaxLength: 150
+            );
         }
 
         /// <inheritdoc />
@@ -42,7 +44,8 @@ namespace landingpageisis.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(255)",
-                oldMaxLength: 255);
+                oldMaxLength: 255
+            );
 
             migrationBuilder.AlterColumn<string>(
                 name: "email",
@@ -52,7 +55,8 @@ namespace landingpageisis.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "character varying(255)",
-                oldMaxLength: 255);
+                oldMaxLength: 255
+            );
         }
     }
 }

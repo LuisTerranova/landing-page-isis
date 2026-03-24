@@ -78,6 +78,32 @@ public partial class PacientHandler(AppDbContext context) : IPacientHandler
         return new HandlerResult(true);
     }
 
+    public async Task<PaginatedResponse<Pacient?>> QueryPacients(
+        string query,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
+    {
+        var queryable = context.Pacients.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query))
+            queryable = queryable.Where(p => p.Name.Contains(query));
+
+        var totalItems = await queryable.CountAsync(ct);
+
+        if (totalItems <= 0)
+            return new PaginatedResponse<Pacient?>([], totalItems, page, pageSize);
+
+        var items = await queryable
+            .OrderBy(p => p.Name)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<Pacient?>(items, totalItems, page, pageSize);
+    }
+
     [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
     private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
 }

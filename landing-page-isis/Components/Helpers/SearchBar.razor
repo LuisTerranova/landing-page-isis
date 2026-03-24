@@ -1,0 +1,43 @@
+@namespace landing_page_isis.Components.Helpers
+@using MudBlazor
+
+<MudTextField T="string"
+              Value="@SearchQuery"
+              ValueChanged="OnValueChanged"
+              Placeholder="@Placeholder"
+              Adornment="Adornment.Start"
+              AdornmentIcon="@Icons.Material.Filled.Search"
+              IconSize="Size.Medium"
+              Class="@($"mt-0 {Class}")"
+              Clearable="true"
+              OnClearButtonClick="OnClear"
+              Immediate="true"
+              DebounceInterval="500" />
+
+@code {
+    [Parameter] public string SearchQuery { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> SearchQueryChanged { get; set; }
+    [Parameter] public EventCallback<string> OnSearch { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Pesquisar...";
+    [Parameter] public string Class { get; set; } = "";
+
+    private async Task OnValueChanged(string value)
+    {
+        SearchQuery = value;
+        await SearchQueryChanged.InvokeAsync(value);
+        if (OnSearch.HasDelegate)
+        {
+            await OnSearch.InvokeAsync(value);
+        }
+    }
+
+    private async Task OnClear()
+    {
+        SearchQuery = string.Empty;
+        await SearchQueryChanged.InvokeAsync(string.Empty);
+        if (OnSearch.HasDelegate)
+        {
+            await OnSearch.InvokeAsync(string.Empty);
+        }
+    }
+}

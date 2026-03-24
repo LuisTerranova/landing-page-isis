@@ -20,6 +20,13 @@ public partial class WelcomeView : ComponentBase
     private ViewMode _currentView = ViewMode.Day;
     private DateTime _selectedDate = DateTime.Today;
 
+    private string _searchQuery = string.Empty;
+    private bool IsSearching => !string.IsNullOrWhiteSpace(_searchQuery);
+
+    private int _currentPage = 1;
+    private int _pageSize = 9;
+    private int _totalItems = 0;
+
     #endregion
 
     #region Methods
@@ -31,70 +38,114 @@ public partial class WelcomeView : ComponentBase
         await LoadAppointments();
     }
 
+    private async Task OnSearch(string query)
+    {
+        _searchQuery = query;
+        _currentPage = 1;
+        await LoadAppointments();
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        _currentPage = page;
+        await LoadAppointments();
+    }
+
     private async Task LoadAppointments()
     {
         _loading = true;
         StateHasChanged();
         try
         {
-            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-            DateTimeOffset start,
-                end;
-
-            if (_currentView == ViewMode.Day)
+            if (IsSearching)
             {
-                var date = _selectedDate.Date;
-                // Calculate start and end of day in Porto Velho
-                var startPvh = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0);
-                var endPvh = startPvh.AddDays(1).AddTicks(-1);
-
-                start = new DateTimeOffset(
-                    startPvh,
-                    pvhTimeZone.GetUtcOffset(startPvh)
-                ).ToUniversalTime();
-                end = new DateTimeOffset(
-                    endPvh,
-                    pvhTimeZone.GetUtcOffset(endPvh)
-                ).ToUniversalTime();
+                var queryResult = await AppointmentHandler.QueryAppointments(
+                    _searchQuery,
+                    _currentPage - 1,
+                    _pageSize,
+                    default
+                );
+                _totalItems = queryResult.TotalItems;
+                _appointments = queryResult
+                    .Items.Where(a => a != null)
+                    .Select(a => new AppointmentViewModel
+                    {
+                        Id = a!.Id,
+                        Date = a.AppointmentDate,
+                        PatientName = a.Pacient?.Name ?? "N/A",
+                        Status = a.AppointmentStatus,
+                        Price = a.Price,
+                    })
+                    .OrderByDescending(a => a.Date)
+                    .ToList();
             }
             else
             {
-                int diff = (7 + (_selectedDate.DayOfWeek - DayOfWeek.Monday)) % 7;
-                var mondayDate = _selectedDate.AddDays(-1 * diff).Date;
+                var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+                DateTimeOffset start,
+                    end;
 
-                var startPvh = new DateTime(
-                    mondayDate.Year,
-                    mondayDate.Month,
-                    mondayDate.Day,
-                    0,
-                    0,
-                    0
-                );
-                var endPvh = startPvh.AddDays(7).AddTicks(-1);
-
-                start = new DateTimeOffset(
-                    startPvh,
-                    pvhTimeZone.GetUtcOffset(startPvh)
-                ).ToUniversalTime();
-                end = new DateTimeOffset(
-                    endPvh,
-                    pvhTimeZone.GetUtcOffset(endPvh)
-                ).ToUniversalTime();
-            }
-
-            var results = await AppointmentHandler.GetAppointmentsByDateRange(start, end, default);
-
-            _appointments = results
-                .Select(a => new AppointmentViewModel
+                if (_currentView == ViewMode.Day)
                 {
-                    Id = a.Id,
-                    Date = a.AppointmentDate,
-                    PatientName = a.Pacient?.Name ?? "N/A",
-                    Status = a.AppointmentStatus,
-                    Price = a.Price,
-                })
-                .OrderBy(a => a.Date)
-                .ToList();
+                    var date = _selectedDate.Date;
+                    var startPvh = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0);
+                    var endPvh = startPvh.AddDays(1).AddTicks(-1);
+
+                    start = new DateTimeOffset(
+                        startPvh,
+                        pvhTimeZone.GetUtcOffset(startPvh)
+                    ).ToUniversalTime();
+                    end = new DateTimeOffset(
+                        endPvh,
+                        pvhTimeZone.GetUtcOffset(endPvh)
+                    ).ToUniversalTime();
+                }
+                else
+                {
+                    int diff = (7 + (_selectedDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+                    var mondayDate = _selectedDate.AddDays(-1 * diff).Date;
+                    var startPvh = new DateTime(
+                        mondayDate.Year,
+                        mondayDate.Month,
+                        mondayDate.Day,
+                        0,
+                        0,
+                        0
+                    );
+                    var endPvh = startPvh.AddDays(7).AddTicks(-1);
+
+                    start = new DateTimeOffset(
+                        startPvh,
+                        pvhTimeZone.GetUtcOffset(startPvh)
+                    ).ToUniversalTime();
+                    end = new DateTimeOffset(
+                        endPvh,
+                        pvhTimeZone.GetUtcOffset(endPvh)
+                    ).ToUniversalTime();
+                }
+
+                var paginatedResult = await AppointmentHandler.GetAppointmentsByDateRange(
+                    start,
+                    end,
+                    _currentPage - 1,
+                    _pageSize,
+                    default
+                );
+
+                _totalItems = paginatedResult.TotalItems;
+                _appointments = paginatedResult
+                    .Items.Where(a => a != null)
+                    .Select(a => new AppointmentViewModel
+                    {
+                        Id = a!.Id,
+                        Date = a.AppointmentDate,
+                        PatientName = a.Pacient?.Name ?? "N/A",
+                        Status = a.AppointmentStatus,
+                        Price = a.Price,
+                    })
+                    .OrderBy(a => a.Date)
+                    .ToList();
+            }
         }
         catch (Exception ex)
         {
@@ -113,12 +164,14 @@ public partial class WelcomeView : ComponentBase
         if (_currentView == mode)
             return;
         _currentView = mode;
+        _currentPage = 1;
         await LoadAppointments();
     }
 
     private async Task ChangeDate(int days)
     {
         _selectedDate = _selectedDate.AddDays(days);
+        _currentPage = 1;
         await LoadAppointments();
     }
 

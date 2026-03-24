@@ -18,7 +18,8 @@ namespace landingpageisis.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "character varying(255)",
-                oldMaxLength: 255);
+                oldMaxLength: 255
+            );
         }
 
         /// <inheritdoc />
@@ -34,7 +35,8 @@ namespace landingpageisis.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(255)",
                 oldMaxLength: 255,
-                oldNullable: true);
+                oldNullable: true
+            );
         }
     }
 }

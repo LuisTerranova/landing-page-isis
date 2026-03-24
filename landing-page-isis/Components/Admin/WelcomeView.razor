@@ -10,11 +10,14 @@
     <MudItem xs="12" class="d-flex align-end justify-space-between mb-8">
         <div>
             <MudText Typo="Typo.h3" Color="Color.Secondary" Style="font-weight: 800; text-transform: uppercase; line-height: 1.2">
-                AGENDA DE @GetViewTitle()
+                @(IsSearching ? "RESULTADOS DA BUSCA" : $"AGENDA DE {GetViewTitle()}")
             </MudText>
         </div>
         <div class="d-flex align-center gap-4">
-            <div class="custom-button-group">
+            <div style="width: 250px;">
+                <landing_page_isis.Components.Helpers.SearchBar @bind-SearchQuery="_searchQuery" OnSearch="OnSearch" Placeholder="Localizar paciente..." />
+            </div>
+            <div class="custom-button-group" style="@(IsSearching ? "opacity: 0.5; pointer-events: none;" : "")">
                 <MudButton OnClick="@(async () => await ToggleView(ViewMode.Day))"
                            Variant="@(_currentView == ViewMode.Day ? Variant.Filled : Variant.Text)"
                            Color="@(_currentView == ViewMode.Day ? Color.Primary : Color.Default)"
@@ -29,7 +32,7 @@
                 </MudButton>
             </div>
 
-            <div class="d-flex align-center ml-2">
+            <div class="d-flex align-center ml-2" style="@(IsSearching ? "opacity: 0.5; pointer-events: none;" : "")">
                 <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? -1 : -7))"/>
                 <MudIconButton Icon="@Icons.Material.Filled.Today" Color="Color.Primary"
                                OnClick="@(async () =>
@@ -101,6 +104,16 @@
                         <MudButton Variant="Variant.Text" Style="color: white; background-color: rgba(255,255,255,0.1);" EndIcon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Class="rounded-pill px-4"> Ver detalhes </MudButton>
                     </div>
                 </MudPaper>
+            </MudItem>
+        }
+
+        @if (_totalItems > _pageSize)
+        {
+            <MudItem xs="12" class="d-flex justify-center mt-8">
+                <MudPagination Color="Color.Primary"
+                               Count="@((_totalItems + _pageSize - 1) / _pageSize)"
+                               Selected="@_currentPage"
+                               SelectedChanged="OnPageChanged"/>
             </MudItem>
         }
     }

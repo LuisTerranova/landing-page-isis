@@ -1,17 +1,31 @@
 @namespace landing_page_isis.Components.Helpers
 @typeparam TItem
 
-@if (ShowCreateButton)
+@if (ShowCreateButton || ShowSearchBar)
 {
-    <div class="d-flex justify-end mb-4">
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Secondary"
-                   Size="Size.Large"
-                   Class="px-10 py-3"
-                   Style="font-weight: bold; border-radius: 8px;"
-                   OnClick="@(() => OnCreate.InvokeAsync())">
-            Criar
-        </MudButton>
+    <div class="d-flex justify-space-between align-center mb-4 gap-4">
+        <div class="flex-grow-1" style="max-width: 400px;">
+            @if (ShowSearchBar)
+            {
+                <SearchBar SearchQuery="@SearchQuery" 
+                           SearchQueryChanged="SearchQueryChanged" 
+                           OnSearch="OnSearchExecuted" 
+                           Placeholder="Pesquisar..." />
+            }
+        </div>
+        <div class="d-flex justify-end flex-grow-1">
+            @if (ShowCreateButton)
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Secondary"
+                           Size="Size.Large"
+                           Class="px-10 py-3"
+                           Style="font-weight: bold; border-radius: 8px;"
+                           OnClick="@(() => OnCreate.InvokeAsync())">
+                    Criar
+                </MudButton>
+            }
+        </div>
     </div>
 }
 <MudTable ServerData="@ServerData" @ref="_table" Hover="true" Elevation="2" Class="mud-theme-secondary">
@@ -65,6 +79,17 @@
     [Parameter] public EventCallback OnCreate { get; set; }
     [Parameter] public string EditText { get; set; } = "Editar";
     [Parameter] public bool ShowCreateButton { get; set; } = true;
+
+    [Parameter] public bool ShowSearchBar { get; set; } = false;
+    [Parameter] public string SearchQuery { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> SearchQueryChanged { get; set; }
+
+    private async Task OnSearchExecuted(string query)
+    {
+        SearchQuery = query;
+        await SearchQueryChanged.InvokeAsync(query);
+        await ReloadAsync();
+    }
 
     public Task ReloadAsync() => _table.ReloadServerData();
 }

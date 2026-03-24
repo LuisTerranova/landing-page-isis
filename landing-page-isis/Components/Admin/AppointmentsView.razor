@@ -16,7 +16,9 @@
               ServerData="@ServerReload"
               OnCreate="@(OpenCreate)"
               OnEdit="@(EditAppointment)"
-              OnDelete="@(DeleteAppointment)">
+              OnDelete="@(DeleteAppointment)"
+              ShowSearchBar="true"
+              @bind-SearchQuery="_searchQuery">
 
     <HeaderColumns>
         <MudTh>Paciente</MudTh>

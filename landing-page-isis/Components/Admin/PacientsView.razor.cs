@@ -1,5 +1,6 @@
 using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Helpers;
+using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using Microsoft.AspNetCore.Components;
@@ -25,6 +26,7 @@ public partial class PacientsView : ComponentBase
     #region Properties
 
     private GenericTable<Pacient> _pacientsTable = null!;
+    private string _searchQuery = string.Empty;
 
     #endregion
 
@@ -34,7 +36,20 @@ public partial class PacientsView : ComponentBase
     {
         try
         {
-            var result = await PacientHandler.GetPacients(state.Page, state.PageSize, ct);
+            PaginatedResponse<Pacient?> result;
+            if (string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                result = await PacientHandler.GetPacients(state.Page, state.PageSize, ct);
+            }
+            else
+            {
+                result = await PacientHandler.QueryPacients(
+                    _searchQuery,
+                    state.Page,
+                    state.PageSize,
+                    ct
+                );
+            }
 
             return new TableData<Pacient>
             {

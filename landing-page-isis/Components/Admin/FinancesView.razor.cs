@@ -52,7 +52,7 @@ public partial class FinancesView : ComponentBase
             var startOfYear = new DateTimeOffset(currentYear, 1, 1, 0, 0, 0, TimeSpan.Zero);
             var endOfYear = new DateTimeOffset(currentYear, 12, 31, 23, 59, 59, TimeSpan.Zero);
 
-            var appointments = await AppointmentHandler.GetAppointmentsByDateRange(
+            var appointments = await AppointmentHandler.GetAllAppointmentsByDateRange(
                 startOfYear,
                 endOfYear,
                 CancellationToken.None

@@ -17,7 +17,9 @@
               ServerData="@ServerReload"
               OnCreate="@(OpenCreate)"
               OnEdit="@(EditPacient)"
-              OnDelete="@(DeletePacient)">
+              OnDelete="@(DeletePacient)"
+              ShowSearchBar="true"
+              @bind-SearchQuery="_searchQuery">
 
     <HeaderColumns>
         <MudTh>Nome</MudTh>

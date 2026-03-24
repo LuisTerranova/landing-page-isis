@@ -14,7 +14,8 @@ public partial class LeadHandler(
 ) : ILeadHandler
 {
     private const string RateLimitPrefix = "lead_rate_limit_";
-    private string? RemoteIp => httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+    private string? RemoteIp =>
+        httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
     public async Task<PaginatedResponse<Lead?>> GetLeads(
         int page,

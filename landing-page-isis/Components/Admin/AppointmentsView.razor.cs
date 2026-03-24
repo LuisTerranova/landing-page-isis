@@ -1,5 +1,6 @@
 using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Helpers;
+using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using Microsoft.AspNetCore.Components;
@@ -19,16 +20,30 @@ public partial class AppointmentsView : ComponentBase
     private IAppointmentHandler AppointmentHandler { get; set; } = null!;
 
     private GenericTable<Appointment> _appointmentsTable = null!;
+    private string _searchQuery = string.Empty;
 
     private async Task<TableData<Appointment>> ServerReload(TableState state, CancellationToken ct)
     {
         try
         {
-            var result = await AppointmentHandler.GetAllAppointments(
-                state.Page,
-                state.PageSize,
-                ct
-            );
+            PaginatedResponse<Appointment?> result;
+            if (string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                result = await AppointmentHandler.GetAllAppointments(
+                    state.Page,
+                    state.PageSize,
+                    ct
+                );
+            }
+            else
+            {
+                result = await AppointmentHandler.QueryAppointments(
+                    _searchQuery,
+                    state.Page,
+                    state.PageSize,
+                    ct
+                );
+            }
             return new TableData<Appointment>
             {
                 TotalItems = result.TotalItems,
