@@ -9,4 +9,5 @@ public class Appointment
     public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Marcada;
     public decimal Price { get; set; }
     public bool ReminderSent { get; set; } = false;
+    public AppointmentRecord? Record { get; set; }
 }
