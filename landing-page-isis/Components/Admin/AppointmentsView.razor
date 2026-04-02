@@ -1,6 +1,7 @@
 @page "/admin/consultas"
 @attribute [Authorize]
 @using landing_page_isis.Components.Layout
+@using landing_page_isis.core
 @using landing_page_isis.core.Models
 @layout DashboardLayout
 @rendermode InteractiveServer
@@ -45,5 +46,11 @@
     </RowColumns>
 
     <CustomActions>
+        @if (context.AppointmentStatus != AppointmentStatusEnum.Realizada)
+        {
+            <MudMenuItem OnClick="@(() => MarkAsCompleted(context))">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2"/> Finalizar
+            </MudMenuItem>
+        }
     </CustomActions>
 </GenericTable>

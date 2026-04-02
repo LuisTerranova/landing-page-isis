@@ -87,12 +87,13 @@
 
 @code {
     [SupplyParameterFromForm]
-    private LoginFormModel LoginForm { get; set; } = new();
+    private LoginFormModel LoginForm { get; set; } = null!;
 
     private string? _errorMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
+        LoginForm ??= new();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 

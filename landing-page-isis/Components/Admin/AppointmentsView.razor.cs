@@ -3,6 +3,7 @@ using landing_page_isis.Components.Helpers;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
+using landing_page_isis.Extensions;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -18,6 +19,9 @@ public partial class AppointmentsView : ComponentBase
 
     [Inject]
     private IAppointmentHandler AppointmentHandler { get; set; } = null!;
+
+    [Inject]
+    private IAppointmentRecordHandler RecordHandler { get; set; } = null!;
 
     private GenericTable<Appointment> _appointmentsTable = null!;
     private string _searchQuery = string.Empty;
@@ -143,7 +147,7 @@ public partial class AppointmentsView : ComponentBase
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
-            $"Tem certeza que deseja apagar o agendamento de {appointment.AppointmentDate.ToLocalTime():dd/MM/yyyy HH:mm}?",
+            $"Tem certeza que deseja apagar o agendamento de {appointment.AppointmentDate.ToPortoVelhoTime():dd/MM/yyyy HH:mm}?",
             yesText: "Excluir",
             cancelText: "Cancelar",
             options: options
@@ -161,6 +165,60 @@ public partial class AppointmentsView : ComponentBase
             else
             {
                 Snackbar.Add($"Erro ao excluir: {result.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task MarkAsCompleted(Appointment appointment)
+    {
+        var parameters = new DialogParameters<AppointmentRecordDialog>
+        {
+            { x => x.Appointment, appointment },
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<AppointmentRecordDialog>(
+            "Finalizar Consulta",
+            parameters,
+            options
+        );
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: AppointmentRecord record })
+        {
+            // Update the appointment status
+            appointment.AppointmentStatus = AppointmentStatusEnum.Realizada;
+            var updateStatus = await AppointmentHandler.UpdateAppointment(
+                appointment,
+                appointment.Id
+            );
+
+            if (updateStatus.Success)
+            {
+                // Create the record
+                var createRecord = await RecordHandler.CreateAppointmentRecord(record);
+                if (createRecord.Success)
+                {
+                    Snackbar.Add("Consulta finalizada e prontuário salvo!", Severity.Success);
+                    await _appointmentsTable.ReloadAsync();
+                }
+                else
+                {
+                    Snackbar.Add(
+                        $"Status atualizado, mas houve erro no prontuário: {createRecord.Message}",
+                        Severity.Warning
+                    );
+                }
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao finalizar consulta: {updateStatus.Message}", Severity.Error);
             }
         }
     }

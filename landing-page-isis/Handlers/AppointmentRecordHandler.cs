@@ -15,37 +15,64 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
             .FirstOrDefaultAsync(ar => ar.Id == id);
     }
 
-    public async Task<AppointmentRecord?> GetAppointmentRecordByAppointmentId(Guid appointmentId)
+    public async Task<PaginatedResponse<AppointmentRecord?>> GetRecordsByPacientId(
+        int page,
+        int pageSize,
+        Guid pacientId,
+        DateTime? filterMonthYear,
+        CancellationToken ct
+    )
     {
-        return await context
-            .AppointmentRecords.AsNoTracking()
-            .FirstOrDefaultAsync(ar => ar.AppointmentId == appointmentId);
+        var query = context
+            .AppointmentRecords.Include(ar => ar.Appointment)
+            .AsNoTracking()
+            .Where(ar => ar.Appointment != null && ar.Appointment.PacientId == pacientId);
+
+        if (filterMonthYear.HasValue)
+        {
+            var localStart = new DateTime(filterMonthYear.Value.Year, filterMonthYear.Value.Month, 1, 0, 0, 0, DateTimeKind.Local);
+            var utcStart = localStart.ToUniversalTime();
+            var utcEnd = localStart.AddMonths(1).ToUniversalTime();
+
+            query = query.Where(ar => ar.Appointment!.AppointmentDate >= utcStart && ar.Appointment.AppointmentDate < utcEnd);
+        }
+
+        var totalItems = await query.CountAsync(ct);
+
+        if (totalItems <= 0)
+            return new PaginatedResponse<AppointmentRecord?>([], totalItems, page, pageSize);
+
+        var items = await query
+            .OrderByDescending(ar => ar.CreatedAt)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<AppointmentRecord?>(items, totalItems, page, pageSize);
     }
 
     public async Task<HandlerResult> CreateAppointmentRecord(AppointmentRecord record)
     {
-        // Additional validation could be checked here
-        if (record.AppointmentId == Guid.Empty)
-            return new HandlerResult(false, "Consulta não informada.");
-
-        record.CreatedAt = DateTime.Now;
+        if (string.IsNullOrEmpty(record.Note))
+            return new HandlerResult(false, "Nota de consulta não pode estar nula.");
 
         context.AppointmentRecords.Add(record);
         await context.SaveChangesAsync();
-        return new HandlerResult(true);
+        return new HandlerResult(true, "Nota criada com sucesso.");
     }
 
     public async Task<HandlerResult> UpdateAppointmentRecord(AppointmentRecord record)
     {
         var existing = await context.AppointmentRecords.FindAsync(record.Id);
-        if (existing == null)
-            return new HandlerResult(false, "Prontuário não encontrado.");
 
-        existing.Note = record.Note;
-        existing.UpdatedAt = DateTime.Now;
+        if (existing == null)
+            return new HandlerResult(false, "Nota não encontrada.");
+
+        existing.Note += $"\n\nRetificado em {DateTime.Now:dd/MM/yyyy HH:mm}:\n{record.Note}";
+        existing.UpdatedAt = DateTime.UtcNow;
 
         context.Entry(existing).CurrentValues.SetValues(existing);
         await context.SaveChangesAsync();
-        return new HandlerResult(true);
+        return new HandlerResult(true, "Retificação adicionada com sucesso");
     }
 }

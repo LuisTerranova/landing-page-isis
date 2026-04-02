@@ -121,6 +121,25 @@
     font-weight: bold !important;
 }
 
+/* Package Status Chip Styles for High Visibility */
+.pkg-status-ativo {
+    background-color: #2ECC71 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.pkg-status-esgotado {
+    background-color: #5D5D5D !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.pkg-status-cancelado {
+    background-color: #1A1A1A !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
 .mud-charts-xaxis text {
     fill: white !important;
     font-weight: bold;
@@ -204,7 +223,8 @@ section {
 
 /* Validation Message settings */
 .validation-message {
-    color: #FFCDD2 !important; /* Soft light red/pink for dark red backgrounds (contact form) */
+    color: #FFCDD2 !important;
+    /* Soft light red/pink for dark red backgrounds (contact form) */
     font-weight: 500;
 }
 
@@ -227,7 +247,8 @@ section {
 }
 
 .login-page-validation {
-    color: #ff4d00 !important; /* High intensity Orange/Red for login validation */
+    color: #ff4d00 !important;
+    /* High intensity Orange/Red for login validation */
     font-weight: 600;
     font-size: 0.75rem;
     margin-top: 2px;
@@ -246,7 +267,7 @@ section {
     color: #FFF;
     border-radius: 50%;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     z-index: 9999;
     display: flex;
     align-items: center;
@@ -290,6 +311,7 @@ section {
         transform: scale(1);
         opacity: 0.5;
     }
+
     100% {
         transform: scale(1.6);
         opacity: 0;

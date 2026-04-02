@@ -55,7 +55,7 @@ public static class BuilderExtensions
         {
             options.ForwardedHeaders =
                 ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            options.KnownNetworks.Clear();
+            options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
         });
 
@@ -84,6 +84,7 @@ public static class BuilderExtensions
         // Handlers Configuration
         builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
         builder.Services.AddScoped<IAppointmentRecordHandler, AppointmentRecordHandler>();
+        builder.Services.AddScoped<IAppointmentPackageHandler, AppointmentPackageHandler>();
         builder.Services.AddScoped<IPacientHandler, PacientHandler>();
         builder.Services.AddScoped<ILeadHandler, LeadHandler>();
         builder.Services.AddScoped<IAuthHandler, AuthHandler>();

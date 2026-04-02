@@ -1,0 +1,174 @@
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.PersonSearch" />
+            <MudText Typo="Typo.h6">Detalhes - @Pacient.Name</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" ActivePanelIndexChanged="OnTabChanged">
+            
+            <MudTabPanel Text="Perfil" Icon="@Icons.Material.Filled.Info">
+                <div class="pa-6">
+                    <MudForm @ref="_perfilForm" @bind-IsValid="@_isFormValid">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_model.Name" Label="Nome" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_model.Email" Label="E-mail" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_model.Phone" Label="Telefone" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                @if (_isEditing)
+                                {
+                                    <MudDatePicker Label="Data de Nascimento" @bind-Date="_tempBirthDate" Variant="Variant.Outlined" Margin="Margin.Dense" DateFormat="dd/MM/yyyy" Required="true" />
+                                }
+                                else
+                                {
+                                    <MudTextField Value="@_model.BirthDate?.ToString("dd/MM/yyyy")" Label="Data de Nascimento" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                }
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                @if (_isEditing)
+                                {
+                                    <MudTextField @bind-Value="_model.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" Mask="@(new PatternMask("000.000.000-00"))" />
+                                }
+                                else
+                                {
+                                    <MudTextField Value="@GetDisplayCpf()" Label="CPF" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense" 
+                                                  Adornment="Adornment.End" AdornmentIcon="@GetCpfIcon()" OnAdornmentClick="ToggleCpfObfuscation" AdornmentAriaLabel="Mostrar CPF" />
+                                }
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_model.StateOfResidency" Label="Estado (UF)" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="2" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudForm>
+
+                    <div class="d-flex justify-end mt-6 gap-2">
+                        @if (!_isEditing)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="ToggleEdit">Editar Perfil</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ToggleEdit">Cancelar</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" OnClick="SavePacient" Disabled="@(!_isFormValid)">Salvar Alterações</MudButton>
+                        }
+                    </div>
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Histórico" Icon="@Icons.Material.Filled.Assignment" >
+                <div class="pa-6">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6" Class="mr-2">Histórico do Paciente</MudText>
+                        <MudDatePicker Date="_recordsFilterDate" DateChanged="OnFilterDateChanged" OpenTo="OpenTo.Month" FixDay="1" DateFormat="MM/yyyy" Label="Filtrar por Mês" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 200px" />
+                    </div>
+
+                    @if (_isLoadingRecords)
+                    {
+                        <div class="d-flex justify-center my-4">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        </div>
+                    }
+                    else if (_records.Any())
+                    {
+                        <div class="d-flex flex-column gap-4" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                            @foreach (var record in _records)
+                            {
+                                <MudCard Elevation="2" Class="pa-0">
+                                    <MudCardHeader Class="pb-2">
+                                        <CardHeaderContent>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                                <b>Consulta:</b> @record.Appointment?.AppointmentDate.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                <b>Criado:</b> @record.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                                                @if (record.UpdatedAt.HasValue)
+                                                {
+                                                    <span> | <b>Última Retificação:</b> @record.UpdatedAt.Value.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                                }
+                                            </MudText>
+                                        </CardHeaderContent>
+                                        <CardHeaderActions>
+                                            <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" OnClick="@(() => RectifyRecord(record))" StartIcon="@Icons.Material.Filled.Edit">
+                                                Retificar
+                                            </MudButton>
+                                        </CardHeaderActions>
+                                    </MudCardHeader>
+                                    <MudCardContent Class="pt-0">
+                                        <MudText Typo="Typo.body2" Style="white-space: pre-wrap; word-break: break-word;">
+                                            @record.Note
+                                        </MudText>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                            @if (_totalRecords > _records.Count)
+                            {
+                                <div class="d-flex justify-center mt-2">
+                                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="LoadMoreRecords">Ver Mais</MudButton>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">Nenhum prontuário encontrado para este paciente.</MudAlert>
+                    }
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Pacotes" Icon="@Icons.Material.Filled.CardGiftcard">
+                <div class="pa-6">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">Emissões de Pacotes</MudText>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="OpenCreatePackage">Novo Pacote</MudButton>
+                    </div>
+
+                    @if (_isLoadingPackages)
+                    {
+                        <div class="d-flex justify-center my-4">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        </div>
+                    }
+                    else if (_packages.Any())
+                    {
+                        <div class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                            @foreach (var pkg in _packages)
+                            {
+                                <MudPaper Elevation="1" Class="pa-3 d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.subtitle1"><b>Pacote de @pkg.TotalAppointments consultas</b></MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Default">
+                                            Restantes: <b>@pkg.RemainingAppointments</b> | Criado: @pkg.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy")
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            Pagamento: @pkg.PaymentMethod | Valor: @pkg.Price.ToString("C")
+                                        </MudText>
+                                    </div>
+                                    <div class="d-flex align-center gap-2">
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Class="@($"pkg-status-{pkg.Status.ToString().ToLower()}")">
+                                            @pkg.Status.ToString().ToUpper()
+                                        </MudChip>
+                                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditPackage(pkg))">Editar</MudMenuItem>
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" OnClick="@(() => DeletePackageAsync(pkg))">Excluir</MudMenuItem>
+                                        </MudMenu>
+                                    </div>
+                                </MudPaper>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">Nenhum pacote encontrado para este paciente.</MudAlert>
+                    }
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+</MudDialog>

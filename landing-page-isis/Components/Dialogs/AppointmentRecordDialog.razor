@@ -1,0 +1,51 @@
+@using landing_page_isis.core.Models
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Assignment" Class="mr-3" />
+            Finalizar Consulta e Adicionar Anotação
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            Ao finalizar, esta consulta será marcada como realizada. Use o campo abaixo para as notas da sessão.
+        </MudAlert>
+        <MudTextField @bind-Value="_note"
+                      Label="Notas da Sessão"
+                      Lines="10"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Placeholder="Descreva aqui..."
+                      Required="true"
+                      RequiredError="As notas do prontuário são obrigatórias para finalizar." />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(string.IsNullOrWhiteSpace(_note))">Finalizar Consulta</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public Appointment Appointment { get; set; } = null!;
+
+    private string _note = string.Empty;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        var record = new AppointmentRecord
+        {
+            AppointmentId = Appointment.Id,
+            Note = _note,
+            CreatedAt = DateTime.UtcNow
+        };
+        MudDialog.Close(DialogResult.Ok(record));
+    }
+}

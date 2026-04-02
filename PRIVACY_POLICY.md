@@ -18,7 +18,12 @@ Caso você assine o contrato terapêutico e inicie o acompanhamento formal, os s
 * **CPF, Endereço e Data de Nascimento.**
 * *Finalidade:* Utilizados **obrigatoriamente** para a elaboração formal do contrato de prestação de serviço psicológico e para a emissão de recibos/notas fiscais.
 
-> **⚠️ Atenção:** Este ambiente virtual serve **exclusivamente** para contato e organização de agenda. **Nenhum prontuário, anotação clínica ou histórico terapêutico** é armazenado neste sistema. 
+**Etapa Clínica (Acompanhamento Terapêutico)**
+Durante as sessões, dados sensíveis referentes à sua saúde mental são registrados:
+* **Anotações Clínicas das Consultas.**
+* *Finalidade:* Acompanhar a evolução terapêutica e garantir a excelência técnica do serviço de psicologia prestado.
+
+> **🔒 Segurança Absoluta (Criptografia AES-256):** Levamos o sigilo profissional ao mais alto patamar da tecnologia. **Todas as suas anotações e evoluções clínicas são rigorosamente criptografadas (padrão AES-256)** antes de serem guardados no banco de dados. Isso significa que nem mesmo administradores de sistema, engenheiros de banco de dados ou interceptações criminosas possuem a chave para decifrá-los ou ler as notas da sua consulta. Apenas a profissional responsável possui o token sistêmico capaz de decriptar o conteúdo.
 
 ### 3. Como cuidamos dos seus dados?
 Os dados listados na Etapa 2 ficam armazenados em nosso banco de dados protegido e com acesso limitado unicamente à profissional responsável. Suas informações, de forma alguma, serão vendidas ou repassadas a terceiros com o intuito de publicidade ou marketing. 

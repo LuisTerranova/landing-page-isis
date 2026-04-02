@@ -91,50 +91,6 @@ public partial class PacientsView : ComponentBase
         }
     }
 
-    private async Task EditPacient(Pacient pacient)
-    {
-        var parameters = new DialogParameters<PacientDialog>
-        {
-            { x => x.Titulo, "Editar Paciente" },
-            {
-                x => x.Model,
-                new Pacient
-                {
-                    Id = pacient.Id,
-                    Name = pacient.Name,
-                    Cpf = pacient.Cpf,
-                    BirthDate = pacient.BirthDate,
-                    Email = pacient.Email,
-                    Phone = pacient.Phone,
-                    StateOfResidency = pacient.StateOfResidency,
-                }
-            },
-        };
-        var options = new DialogOptions
-        {
-            CloseOnEscapeKey = true,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-        };
-
-        var dialog = await DialogService.ShowAsync<PacientDialog>("Edição", parameters, options);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false } && result.Data is Pacient pacientEditado)
-        {
-            var sucesso = await PacientHandler.UpdatePacient(pacientEditado);
-            if (sucesso.Success)
-            {
-                Snackbar.Add("Paciente atualizado!", Severity.Success);
-                await _pacientsTable.ReloadAsync();
-            }
-            else
-            {
-                Snackbar.Add($"Erro ao atualizar: {sucesso.Message}", Severity.Error);
-            }
-        }
-    }
-
     private async Task OpenCreate()
     {
         var parameters = new DialogParameters<PacientDialog> { { x => x.Titulo, "Novo Paciente" } };
@@ -157,6 +113,29 @@ public partial class PacientsView : ComponentBase
                 await _pacientsTable.ReloadAsync();
             }
         }
+    }
+
+    private async Task OpenDetails(Pacient pacient)
+    {
+        var parameters = new DialogParameters<PacientDetailsDialog>
+        {
+            { x => x.Pacient, pacient }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<PacientDetailsDialog>(
+            string.Empty,
+            parameters,
+            options
+        );
+        await dialog.Result;
     }
 
     #endregion

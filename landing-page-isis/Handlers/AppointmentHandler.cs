@@ -41,7 +41,8 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 
         var totalItems = await query.CountAsync(ct);
 
-        //WIP add return if null here, with paginatedresponse and null items if count 0.
+        if (totalItems <= 0)
+            return new PaginatedResponse<Appointment?>([], totalItems, page, pageSize);
 
         var items = await query
             .OrderByDescending(a => a.AppointmentDate)
@@ -79,6 +80,21 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 
         if (isOccupied)
             return new HandlerResult(false, "Este horário já possui um agendamento.");
+
+        var activePackage = await context.AppointmentPackages.FirstOrDefaultAsync(p =>
+            p.PacientId == appointment.PacientId
+            && p.Status == PackageStatus.Ativo
+            && p.RemainingAppointments > 0
+        );
+
+        if (activePackage != null)
+        {
+            activePackage.RemainingAppointments--;
+            if (activePackage.RemainingAppointments <= 0)
+                activePackage.Status = PackageStatus.Esgotado;
+
+            appointment.Price = 0; // Zera o valor individual pois a consulta é via pacote
+        }
 
         context.Appointments.Add(appointment);
         await context.SaveChangesAsync();
