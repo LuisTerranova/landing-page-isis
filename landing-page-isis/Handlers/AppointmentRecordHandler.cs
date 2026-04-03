@@ -3,6 +3,7 @@ using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.Data;
 using Microsoft.EntityFrameworkCore;
+using landing_page_isis.Extensions;
 
 namespace landing_page_isis.Handlers;
 
@@ -56,6 +57,8 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (string.IsNullOrEmpty(record.Note))
             return new HandlerResult(false, "Nota de consulta não pode estar nula.");
 
+        record.CreatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
+
         context.AppointmentRecords.Add(record);
         await context.SaveChangesAsync();
         return new HandlerResult(true, "Nota criada com sucesso.");
@@ -68,8 +71,8 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (existing == null)
             return new HandlerResult(false, "Nota não encontrada.");
 
-        existing.Note += $"\n\nRetificado em {DateTime.Now:dd/MM/yyyy HH:mm}:\n{record.Note}";
-        existing.UpdatedAt = DateTime.UtcNow;
+        existing.Note += $"\n\nRetificado em {DateTime.Now.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
+        existing.UpdatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
 
         context.Entry(existing).CurrentValues.SetValues(existing);
         await context.SaveChangesAsync();

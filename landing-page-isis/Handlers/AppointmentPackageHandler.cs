@@ -3,6 +3,7 @@ using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.Data;
 using Microsoft.EntityFrameworkCore;
+using landing_page_isis.Extensions;
 
 namespace landing_page_isis.Handlers;
 
@@ -51,7 +52,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
             return new HandlerResult(false, "Paciente já possui um pacote ativo.");
 
         package.RemainingAppointments = package.TotalAppointments;
-        package.CreatedAt = DateTime.UtcNow; // Ensure Utc for Postgres
+        package.CreatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset(); // Ensure the package starts tracking relative to Porto Velho
 
         context.AppointmentPackages.Add(package);
         await context.SaveChangesAsync();
@@ -69,7 +70,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         existing.PaymentMethod = package.PaymentMethod;
         existing.Price = package.Price;
         existing.Status = package.Status;
-        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
 
         await context.SaveChangesAsync();
         return new HandlerResult(true);

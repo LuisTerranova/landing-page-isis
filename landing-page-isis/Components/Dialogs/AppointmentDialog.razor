@@ -1,6 +1,8 @@
 @namespace landing_page_isis.Components.Dialogs
 @using landing_page_isis.core.Models
 @using landing_page_isis.core
+@using landing_page_isis.Extensions
+
 
 <MudDialog>
     <TitleContent>
@@ -21,8 +23,6 @@
                                     Required="true"
                                     Variant="Variant.Outlined"
                                     ResetValueOnEmptyText="true"
-                                    CoerceText="true" 
-                                    CoerceValue="true"
                                     ShowProgressIndicator="true"
                                     ProgressIndicatorColor="Color.Primary"
                                     Placeholder="Comece a digitar o nome do paciente..." />
@@ -102,11 +102,9 @@
         if (Model.Id != Guid.Empty && Model.AppointmentDate != default)
         {
             // For editing, convert the model's UTC DateTimeOffset to Porto Velho time for the pickers
-            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-            var localTime = TimeZoneInfo.ConvertTime(Model.AppointmentDate, pvhTimeZone);
+            var localTime = Model.AppointmentDate.ToPortoVelhoTime();
             _tempDate = localTime.Date;
             _tempTime = localTime.TimeOfDay;
-            Console.WriteLine($"[EditForm] Loaded existing appointment: LocalTime={localTime}, Date={_tempDate}, Time={_tempTime}");
         }
     }
 
@@ -119,14 +117,8 @@
             // Combine Date and Time into a single local DateTime
             var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
 
-            // Explicitly treat this combined date/time as Porto Velho time
-            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-
-            // Create a DateTimeOffset assuming this is Porto Velho time
-            // This will correctly calculate the UTC offset (-04:00)
-            Model.AppointmentDate = new DateTimeOffset(combinedDateTime, pvhTimeZone.GetUtcOffset(combinedDateTime));
-
-            Console.WriteLine($"[SalvarForm] Extracted: Date={_tempDate}, Time={_tempTime} | Combined: {combinedDateTime} | Assigned To Model (PVH Offset): {Model.AppointmentDate}");
+            // Create a DateTimeOffset using the Porto Velho extension
+            Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
         }
 
         Model.PacientId = _selectedPacient?.Id ?? Guid.Empty;

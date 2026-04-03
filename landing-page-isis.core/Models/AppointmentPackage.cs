@@ -9,8 +9,8 @@ public class AppointmentPackage
     public PaymentMethod PaymentMethod { get; set; }
     public decimal Price { get; set; }
     public PackageStatus Status { get; set; } = PackageStatus.Ativo;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     public Pacient? Pacient { get; set; }
 }

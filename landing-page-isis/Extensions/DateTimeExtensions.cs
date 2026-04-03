@@ -16,4 +16,10 @@ public static class DateTimeExtensions
     {
         return TimeZoneInfo.ConvertTimeFromUtc(dateOffset.UtcDateTime, PortoVelhoZone);
     }
+
+    public static DateTimeOffset ToPortoVelhoDateTimeOffset(this DateTime date)
+    {
+        var offset = new DateTimeOffset(date, PortoVelhoZone.GetUtcOffset(date));
+        return offset.ToUniversalTime(); // Postgres requires Offset 0 (UTC)
+    }
 }

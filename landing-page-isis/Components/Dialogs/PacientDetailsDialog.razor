@@ -77,36 +77,38 @@
                     }
                     else if (_records.Any())
                     {
-                        <div class="d-flex flex-column gap-4" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
-                            @foreach (var record in _records)
-                            {
-                                <MudCard Elevation="2" Class="pa-0">
-                                    <MudCardHeader Class="pb-2">
-                                        <CardHeaderContent>
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                                                <b>Consulta:</b> @record.Appointment?.AppointmentDate.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                        <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px;">
+                            <MudExpansionPanels MultiExpansion="true" Elevation="2" Class="mb-3">
+                                @foreach (var record in _records)
+                                {
+                                    <MudExpansionPanel>
+                                        <TitleContent>
+                                            <div class="d-flex flex-column">
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                                    <b>Consulta:</b> @record.Appointment?.AppointmentDate.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                                                </MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    <b>Criado:</b> @record.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                                                    @if (record.UpdatedAt.HasValue)
+                                                    {
+                                                        <span> | <b>Última Retificação:</b> @record.UpdatedAt.Value.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                                    }
+                                                </MudText>
+                                            </div>
+                                        </TitleContent>
+                                        <ChildContent>
+                                            <MudText Typo="Typo.body2" Style="white-space: pre-wrap; word-break: break-word;" Class="mb-3">
+                                                @record.Note
                                             </MudText>
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                                <b>Criado:</b> @record.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
-                                                @if (record.UpdatedAt.HasValue)
-                                                {
-                                                    <span> | <b>Última Retificação:</b> @record.UpdatedAt.Value.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")</span>
-                                                }
-                                            </MudText>
-                                        </CardHeaderContent>
-                                        <CardHeaderActions>
-                                            <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" OnClick="@(() => RectifyRecord(record))" StartIcon="@Icons.Material.Filled.Edit">
-                                                Retificar
-                                            </MudButton>
-                                        </CardHeaderActions>
-                                    </MudCardHeader>
-                                    <MudCardContent Class="pt-0">
-                                        <MudText Typo="Typo.body2" Style="white-space: pre-wrap; word-break: break-word;">
-                                            @record.Note
-                                        </MudText>
-                                    </MudCardContent>
-                                </MudCard>
-                            }
+                                            <div class="d-flex justify-end">
+                                                <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" OnClick="@(() => RectifyRecord(record))" StartIcon="@Icons.Material.Filled.Edit">
+                                                    Retificar
+                                                </MudButton>
+                                            </div>
+                                        </ChildContent>
+                                    </MudExpansionPanel>
+                                }
+                            </MudExpansionPanels>
                             @if (_totalRecords > _records.Count)
                             {
                                 <div class="d-flex justify-center mt-2">
