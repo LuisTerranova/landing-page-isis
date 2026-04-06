@@ -22,5 +22,13 @@ public class AppointmentMap : IEntityTypeConfiguration<Appointment>
         builder.Property(a => a.Price).IsRequired().HasColumnName("appointment_price");
 
         builder.Property(a => a.ReminderSent).IsRequired().HasColumnName("reminder_sent");
+
+        builder.Property(a => a.PackageId).IsRequired(false).HasColumnName("package_id");
+
+        builder
+            .HasOne(a => a.Package)
+            .WithMany()
+            .HasForeignKey(a => a.PackageId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

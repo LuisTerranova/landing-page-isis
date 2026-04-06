@@ -109,6 +109,7 @@ public partial class AppointmentsView : ComponentBase
                     AppointmentStatus = appointment.AppointmentStatus,
                     Price = appointment.Price,
                     PacientId = appointment.PacientId,
+                    PackageId = appointment.PackageId,
                 }
             },
         };

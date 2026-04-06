@@ -8,10 +8,7 @@ public static class DateTimeExtensions
 
     public static DateTime ToPortoVelhoTime(this DateTime date)
     {
-        if (date.Kind == DateTimeKind.Local)
-            date = date.ToUniversalTime();
-
-        return TimeZoneInfo.ConvertTimeFromUtc(date, PortoVelhoZone);
+        return TimeZoneInfo.ConvertTime(date, PortoVelhoZone);
     }
 
     public static DateTime ToPortoVelhoTime(this DateTimeOffset dateOffset)
@@ -21,7 +18,8 @@ public static class DateTimeExtensions
 
     public static DateTimeOffset ToPortoVelhoDateTimeOffset(this DateTime date)
     {
-        var offset = new DateTimeOffset(date, PortoVelhoZone.GetUtcOffset(date));
-        return offset.ToUniversalTime(); // Postgres requires Offset 0 (UTC)
+        var unspecified = DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
+        var offset = PortoVelhoZone.GetUtcOffset(unspecified);
+        return new DateTimeOffset(unspecified, offset).ToUniversalTime();
     }
 }

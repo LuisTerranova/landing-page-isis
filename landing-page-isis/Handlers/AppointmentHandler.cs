@@ -96,7 +96,8 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             if (activePackage.RemainingAppointments <= 0)
                 activePackage.Status = PackageStatus.Esgotado;
 
-            appointment.Price = 0; // Zera o valor individual pois a consulta é via pacote
+            appointment.PackageId = activePackage.Id;
+            appointment.Price = 0;
         }
 
         context.Appointments.Add(appointment);
@@ -120,6 +121,15 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (appointment.PacientId == Guid.Empty)
             return new HandlerResult(false, "Selecione um paciente válido.");
 
+        if (
+            appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada
+            && existing.AppointmentStatus != AppointmentStatusEnum.Cancelada
+            && existing.PackageId.HasValue
+        )
+        {
+            await RefundPackageCredit(existing.PackageId.Value);
+        }
+
         // Normalize to UTC for PostgreSQL compatibility
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
@@ -142,6 +152,9 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         var app = await context.Appointments.FindAsync(id);
         if (app == null)
             return new HandlerResult(false, "Consulta não encontrada.");
+
+        if (app.PackageId.HasValue)
+            await RefundPackageCredit(app.PackageId.Value);
 
         context.Appointments.Remove(app);
         await context.SaveChangesAsync();
@@ -211,5 +224,17 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             .ToListAsync(ct);
 
         return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+    }
+
+    private async Task RefundPackageCredit(Guid packageId)
+    {
+        var package = await context.AppointmentPackages.FindAsync(packageId);
+        if (package == null)
+            return;
+
+        package.RemainingAppointments++;
+
+        if (package.Status == PackageStatus.Esgotado)
+            package.Status = PackageStatus.Ativo;
     }
 }
