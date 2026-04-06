@@ -1,6 +1,6 @@
 # 🌿 Landing Page - Isis Vitória
 
-[![.NET](https://img.shields.io/badge/.NET-9.0-512bd4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512bd4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Blazor](https://img.shields.io/badge/Blazor-Interactive%20Server-512bd4?logo=blazor)](https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor)
 [![MudBlazor](https://img.shields.io/badge/MudBlazor-UI%20Framework-512bd4?logo=mudblazor)](https://mudblazor.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-latest-4169e1?logo=postgresql)](https://www.postgresql.org/)
@@ -31,7 +31,7 @@ Projeto Full-Stack desenvolvido para a psicóloga **Isis Vitória**, focado na c
 ## 🛠️ Stack Tecnológica
 
 ### Backend & Core
-- **Framework:** .NET 9.0 (ASP.NET Core)
+- **Framework:** .NET 10.0 (ASP.NET Core)
 - **Persistência:** Entity Framework Core
 - **Banco de Dados:** PostgreSQL
 - **Templates de E-mail:** RazorLight (Engine Razor para templates HTML)
@@ -77,7 +77,7 @@ A aplicação estará disponível em `http://localhost:8080`. O banco de dados e
 ## 🛠️ Desenvolvimento e Customização
 
 Se desejar rodar o projeto manualmente sem Docker para desenvolvimento:
-- Certifique-se de ter o [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) instalado.
+- Certifique-se de ter o [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) instalado.
 - Configure um banco PostgreSQL local e atualize a string de conexão em `appsettings.Development.json`.
 - Utilize o comando `dotnet ef database update` para gerenciar o esquema do banco via migrations.
 

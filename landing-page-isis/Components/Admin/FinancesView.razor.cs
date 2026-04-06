@@ -98,7 +98,10 @@ public partial class FinancesView : ComponentBase
             {
                 var monthlyAppointments = (double)
                     appointments
-                        .Where(a => a.AppointmentDate.Month == i && a.AppointmentStatus == AppointmentStatusEnum.Realizada)
+                        .Where(a =>
+                            a.AppointmentDate.Month == i
+                            && a.AppointmentStatus == AppointmentStatusEnum.Realizada
+                        )
                         .Sum(a => a.Price);
 
                 var monthlyPackages = (double)
