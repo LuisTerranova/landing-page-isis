@@ -31,11 +31,22 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
 
         if (filterMonthYear.HasValue)
         {
-            var localStart = new DateTime(filterMonthYear.Value.Year, filterMonthYear.Value.Month, 1, 0, 0, 0, DateTimeKind.Local);
+            var localStart = new DateTime(
+                filterMonthYear.Value.Year,
+                filterMonthYear.Value.Month,
+                1,
+                0,
+                0,
+                0,
+                DateTimeKind.Local
+            );
             var utcStart = localStart.ToUniversalTime();
             var utcEnd = localStart.AddMonths(1).ToUniversalTime();
 
-            query = query.Where(ar => ar.Appointment!.AppointmentDate >= utcStart && ar.Appointment.AppointmentDate < utcEnd);
+            query = query.Where(ar =>
+                ar.Appointment!.AppointmentDate >= utcStart
+                && ar.Appointment.AppointmentDate < utcEnd
+            );
         }
 
         var totalItems = await query.CountAsync(ct);
@@ -71,7 +82,8 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (existing == null)
             return new HandlerResult(false, "Nota não encontrada.");
 
-        existing.Note += $"\n\nRetificado em {DateTime.Now.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
+        existing.Note +=
+            $"\n\nRetificado em {DateTime.Now.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
         existing.UpdatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
 
         context.Entry(existing).CurrentValues.SetValues(existing);

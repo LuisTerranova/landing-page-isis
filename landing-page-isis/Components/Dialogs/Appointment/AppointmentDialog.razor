@@ -15,16 +15,16 @@
             <MudGrid>
                 <MudItem xs="12">
                     <MudAutocomplete T="Pacient"
-                                    Label="Paciente"
-                                    @bind-Value="_selectedPacient"
-                                    SearchFunc="@SearchPacient"
-                                    ToStringFunc="@(p => p == null ? "" : p.Name)"
-                                    Required="true"
-                                    Variant="Variant.Outlined"
-                                    ResetValueOnEmptyText="true"
-                                    ShowProgressIndicator="true"
-                                    ProgressIndicatorColor="Color.Primary"
-                                    Placeholder="Comece a digitar o nome do paciente..." />
+                                     Label="Paciente"
+                                     @bind-Value="_selectedPacient"
+                                     SearchFunc="@SearchPacient"
+                                     ToStringFunc="@(p => p == null ? "" : p.Name)"
+                                     Required="true"
+                                     Variant="Variant.Outlined"
+                                     ResetValueOnEmptyText="true"
+                                     ShowProgressIndicator="true"
+                                     ProgressIndicatorColor="Color.Primary"
+                                     Placeholder="Comece a digitar o nome do paciente..."/>
                 </MudItem>
                 <MudItem xs="6">
                     <MudDatePicker Label="Data da Consulta"

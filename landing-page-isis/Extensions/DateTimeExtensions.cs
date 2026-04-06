@@ -21,15 +21,7 @@ public static class DateTimeExtensions
 
     public static DateTimeOffset ToPortoVelhoDateTimeOffset(this DateTime date)
     {
-        DateTime utcDate = date.Kind == DateTimeKind.Utc ? date : date.ToUniversalTime();
-
-        DateTime portoVelhoTime = TimeZoneInfo.ConvertTimeFromUtc(utcDate, PortoVelhoZone);
-
-        var offset = new DateTimeOffset(
-            DateTime.SpecifyKind(portoVelhoTime, DateTimeKind.Unspecified),
-            PortoVelhoZone.GetUtcOffset(portoVelhoTime)
-        );
-
-        return offset.ToUniversalTime();
+        var offset = new DateTimeOffset(date, PortoVelhoZone.GetUtcOffset(date));
+        return offset.ToUniversalTime(); // Postgres requires Offset 0 (UTC)
     }
 }
