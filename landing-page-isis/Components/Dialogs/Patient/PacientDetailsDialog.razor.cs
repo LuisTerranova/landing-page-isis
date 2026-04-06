@@ -3,8 +3,9 @@ using landing_page_isis.core.Models;
 using landing_page_isis.Extensions;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using landing_page_isis.Components.Dialogs.Appointment;
 
-namespace landing_page_isis.Components.Dialogs;
+namespace landing_page_isis.Components.Dialogs.Patient;
 
 public partial class PacientDetailsDialog : ComponentBase
 {
@@ -32,7 +33,6 @@ public partial class PacientDetailsDialog : ComponentBase
     private bool _showCpf;
     private bool _isEditing;
     private bool _isFormValid;
-    private MudForm _perfilForm = null!;
     private Pacient _model = new();
     private DateTime? _tempBirthDate;
 
@@ -87,12 +87,9 @@ public partial class PacientDetailsDialog : ComponentBase
 
     private async Task SavePacient()
     {
-        if (_perfilForm != null)
-        {
-            await _perfilForm.ValidateAsync();
-            if (!_isFormValid)
-                return;
-        }
+        if (!_isFormValid)
+            return;
+
 
         _model.BirthDate = _tempBirthDate.HasValue
             ? DateOnly.FromDateTime(_tempBirthDate.Value)

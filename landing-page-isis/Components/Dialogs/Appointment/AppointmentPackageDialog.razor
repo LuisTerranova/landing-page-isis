@@ -1,6 +1,6 @@
-@namespace landing_page_isis.Components.Dialogs
-@using landing_page_isis.core.Models
+@namespace landing_page_isis.Components.Dialogs.Appointment
 @using landing_page_isis.core
+@using landing_page_isis.core.Models
 
 <MudDialog>
     <TitleContent>
@@ -10,7 +10,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="_form" @bind-IsValid="@_formValido">
+        <MudForm @bind-IsValid="@_formValido">
             <MudGrid>
                 <MudItem xs="12">
                     <MudNumericField T="int" Label="Quantidade de Consultas" Required="true" Min="1"
@@ -33,7 +33,7 @@
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton OnClick="Cancelar" Color="Color.Error">Cancelar</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
                    Disabled="@(!_formValido)" OnClick="Salvar">
             @(Model.Id == Guid.Empty ? "Criar Pacote" : "Salvar Alterações")
@@ -47,7 +47,6 @@
     [Parameter]
     public AppointmentPackage Model { get; set; } = new AppointmentPackage() { TotalAppointments = 4, Price = 600, PaymentMethod = PaymentMethod.Pix };
 
-    private MudForm _form = null!;
     private bool _formValido;
 
     private void Cancelar() => MudDialog.Cancel();

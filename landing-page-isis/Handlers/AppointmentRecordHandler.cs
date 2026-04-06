@@ -2,8 +2,8 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.Data;
-using Microsoft.EntityFrameworkCore;
 using landing_page_isis.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 

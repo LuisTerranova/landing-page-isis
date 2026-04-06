@@ -1,4 +1,4 @@
-@namespace landing_page_isis.Components.Dialogs
+@namespace landing_page_isis.Components.Dialogs.Patient
 @using landing_page_isis.core.Models
 
 <MudDialog>
@@ -9,7 +9,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm @ref="_form" @bind-IsValid="@_formValido">
+        <MudForm @bind-IsValid="@_formValido">
             <MudGrid>
                 <MudItem xs="12">
                     <MudTextField T="string" Label="Nome Completo" Required="true"
@@ -45,7 +45,7 @@
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton OnClick="Cancelar" Color="Color.Error">Cancelar</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
                    Disabled="@(!_formValido)" OnClick="Salvar">
             Salvar
@@ -59,7 +59,6 @@
     [Parameter] public Pacient Model { get; set; } = new();
     [Parameter] public string Titulo { get; set; } = "Novo Paciente";
 
-    private MudForm _form = null!;
     private bool _formValido;
     private DateTime? _tempBirthDate;
 

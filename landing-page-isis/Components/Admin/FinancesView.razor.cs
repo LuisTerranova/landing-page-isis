@@ -21,10 +21,20 @@ public partial class FinancesView : ComponentBase
 
     private bool _loading = true;
 
+    // Filters
+    private DateRange _dateRange = new DateRange(
+        new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1),
+        new DateTime(
+            DateTime.UtcNow.Year,
+            DateTime.UtcNow.Month,
+            DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month)
+        )
+    );
+
     // KPIs
-    private decimal _currentRevenue;
-    private decimal _expectedMonthlyRevenue;
-    private decimal _annualRevenue;
+    private decimal _realizedRevenue;
+    private decimal _pendingRevenue;
+    private decimal _totalRevenue;
     private decimal _packagesRevenue;
 
     // Charts Data
@@ -43,64 +53,56 @@ public partial class FinancesView : ComponentBase
     private async Task LoadFinances()
     {
         _loading = true;
+        StateHasChanged();
+
         try
         {
-            var now = DateTime.UtcNow;
-            var currentYear = now.Year;
-            var currentMonth = now.Month;
+            var start = _dateRange?.Start ?? new DateTime(DateTime.UtcNow.Year, 1, 1);
+            var end = _dateRange?.End ?? new DateTime(DateTime.UtcNow.Year, 12, 31);
 
-            // Start of year to end of year
-            var startOfYear = new DateTimeOffset(currentYear, 1, 1, 0, 0, 0, TimeSpan.Zero);
-            var endOfYear = new DateTimeOffset(currentYear, 12, 31, 23, 59, 59, TimeSpan.Zero);
+            var startOffset = new DateTimeOffset(start.Date, TimeSpan.Zero);
+            var endOffset = new DateTimeOffset(end.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);
 
             var appointments = await AppointmentHandler.GetAllAppointmentsByDateRange(
-                startOfYear,
-                endOfYear,
+                startOffset,
+                endOffset,
                 CancellationToken.None
             );
 
             var packages = await PackageHandler.GetAllPackagesByDateRange(
-                startOfYear,
-                endOfYear,
+                startOffset,
+                endOffset,
                 CancellationToken.None
             );
 
-            // 0. Packages Revenue (Total strictly from packages this year)
+            // 1. Packages Revenue
             _packagesRevenue = packages.Where(p => p != null).Sum(p => p!.Price);
 
-            // 1. Annual Revenue (All "Realizada" appointments + All Packages in the year)
-            _annualRevenue = appointments
-                .Where(a => a != null && a.AppointmentStatus == AppointmentStatusEnum.Realizada)
-                .Sum(a => a!.Price) +
-                packages.Where(p => p != null).Sum(p => p!.Price);
+            // 2. Realizada Revenue for Period (Completed Appointments + Packages)
+            _realizedRevenue =
+                appointments
+                    .Where(a => a.AppointmentStatus == AppointmentStatusEnum.Realizada)
+                    .Sum(a => a.Price) + _packagesRevenue;
 
-            // 2. Expected Monthly Revenue (All appointments in current month + Current Month Packages)
-            _expectedMonthlyRevenue = appointments
-                .Where(a => a != null && a.AppointmentDate.Month == currentMonth)
-                .Sum(a => a!.Price) +
-                packages.Where(p => p != null && p.CreatedAt.Month == currentMonth).Sum(p => p!.Price);
+            // 3. Pending Revenue for Period (Scheduled Appointments)
+            _pendingRevenue = appointments
+                .Where(a => a.AppointmentStatus == AppointmentStatusEnum.Marcada)
+                .Sum(a => a.Price);
 
-            // 3. Current Revenue (Only "Realizada" + All Packages)
-            _currentRevenue = appointments
-                .Where(a => a != null && a.AppointmentStatus == AppointmentStatusEnum.Realizada)
-                .Sum(a => a!.Price) +
-                _packagesRevenue;
+            // 4. Total Revenue for Period
+            _totalRevenue = _realizedRevenue + _pendingRevenue;
 
-            // 4. Monthly Revenue Chart Data (Bar)
+            // 5. Monthly Revenue Chart Data (Bar)
             var monthlyData = new double[12];
             for (int i = 1; i <= 12; i++)
             {
-                var monthlyAppointments = (double)appointments
-                        .Where(a =>
-                            a != null &&
-                            a.AppointmentDate.Month == i
-                            && a.AppointmentStatus == AppointmentStatusEnum.Realizada
-                        )
-                        .Sum(a => a!.Price);
+                var monthlyAppointments = (double)
+                    appointments
+                        .Where(a => a.AppointmentDate.Month == i && a.AppointmentStatus == AppointmentStatusEnum.Realizada)
+                        .Sum(a => a.Price);
 
-                var monthlyPackages = (double)packages
-                        .Where(p => p != null && p.CreatedAt.Month == i)
-                        .Sum(p => p!.Price);
+                var monthlyPackages = (double)
+                    packages.Where(p => p.CreatedAt.Month == i).Sum(p => p.Price);
 
                 monthlyData[i - 1] = monthlyAppointments + monthlyPackages;
             }
@@ -120,12 +122,13 @@ public partial class FinancesView : ComponentBase
                 "Nov",
                 "Dez",
             ];
+
             _monthlyRevenueSeries =
             [
                 new ChartSeries<double> { Name = "Receita Realizada (R$)", Data = monthlyData },
             ];
 
-            StateHasChanged(); // Force chart refresh after data is ready
+            StateHasChanged();
         }
         catch (Exception ex)
         {

@@ -176,6 +176,14 @@ section {
     font-size: clamp(2.5rem, 6vw, 5rem) !important;
     text-align: center;
     width: 100%;
+    outline: none;
+}
+
+/* Remove Visual Focus */
+.hero-title:focus,
+.hero-title:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .photo-bg {

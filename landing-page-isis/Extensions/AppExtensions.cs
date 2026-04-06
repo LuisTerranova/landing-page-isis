@@ -8,9 +8,9 @@ public static class AppExtensions
     {
         app.UseForwardedHeaders();
 
-        app.UseResponseCompression();
         if (!app.Environment.IsDevelopment())
         {
+            app.UseResponseCompression();
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
             app.UseHsts();
         }

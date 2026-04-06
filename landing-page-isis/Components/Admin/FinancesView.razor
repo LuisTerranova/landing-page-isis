@@ -6,9 +6,23 @@
 
 <PageTitle>Financeiro | Isis Vitória</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
-    FINANCEIRO
-</MudText>
+<div class="d-flex justify-space-between align-center mb-6">
+    <MudText Typo="Typo.h4" Color="Color.Secondary" Style="font-weight: 800">
+        FINANCEIRO
+    </MudText>
+
+    <MudPaper Class="pa-2 d-flex align-center gap-2" Elevation="1" Style="background-color: var(--mud-palette-surface);">
+        <MudDateRangePicker Label="Filtrar por Período" @bind-DateRange="_dateRange" 
+                            Margin="Margin.Dense" Variant="Variant.Outlined" 
+                            DateFormat="dd/MM/yyyy" Clearable="true" 
+                            PickerVariant="PickerVariant.Dialog"
+                            Style="max-width: 310px" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                   OnClick="LoadFinances" StartIcon="@Icons.Material.Filled.Search">
+            Filtrar
+        </MudButton>
+    </MudPaper>
+</div>
 
 @if (_loading)
 {
@@ -22,10 +36,10 @@ else
             <MudCard Class="schedule-card hover-elevate transition-all">
                 <MudCardContent>
                     <MudText Typo="Typo.subtitle2" Class="white-text-70 uppercase mb-2">
-                        Receita Atual (R$)
+                        Receita Realizada (R$)
                     </MudText>
                     <MudText Typo="Typo.h5" Class="white-text" Style="font-weight: 700;">
-                        @_currentRevenue.ToString("C")
+                        @_realizedRevenue.ToString("C")
                     </MudText>
                 </MudCardContent>
             </MudCard>
@@ -35,10 +49,10 @@ else
             <MudCard Class="schedule-card hover-elevate transition-all">
                 <MudCardContent>
                     <MudText Typo="Typo.subtitle2" Class="white-text-70 uppercase mb-2">
-                        Mensal Prevista (R$)
+                        Receita Pendente (R$)
                     </MudText>
                     <MudText Typo="Typo.h5" Class="white-text" Style="font-weight: 700;">
-                        @_expectedMonthlyRevenue.ToString("C")
+                        @_pendingRevenue.ToString("C")
                     </MudText>
                 </MudCardContent>
             </MudCard>
@@ -48,10 +62,10 @@ else
             <MudCard Class="schedule-card hover-elevate transition-all">
                 <MudCardContent>
                     <MudText Typo="Typo.subtitle2" Class="white-text-70 uppercase mb-2">
-                        Receita Anual Total (R$)
+                        Receita Total Prevista (R$)
                     </MudText>
                     <MudText Typo="Typo.h5" Class="white-text" Style="font-weight: 700;">
-                        @_annualRevenue.ToString("C")
+                        @_totalRevenue.ToString("C")
                     </MudText>
                 </MudCardContent>
             </MudCard>

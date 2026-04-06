@@ -81,11 +81,14 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (isOccupied)
             return new HandlerResult(false, "Este horário já possui um agendamento.");
 
-        var activePackage = await context.AppointmentPackages.FirstOrDefaultAsync(p =>
-            p.PacientId == appointment.PacientId
-            && p.Status == PackageStatus.Ativo
-            && p.RemainingAppointments > 0
-        );
+        var activePackage = await context
+            .AppointmentPackages.Where(p =>
+                p.PacientId == appointment.PacientId
+                && p.Status == PackageStatus.Ativo
+                && p.RemainingAppointments > 0
+            )
+            .OrderBy(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
 
         if (activePackage != null)
         {

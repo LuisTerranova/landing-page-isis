@@ -2,6 +2,7 @@
 @using landing_page_isis.Components.Forms
 @using landing_page_isis.Components.Layout
 @layout MainLayout
+@inject IJSRuntime Js
 
 <PageTitle>Psicóloga Isis Vitória</PageTitle>
 
@@ -145,3 +146,13 @@
     <LeadFormContact/>
 </div>
 
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Removes automatic visual focus
+            await Js.InvokeVoidAsync("eval", "document.activeElement?.blur()");
+        }
+    }
+}

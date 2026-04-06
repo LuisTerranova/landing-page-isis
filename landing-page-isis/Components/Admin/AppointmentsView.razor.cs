@@ -1,4 +1,4 @@
-using landing_page_isis.Components.Dialogs;
+using landing_page_isis.Components.Dialogs.Appointment;
 using landing_page_isis.Components.Helpers;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;

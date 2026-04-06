@@ -1,3 +1,4 @@
+@namespace landing_page_isis.Components.Dialogs.Patient
 <MudDialog>
     <TitleContent>
         <div class="d-flex align-center gap-2">
@@ -10,7 +11,7 @@
             
             <MudTabPanel Text="Perfil" Icon="@Icons.Material.Filled.Info">
                 <div class="pa-6">
-                    <MudForm @ref="_perfilForm" @bind-IsValid="@_isFormValid">
+                    <MudForm @bind-IsValid="@_isFormValid">
                         <MudGrid>
                             <MudItem xs="12" sm="6">
                                 <MudTextField @bind-Value="_model.Name" Label="Nome" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
@@ -55,7 +56,7 @@
                         }
                         else
                         {
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ToggleEdit">Cancelar</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ToggleEdit">Cancelar</MudButton>
                             <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" OnClick="SavePacient" Disabled="@(!_isFormValid)">Salvar Alterações</MudButton>
                         }
                     </div>

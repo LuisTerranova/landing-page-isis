@@ -1,4 +1,4 @@
-using landing_page_isis.Components.Dialogs;
+using landing_page_isis.Components.Dialogs.Patient;
 using landing_page_isis.Components.Helpers;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
@@ -117,17 +117,14 @@ public partial class PacientsView : ComponentBase
 
     private async Task OpenDetails(Pacient pacient)
     {
-        var parameters = new DialogParameters<PacientDetailsDialog>
-        {
-            { x => x.Pacient, pacient }
-        };
+        var parameters = new DialogParameters<PacientDetailsDialog> { { x => x.Pacient, pacient } };
 
         var options = new DialogOptions
         {
             CloseOnEscapeKey = true,
             MaxWidth = MaxWidth.Medium,
             FullWidth = true,
-            CloseButton = true
+            CloseButton = true,
         };
 
         var dialog = await DialogService.ShowAsync<PacientDetailsDialog>(

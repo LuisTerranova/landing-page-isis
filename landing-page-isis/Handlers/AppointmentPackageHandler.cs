@@ -2,8 +2,8 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.Data;
-using Microsoft.EntityFrameworkCore;
 using landing_page_isis.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
@@ -43,13 +43,6 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
 
         if (package.Price <= 0)
             return new HandlerResult(false, "O preço deve ser maior que zero.");
-
-        var hasActivePackage = await context.AppointmentPackages.AnyAsync(ap =>
-            ap.PacientId == package.PacientId && ap.Status == PackageStatus.Ativo
-        );
-
-        if (hasActivePackage)
-            return new HandlerResult(false, "Paciente já possui um pacote ativo.");
 
         package.RemainingAppointments = package.TotalAppointments;
         package.CreatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset(); // Ensure the package starts tracking relative to Porto Velho
@@ -93,11 +86,14 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         CancellationToken ct
     )
     {
+        if (!await context.AppointmentPackages.AnyAsync(ct))
+            return [];
+
         return (
             await context
                 .AppointmentPackages.AsNoTracking()
                 .Where(ap => ap.CreatedAt >= start.UtcDateTime && ap.CreatedAt <= end.UtcDateTime)
                 .ToListAsync(ct)
-        );
+        )!;
     }
 }

@@ -1,5 +1,5 @@
+@namespace landing_page_isis.Components.Dialogs.Appointment
 @using landing_page_isis.core.Models
-@using MudBlazor
 
 <MudDialog>
     <TitleContent>
@@ -22,7 +22,7 @@
                       RequiredError="As notas do prontuário são obrigatórias para finalizar." />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Error">Cancelar</MudButton>
         <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(string.IsNullOrWhiteSpace(_note))">Finalizar Consulta</MudButton>
     </DialogActions>
 </MudDialog>
