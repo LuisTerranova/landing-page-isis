@@ -2,7 +2,9 @@ namespace landing_page_isis.Extensions;
 
 public static class DateTimeExtensions
 {
-    private static readonly TimeZoneInfo PortoVelhoZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
+    private static readonly TimeZoneInfo PortoVelhoZone = TimeZoneInfo.FindSystemTimeZoneById(
+        "America/Porto_Velho"
+    );
 
     public static DateTime ToPortoVelhoTime(this DateTime date)
     {
@@ -19,7 +21,15 @@ public static class DateTimeExtensions
 
     public static DateTimeOffset ToPortoVelhoDateTimeOffset(this DateTime date)
     {
-        var offset = new DateTimeOffset(date, PortoVelhoZone.GetUtcOffset(date));
-        return offset.ToUniversalTime(); // Postgres requires Offset 0 (UTC)
+        DateTime utcDate = date.Kind == DateTimeKind.Utc ? date : date.ToUniversalTime();
+
+        DateTime portoVelhoTime = TimeZoneInfo.ConvertTimeFromUtc(utcDate, PortoVelhoZone);
+
+        var offset = new DateTimeOffset(
+            DateTime.SpecifyKind(portoVelhoTime, DateTimeKind.Unspecified),
+            PortoVelhoZone.GetUtcOffset(portoVelhoTime)
+        );
+
+        return offset.ToUniversalTime();
     }
 }
