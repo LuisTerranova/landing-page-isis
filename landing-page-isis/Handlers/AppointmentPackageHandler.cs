@@ -2,7 +2,6 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.Data;
-using landing_page_isis.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
@@ -45,7 +44,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
             return new HandlerResult(false, "O preço deve ser maior que zero.");
 
         package.RemainingAppointments = package.TotalAppointments;
-        package.CreatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset(); // Ensure the package starts tracking relative to Porto Velho
+        package.CreatedAt = DateTimeOffset.UtcNow;
 
         context.AppointmentPackages.Add(package);
         await context.SaveChangesAsync();
@@ -63,7 +62,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         existing.PaymentMethod = package.PaymentMethod;
         existing.Price = package.Price;
         existing.Status = package.Status;
-        existing.UpdatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
+        existing.UpdatedAt = DateTimeOffset.UtcNow;
 
         await context.SaveChangesAsync();
         return new HandlerResult(true);

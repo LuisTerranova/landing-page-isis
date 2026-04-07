@@ -68,7 +68,7 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (string.IsNullOrEmpty(record.Note))
             return new HandlerResult(false, "Nota de consulta não pode estar nula.");
 
-        record.CreatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
+        record.CreatedAt = DateTimeOffset.UtcNow;
 
         context.AppointmentRecords.Add(record);
         await context.SaveChangesAsync();
@@ -83,8 +83,8 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
             return new HandlerResult(false, "Nota não encontrada.");
 
         existing.Note +=
-            $"\n\nRetificado em {DateTime.Now.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
-        existing.UpdatedAt = DateTime.Now.ToPortoVelhoDateTimeOffset();
+            $"\n\nRetificado em {DateTimeOffset.UtcNow.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
+        existing.UpdatedAt = DateTimeOffset.UtcNow;
 
         context.Entry(existing).CurrentValues.SetValues(existing);
         await context.SaveChangesAsync();
