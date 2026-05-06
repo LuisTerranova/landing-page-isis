@@ -1,7 +1,8 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
-using landing_page_isis.Data;
+using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -17,7 +18,7 @@ public partial class LeadHandler(
     private string? RemoteIp =>
         httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
-    public async Task<PaginatedResponse<Lead?>> GetLeads(
+    public async Task<PaginatedResponse<LeadListItemDto>> GetLeads(
         int page,
         int pageSize,
         CancellationToken ct
@@ -27,15 +28,25 @@ public partial class LeadHandler(
         var totalItems = await query.CountAsync(ct);
 
         if (totalItems <= 0)
-            return new PaginatedResponse<Lead?>([], totalItems, page, pageSize);
+            return new PaginatedResponse<LeadListItemDto>([], totalItems, page, pageSize);
 
         var items = await query
             .OrderByDescending(l => l.Created)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(l => new LeadListItemDto(
+                l.Id,
+                l.Name,
+                l.Email,
+                l.Phone,
+                l.Intent,
+                l.Created,
+                l.LeadStatus,
+                l.PolicySigned
+            ))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<Lead?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<LeadListItemDto>(items, totalItems, page, pageSize);
     }
 
     public async Task<Lead?> GetLead(Guid id)
@@ -85,8 +96,8 @@ public partial class LeadHandler(
         if (rowsAffected > 0)
         {
             var lead = await context.Leads.AsNoTracking().FirstAsync(l => l.Id == id);
-            context.Pacients.Add(
-                new Pacient
+            context.Patients.Add(
+                new Patient
                 {
                     Name = lead.Name,
                     Email = lead.Email,

@@ -67,12 +67,11 @@ public partial class WelcomeView : ComponentBase
                 );
                 _totalItems = queryResult.TotalItems;
                 _appointments = queryResult
-                    .Items.Where(a => a != null)
-                    .Select(a => new AppointmentViewModel
+                    .Items.Select(a => new AppointmentViewModel
                     {
-                        Id = a!.Id,
+                        Id = a.Id,
                         Date = a.AppointmentDate,
-                        PatientName = a.Pacient?.Name ?? "N/A",
+                        PatientName = a.PatientName ?? "N/A",
                         Status = a.AppointmentStatus,
                         Price = a.Price,
                     })
@@ -134,12 +133,11 @@ public partial class WelcomeView : ComponentBase
 
                 _totalItems = paginatedResult.TotalItems;
                 _appointments = paginatedResult
-                    .Items.Where(a => a != null)
-                    .Select(a => new AppointmentViewModel
+                    .Items.Select(a => new AppointmentViewModel
                     {
-                        Id = a!.Id,
+                        Id = a.Id,
                         Date = a.AppointmentDate,
-                        PatientName = a.Pacient?.Name ?? "N/A",
+                        PatientName = a.PatientName ?? "N/A",
                         Status = a.AppointmentStatus,
                         Price = a.Price,
                     })

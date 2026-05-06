@@ -92,8 +92,12 @@ public class EmailService(
                 toProcess.Count
             );
 
-            foreach (var appointment in toProcess)
+            foreach (var dto in toProcess)
             {
+                var appointment = await appointmentHandler.GetAppointment(dto.Id, dto.PatientId);
+                if (appointment == null)
+                    continue;
+
                 var success = await SendAppointmentReminder(appointment, ct);
                 if (success)
                 {
@@ -116,7 +120,7 @@ public class EmailService(
     {
         try
         {
-            if (appointment.Pacient == null || string.IsNullOrEmpty(appointment.Pacient.Email))
+            if (appointment.Patient == null || string.IsNullOrEmpty(appointment.Patient.Email))
                 return false;
 
             var html = await _razor.CompileRenderAsync("AppointmentReminder.cshtml", appointment);
@@ -127,7 +131,7 @@ public class EmailService(
                 new
                 {
                     from = $"Isis Vitória <{Environment.GetEnvironmentVariable("RESEND_SENDER_EMAIL") ?? "onboarding@resend.dev"}>",
-                    to = new[] { appointment.Pacient.Email },
+                    to = new[] { appointment.Patient.Email },
                     subject = "Lembrete de Sessão - Psicoterapia",
                     html,
                 },
@@ -138,7 +142,7 @@ public class EmailService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error sending reminder to {Email}", appointment.Pacient?.Email);
+            logger.LogError(ex, "Error sending reminder to {Email}", appointment.Patient?.Email);
             return false;
         }
     }

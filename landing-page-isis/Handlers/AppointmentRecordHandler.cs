@@ -1,8 +1,9 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
-using landing_page_isis.Data;
+using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Extensions;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
@@ -16,10 +17,10 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
             .FirstOrDefaultAsync(ar => ar.Id == id);
     }
 
-    public async Task<PaginatedResponse<AppointmentRecord?>> GetRecordsByPacientId(
+    public async Task<PaginatedResponse<AppointmentRecordListItemDto>> GetRecordsByPatientId(
         int page,
         int pageSize,
-        Guid pacientId,
+        Guid patientId,
         DateTime? filterMonthYear,
         CancellationToken ct
     )
@@ -27,7 +28,7 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         var query = context
             .AppointmentRecords.Include(ar => ar.Appointment)
             .AsNoTracking()
-            .Where(ar => ar.Appointment != null && ar.Appointment.PacientId == pacientId);
+            .Where(ar => ar.Appointment != null && ar.Appointment.PatientId == patientId);
 
         if (filterMonthYear.HasValue)
         {
@@ -52,15 +53,33 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         var totalItems = await query.CountAsync(ct);
 
         if (totalItems <= 0)
-            return new PaginatedResponse<AppointmentRecord?>([], totalItems, page, pageSize);
+            return new PaginatedResponse<AppointmentRecordListItemDto>(
+                [],
+                totalItems,
+                page,
+                pageSize
+            );
 
         var items = await query
             .OrderByDescending(ar => ar.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(ar => new AppointmentRecordListItemDto(
+                ar.Id,
+                ar.AppointmentId,
+                ar.Appointment != null ? ar.Appointment.AppointmentDate : null,
+                ar.Note ?? string.Empty,
+                ar.CreatedAt,
+                ar.UpdatedAt
+            ))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<AppointmentRecord?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<AppointmentRecordListItemDto>(
+            items,
+            totalItems,
+            page,
+            pageSize
+        );
     }
 
     public async Task<HandlerResult> CreateAppointmentRecord(AppointmentRecord record)

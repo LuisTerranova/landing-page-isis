@@ -83,7 +83,7 @@
 
     private async Task HandleSubmit()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
         var dialog = await DialogService.ShowAsync<ConsentDialog>("", options);
         var dialogResult = await dialog.Result;
 

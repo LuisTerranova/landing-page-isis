@@ -76,7 +76,7 @@ public partial class FinancesView : ComponentBase
             );
 
             // 1. Packages Revenue
-            _packagesRevenue = packages.Where(p => p != null).Sum(p => p!.Price);
+            _packagesRevenue = packages.Sum(p => p.Price);
 
             // 2. Realizada Revenue for Period (Completed Appointments + Packages)
             _realizedRevenue =

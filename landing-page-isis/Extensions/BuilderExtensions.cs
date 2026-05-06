@@ -1,8 +1,8 @@
 using System.Threading.RateLimiting;
 using landing_page_isis.Authentication;
 using landing_page_isis.core.Interfaces;
-using landing_page_isis.Data;
 using landing_page_isis.Handlers;
+using landing_page_isis.Infrastructure.Data;
 using landing_page_isis.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -85,7 +85,7 @@ public static class BuilderExtensions
         builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
         builder.Services.AddScoped<IAppointmentRecordHandler, AppointmentRecordHandler>();
         builder.Services.AddScoped<IAppointmentPackageHandler, AppointmentPackageHandler>();
-        builder.Services.AddScoped<IPacientHandler, PacientHandler>();
+        builder.Services.AddScoped<IPatientHandler, PatientHandler>();
         builder.Services.AddScoped<ILeadHandler, LeadHandler>();
         builder.Services.AddScoped<IAuthHandler, AuthHandler>();
         builder.Services.AddHostedService<LeadsCleaningService>();

@@ -22,17 +22,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Markdig" Version="1.1.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="mudblazor" Version="9.1.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="RazorLight" Version="2.3.1" />
     <PackageReference Include="Resend" Version="0.2.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\landing-page-isis.core\landing-page-isis.core.csproj" />
+    <ProjectReference Include="..\landing-page-isis.Infrastructure\landing-page-isis.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

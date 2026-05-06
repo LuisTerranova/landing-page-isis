@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\landing-page-isis.core\landing-page-isis.core.csproj" />
+    <ProjectReference Include="..\landing-page-isis.Infrastructure\landing-page-isis.Infrastructure.csproj" />
     <ProjectReference Include="..\landing-page-isis\landing-page-isis.csproj" />
   </ItemGroup>
 </Project>

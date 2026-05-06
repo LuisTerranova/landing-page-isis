@@ -1,5 +1,6 @@
 @namespace landing_page_isis.Components.Dialogs.Appointment
 @using landing_page_isis.core.Models
+@using landing_page_isis.core.Models.DTOs
 @using landing_page_isis.core
 
 
@@ -14,10 +15,13 @@
         <MudForm @bind-IsValid="@_formValido">
             <MudGrid>
                 <MudItem xs="12">
-                    <MudAutocomplete T="Pacient"
+                    <MudAutocomplete T="PatientListItemDto"
+
                                      Label="Paciente"
-                                     @bind-Value="_selectedPacient"
-                                     SearchFunc="@SearchPacient"
+
+                                     @bind-Value="_selectedPatient"
+
+                                     SearchFunc="@SearchPatient"
                                      ToStringFunc="@(p => p == null ? "" : p.Name)"
                                      Required="true"
                                      Variant="Variant.Outlined"
@@ -69,7 +73,7 @@
 
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
-    [Inject] private IPacientHandler PacientHandler { get; set; } = null!;
+    [Inject] private IPatientHandler PatientHandler { get; set; } = null!;
 
     [Parameter] public Appointment Model { get; set; } = new();
     [Parameter] public string Titulo { get; set; } = "Novo Agendamento";
@@ -77,25 +81,30 @@
     private bool _formValido;
     private DateTime? _tempDate;
     private TimeSpan? _tempTime;
-    private Pacient? _selectedPacient;
+    private PatientListItemDto? _selectedPatient;
 
     [Inject] private IDialogService DialogService { get; set; } = null!;
     [Inject] private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        // For editing, load the specific pacient object
-        if (Model.PacientId != Guid.Empty)
+        // For editing, load the specific patient object
+        if (Model.PatientId != Guid.Empty)
         {
-            _selectedPacient = await PacientHandler.GetPacient(Model.PacientId);
+            var full = await PatientHandler.GetPatient(Model.PatientId);
+            if (full != null)
+            {
+                _selectedPatient = new PatientListItemDto(
+                    full.Id, full.Name, full.Email, full.Phone, full.StateOfResidency
+                );
+            }
         }
     }
 
-    private async Task<IEnumerable<Pacient>> SearchPacient(string? value, CancellationToken ct)
+    private async Task<IEnumerable<PatientListItemDto>> SearchPatient(string? value, CancellationToken ct)
     {
-        // Use our existing paginated query handler to find matching pacients (top 10)
-        var result = await PacientHandler.QueryPacients(value ?? "", 0, 10, ct);
-        return result.Items.Where(p => p != null).Cast<Pacient>();
+        var result = await PatientHandler.QueryPatients(value ?? "", 0, 10, ct);
+        return result.Items;
     }
 
     protected override void OnParametersSet()
@@ -113,9 +122,9 @@
 
     private async Task Salvar()
     {
-        if (_selectedPacient != null)
+        if (_selectedPatient != null)
         {
-            var packagesResponse = await PackageHandler.GetPackagesByPacientId(0, 1, _selectedPacient.Id, CancellationToken.None);
+            var packagesResponse = await PackageHandler.GetPackagesByPatientId(0, 1, _selectedPatient.Id, CancellationToken.None);
             var hasActive = packagesResponse.Items.Any(p => p is { Status: PackageStatus.Ativo, RemainingAppointments: > 0 });
 
             if (!hasActive)
@@ -139,7 +148,7 @@
             Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
         }
 
-        Model.PacientId = _selectedPacient?.Id ?? Guid.Empty;
+        Model.PatientId = _selectedPatient?.Id ?? Guid.Empty;
 
         MudDialog.Close(DialogResult.Ok(Model));
     }

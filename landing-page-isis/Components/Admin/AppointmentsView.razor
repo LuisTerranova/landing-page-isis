@@ -2,7 +2,7 @@
 @attribute [Authorize]
 @using landing_page_isis.Components.Layout
 @using landing_page_isis.core
-@using landing_page_isis.core.Models
+@using landing_page_isis.core.Models.DTOs
 @layout DashboardLayout
 @rendermode InteractiveServer
 
@@ -13,7 +13,7 @@
 </MudText>
 
 <GenericTable @ref="_appointmentsTable"
-              TItem="Appointment"
+              TItem="AppointmentListItemDto"
               ServerData="@ServerReload"
               OnCreate="@(OpenCreate)"
               OnEdit="@(EditAppointment)"
@@ -29,7 +29,7 @@
     </HeaderColumns>
 
     <RowColumns>
-        <MudTd DataLabel="Paciente">@context.Pacient?.Name</MudTd>
+        <MudTd DataLabel="Paciente">@context.PatientName</MudTd>
         <MudTd DataLabel="Data e Hora">
             @{
                 var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");

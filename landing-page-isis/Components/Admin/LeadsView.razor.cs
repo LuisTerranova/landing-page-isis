@@ -2,6 +2,7 @@ using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
+using landing_page_isis.core.Models.DTOs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -28,33 +29,40 @@ public partial class LeadsView : ComponentBase
 
     #region Properties
 
-    private GenericTable<Lead> _leadsTable = null!;
+    private GenericTable<LeadListItemDto> _leadsTable = null!;
 
     #endregion
 
     #region Methods
 
-    private async Task<TableData<Lead>> ServerReload(TableState state, CancellationToken ct)
+    private async Task<TableData<LeadListItemDto>> ServerReload(
+        TableState state,
+        CancellationToken ct
+    )
     {
         try
         {
             var result = await LeadHandler.GetLeads(state.Page, state.PageSize, ct);
 
-            return new TableData<Lead>
+            return new TableData<LeadListItemDto>
             {
                 TotalItems = result.TotalItems,
-                Items = result.Items.Where(l => l != null).Cast<Lead>(),
+                Items = result.Items,
             };
         }
         catch (OperationCanceledException)
         {
-            return new TableData<Lead>();
+            return new TableData<LeadListItemDto>();
         }
     }
 
-    private async Task ContactViaWhatsApp(Lead lead)
+    private async Task ContactViaWhatsApp(LeadListItemDto lead)
     {
-        var url = LeadHandler.GetWhatsAppUrl(lead);
+        var fullLead = await LeadHandler.GetLead(lead.Id);
+        if (fullLead == null)
+            return;
+
+        var url = LeadHandler.GetWhatsAppUrl(fullLead);
         if (!string.IsNullOrEmpty(url))
         {
             await JsRuntime.InvokeVoidAsync("open", url, "_blank");
@@ -65,23 +73,28 @@ public partial class LeadsView : ComponentBase
         }
     }
 
-    private async Task ViewIntent(Lead lead)
+    private async Task ViewIntent(LeadListItemDto lead)
     {
-        var parameters = new DialogParameters<LeadIntentDialog> { { x => x.Lead, lead } };
+        var fullLead = await LeadHandler.GetLead(lead.Id);
+        if (fullLead == null)
+            return;
+
+        var parameters = new DialogParameters<LeadIntentDialog> { { x => x.Lead, fullLead } };
 
         var options = new DialogOptions
         {
-            CloseOnEscapeKey = true,
             MaxWidth = MaxWidth.Medium,
             FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true
         };
 
         await DialogService.ShowAsync<LeadIntentDialog>("Visualizar Intenção", parameters, options);
     }
 
-    private async Task DeleteLead(Lead lead)
+    private async Task DeleteLead(LeadListItemDto lead)
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, BackdropClick = false, CloseButton = true };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
@@ -107,9 +120,9 @@ public partial class LeadsView : ComponentBase
         }
     }
 
-    private async Task ApproveLead(Lead lead)
+    private async Task ApproveLead(LeadListItemDto lead)
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, BackdropClick = false, CloseButton = true };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Aprovação",

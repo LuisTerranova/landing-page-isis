@@ -1,40 +1,61 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
-using landing_page_isis.Data;
+using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
 public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPackageHandler
 {
-    public async Task<PaginatedResponse<AppointmentPackage?>> GetPackagesByPacientId(
+    public async Task<PaginatedResponse<AppointmentPackageListItemDto>> GetPackagesByPatientId(
         int page,
         int pageSize,
-        Guid pacientId,
+        Guid patientId,
         CancellationToken ct
     )
     {
         var query = context
             .AppointmentPackages.AsNoTracking()
-            .Where(ap => ap.PacientId == pacientId);
+            .Where(ap => ap.PatientId == patientId);
         var totalItems = await query.CountAsync(ct);
 
         if (totalItems <= 0)
-            return new PaginatedResponse<AppointmentPackage?>([], totalItems, page, pageSize);
+            return new PaginatedResponse<AppointmentPackageListItemDto>(
+                [],
+                totalItems,
+                page,
+                pageSize
+            );
 
         var items = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(p => new AppointmentPackageListItemDto(
+                p.Id,
+                p.PatientId,
+                p.TotalAppointments,
+                p.RemainingAppointments,
+                p.Price,
+                p.Status,
+                p.CreatedAt,
+                p.PaymentMethod
+            ))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<AppointmentPackage?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<AppointmentPackageListItemDto>(
+            items,
+            totalItems,
+            page,
+            pageSize
+        );
     }
 
     public async Task<HandlerResult> CreatePackage(AppointmentPackage package)
     {
-        if (package.PacientId == Guid.Empty)
+        if (package.PatientId == Guid.Empty)
             return new HandlerResult(false, "Paciente não informado.");
 
         if (package.TotalAppointments <= 0)
@@ -79,7 +100,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         return new HandlerResult(true);
     }
 
-    public async Task<List<AppointmentPackage?>> GetAllPackagesByDateRange(
+    public async Task<List<AppointmentPackageListItemDto>> GetAllPackagesByDateRange(
         DateTimeOffset start,
         DateTimeOffset end,
         CancellationToken ct
@@ -88,11 +109,19 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         if (!await context.AppointmentPackages.AnyAsync(ct))
             return [];
 
-        return (
-            await context
-                .AppointmentPackages.AsNoTracking()
-                .Where(ap => ap.CreatedAt >= start.UtcDateTime && ap.CreatedAt <= end.UtcDateTime)
-                .ToListAsync(ct)
-        )!;
+        return await context
+            .AppointmentPackages.AsNoTracking()
+            .Where(ap => ap.CreatedAt >= start.UtcDateTime && ap.CreatedAt <= end.UtcDateTime)
+            .Select(p => new AppointmentPackageListItemDto(
+                p.Id,
+                p.PatientId,
+                p.TotalAppointments,
+                p.RemainingAppointments,
+                p.Price,
+                p.Status,
+                p.CreatedAt,
+                p.PaymentMethod
+            ))
+            .ToListAsync(ct);
     }
 }

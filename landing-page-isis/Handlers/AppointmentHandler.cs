@@ -1,20 +1,21 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
-using landing_page_isis.Data;
+using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
 public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 {
-    public async Task<PaginatedResponse<Appointment?>> GetAllAppointments(
+    public async Task<PaginatedResponse<AppointmentListItemDto>> GetAllAppointments(
         int page,
         int pageSize,
         CancellationToken ct
     )
     {
-        var query = context.Appointments.Include(a => a.Pacient).AsNoTracking();
+        var query = context.Appointments.Include(a => a.Patient).AsNoTracking();
 
         var totalItems = await query.CountAsync(ct);
 
@@ -22,42 +23,44 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             .OrderByDescending(a => a.AppointmentDate)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(a => ToListItemDto(a))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<AppointmentListItemDto>(items, totalItems, page, pageSize);
     }
 
-    public async Task<PaginatedResponse<Appointment?>> GetAppointmentsByPacientId(
+    public async Task<PaginatedResponse<AppointmentListItemDto>> GetAppointmentsByPatientId(
         int page,
         int pageSize,
-        Guid pacientId,
+        Guid patientId,
         CancellationToken ct
     )
     {
         var query = context
-            .Appointments.Include(a => a.Pacient)
+            .Appointments.Include(a => a.Patient)
             .AsNoTracking()
-            .Where(a => a.PacientId == pacientId);
+            .Where(a => a.PatientId == patientId);
 
         var totalItems = await query.CountAsync(ct);
 
         if (totalItems <= 0)
-            return new PaginatedResponse<Appointment?>([], totalItems, page, pageSize);
+            return new PaginatedResponse<AppointmentListItemDto>([], totalItems, page, pageSize);
 
         var items = await query
             .OrderByDescending(a => a.AppointmentDate)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(a => ToListItemDto(a))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<AppointmentListItemDto>(items, totalItems, page, pageSize);
     }
 
-    public async Task<Appointment?> GetAppointment(Guid id, Guid pacientId)
+    public async Task<Appointment?> GetAppointment(Guid id, Guid patientId)
     {
         return await context
             .Appointments.AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id && a.PacientId == pacientId);
+            .FirstOrDefaultAsync(a => a.Id == id && a.PatientId == patientId);
     }
 
     public async Task<HandlerResult> CreateAppointment(Appointment appointment)
@@ -68,7 +71,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (appointment.Price < 0)
             return new HandlerResult(false, "O preço não pode ser negativo.");
 
-        if (appointment.PacientId == Guid.Empty)
+        if (appointment.PatientId == Guid.Empty)
             return new HandlerResult(false, "Selecione um paciente válido.");
 
         // Normalize to UTC for PostgreSQL compatibility
@@ -83,7 +86,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 
         var activePackage = await context
             .AppointmentPackages.Where(p =>
-                p.PacientId == appointment.PacientId
+                p.PatientId == appointment.PatientId
                 && p.Status == PackageStatus.Ativo
                 && p.RemainingAppointments > 0
             )
@@ -118,7 +121,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (appointment.Price < 0)
             return new HandlerResult(false, "O preço não pode ser negativo.");
 
-        if (appointment.PacientId == Guid.Empty)
+        if (appointment.PatientId == Guid.Empty)
             return new HandlerResult(false, "Selecione um paciente válido.");
 
         if (
@@ -162,7 +165,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         return new HandlerResult(true);
     }
 
-    public async Task<List<Appointment>> GetAllAppointmentsByDateRange(
+    public async Task<List<AppointmentListItemDto>> GetAllAppointmentsByDateRange(
         DateTimeOffset start,
         DateTimeOffset end,
         CancellationToken ct
@@ -170,13 +173,14 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     {
         return await context
             .Appointments.AsNoTracking()
-            .Include(a => a.Pacient)
+            .Include(a => a.Patient)
             .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end)
             .OrderBy(a => a.AppointmentDate)
+            .Select(a => ToListItemDto(a))
             .ToListAsync(ct);
     }
 
-    public async Task<PaginatedResponse<Appointment?>> GetAppointmentsByDateRange(
+    public async Task<PaginatedResponse<AppointmentListItemDto>> GetAppointmentsByDateRange(
         DateTimeOffset start,
         DateTimeOffset end,
         int page,
@@ -186,7 +190,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     {
         var query = context
             .Appointments.AsNoTracking()
-            .Include(a => a.Pacient)
+            .Include(a => a.Patient)
             .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end);
 
         var totalItems = await query.CountAsync(ct);
@@ -195,35 +199,51 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             .OrderBy(a => a.AppointmentDate)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(a => ToListItemDto(a))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<AppointmentListItemDto>(items, totalItems, page, pageSize);
     }
 
-    public async Task<PaginatedResponse<Appointment?>> QueryAppointments(
+    public async Task<PaginatedResponse<AppointmentListItemDto>> QueryAppointments(
         string query,
         int page,
         int pageSize,
         CancellationToken ct
     )
     {
-        var queryable = context.Appointments.Include(a => a.Pacient).AsNoTracking();
+        var queryable = context.Appointments.Include(a => a.Patient).AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query))
-            queryable = queryable.Where(a => a.Pacient != null && a.Pacient.Name.Contains(query));
+            queryable = queryable.Where(a => a.Patient != null && a.Patient.Name.Contains(query));
 
         var totalItems = await queryable.CountAsync(ct);
 
         if (totalItems <= 0)
-            return new PaginatedResponse<Appointment?>([], totalItems, page, pageSize);
+            return new PaginatedResponse<AppointmentListItemDto>([], totalItems, page, pageSize);
 
         var items = await queryable
             .OrderByDescending(a => a.AppointmentDate)
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(a => ToListItemDto(a))
             .ToListAsync(ct);
 
-        return new PaginatedResponse<Appointment?>(items, totalItems, page, pageSize);
+        return new PaginatedResponse<AppointmentListItemDto>(items, totalItems, page, pageSize);
+    }
+
+    private static AppointmentListItemDto ToListItemDto(Appointment a)
+    {
+        return new AppointmentListItemDto(
+            a.Id,
+            a.AppointmentDate,
+            a.PatientId,
+            a.Patient?.Name,
+            a.AppointmentStatus,
+            a.Price,
+            a.ReminderSent,
+            a.PackageId
+        );
     }
 
     private async Task RefundPackageCredit(Guid packageId)

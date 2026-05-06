@@ -4,8 +4,8 @@ public class Appointment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public DateTimeOffset AppointmentDate { get; set; }
-    public Guid PacientId { get; set; }
-    public Pacient? Pacient { get; set; }
+    public Guid PatientId { get; set; }
+    public Patient? Patient { get; set; }
     public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Marcada;
     public decimal Price { get; set; }
     public bool ReminderSent { get; set; } = false;

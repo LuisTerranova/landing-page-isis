@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
-using landing_page_isis.Data;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

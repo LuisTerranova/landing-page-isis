@@ -1,4 +1,5 @@
 using landing_page_isis.core.ApplicationUser;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Data;
