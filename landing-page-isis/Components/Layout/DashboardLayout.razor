@@ -1,3 +1,4 @@
+@using landing_page_isis.Extensions
 @inherits LayoutComponentBase
 @inject IsisTheme CustomTheme
 
@@ -67,7 +68,7 @@
 
     private string GetGreeting()
     {
-        var hour = DateTime.Now.Hour;
+        var hour = DateTime.UtcNow.ToPortoVelhoTime().Hour;
         if (hour >= 5 && hour < 12) return "bom dia! ☀️";
         if (hour >= 12 && hour < 18) return "boa tarde! ☕";
         return "boa noite! 🌙";

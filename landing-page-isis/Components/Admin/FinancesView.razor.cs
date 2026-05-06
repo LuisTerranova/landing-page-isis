@@ -2,6 +2,7 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using landing_page_isis.Extensions;
 
 namespace landing_page_isis.Components.Admin;
 
@@ -23,11 +24,11 @@ public partial class FinancesView : ComponentBase
 
     // Filters
     private DateRange _dateRange = new DateRange(
-        new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1),
+        new DateTime(DateTime.UtcNow.ToPortoVelhoTime().Year, DateTime.UtcNow.ToPortoVelhoTime().Month, 1),
         new DateTime(
-            DateTime.UtcNow.Year,
-            DateTime.UtcNow.Month,
-            DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month)
+            DateTime.UtcNow.ToPortoVelhoTime().Year,
+            DateTime.UtcNow.ToPortoVelhoTime().Month,
+            DateTime.DaysInMonth(DateTime.UtcNow.ToPortoVelhoTime().Year, DateTime.UtcNow.ToPortoVelhoTime().Month)
         )
     );
 
@@ -57,8 +58,8 @@ public partial class FinancesView : ComponentBase
 
         try
         {
-            var start = _dateRange?.Start ?? new DateTime(DateTime.UtcNow.Year, 1, 1);
-            var end = _dateRange?.End ?? new DateTime(DateTime.UtcNow.Year, 12, 31);
+            var start = _dateRange?.Start ?? new DateTime(DateTime.UtcNow.ToPortoVelhoTime().Year, 1, 1);
+            var end = _dateRange?.End ?? new DateTime(DateTime.UtcNow.ToPortoVelhoTime().Year, 12, 31);
 
             var startOffset = new DateTimeOffset(start.Date, TimeSpan.Zero);
             var endOffset = new DateTimeOffset(end.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);

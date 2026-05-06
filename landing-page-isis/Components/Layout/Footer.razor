@@ -1,3 +1,5 @@
+@using landing_page_isis.Extensions
+
 <MudPaper Class="mt-16 py-12 px-8" Elevation="0"
           Style="background-color: var(--mud-palette-primary); color: var(--mud-palette-background); border-radius: 40px 40px 0 0;">
     <MudContainer MaxWidth="MaxWidth.Large">
@@ -54,7 +56,7 @@ Pós graduanda em neuropsicologia. Transformando histórias a partir de um lugar
 
         <div class="d-flex flex-column flex-md-row justify-space-between align-center">
             <MudText Typo="Typo.body2" Class="footer-link">
-                &copy; @DateTime.Now.Year Isis Vitória. Todos os direitos reservados.
+                &copy; @DateTime.UtcNow.ToPortoVelhoTime().Year Isis Vitória. Todos os direitos reservados.
             </MudText>
             <MudText Typo="Typo.body2" Class="footer-link mt-2 mt-md-0">
                 Desenvolvedor: <MudLink Href="https://github.com/LuisTerranova" Target="_blank" Color="Color.Inherit" Class="footer-link" Underline="Underline.Always" Style="font-weight: bold;">Luis Terranova</MudLink> | Stack: Blazor e .NET 9

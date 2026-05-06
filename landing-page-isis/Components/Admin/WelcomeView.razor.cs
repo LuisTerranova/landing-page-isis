@@ -1,6 +1,7 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using Microsoft.AspNetCore.Components;
+using landing_page_isis.Extensions;
 
 namespace landing_page_isis.Components.Admin;
 
@@ -33,8 +34,7 @@ public partial class WelcomeView : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-        _selectedDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, pvhTimeZone).Date;
+        _selectedDate = DateTime.UtcNow.ToPortoVelhoTime().Date;
         await LoadAppointments();
     }
 
@@ -80,7 +80,6 @@ public partial class WelcomeView : ComponentBase
             }
             else
             {
-                var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
                 DateTimeOffset start,
                     end;
 
@@ -90,14 +89,8 @@ public partial class WelcomeView : ComponentBase
                     var startPvh = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0);
                     var endPvh = startPvh.AddDays(1).AddTicks(-1);
 
-                    start = new DateTimeOffset(
-                        startPvh,
-                        pvhTimeZone.GetUtcOffset(startPvh)
-                    ).ToUniversalTime();
-                    end = new DateTimeOffset(
-                        endPvh,
-                        pvhTimeZone.GetUtcOffset(endPvh)
-                    ).ToUniversalTime();
+                    start = startPvh.ToPortoVelhoDateTimeOffset();
+                    end = endPvh.ToPortoVelhoDateTimeOffset();
                 }
                 else
                 {
@@ -113,14 +106,8 @@ public partial class WelcomeView : ComponentBase
                     );
                     var endPvh = startPvh.AddDays(7).AddTicks(-1);
 
-                    start = new DateTimeOffset(
-                        startPvh,
-                        pvhTimeZone.GetUtcOffset(startPvh)
-                    ).ToUniversalTime();
-                    end = new DateTimeOffset(
-                        endPvh,
-                        pvhTimeZone.GetUtcOffset(endPvh)
-                    ).ToUniversalTime();
+                    start = startPvh.ToPortoVelhoDateTimeOffset();
+                    end = endPvh.ToPortoVelhoDateTimeOffset();
                 }
 
                 var paginatedResult = await AppointmentHandler.GetAppointmentsByDateRange(

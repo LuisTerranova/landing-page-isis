@@ -1,6 +1,7 @@
 @page "/admin/consultas"
 @attribute [Authorize]
 @using landing_page_isis.Components.Layout
+@using landing_page_isis.Extensions
 @using landing_page_isis.core
 @using landing_page_isis.core.Models.DTOs
 @layout DashboardLayout
@@ -32,8 +33,7 @@
         <MudTd DataLabel="Paciente">@context.PatientName</MudTd>
         <MudTd DataLabel="Data e Hora">
             @{
-                var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-                var pvhTime = TimeZoneInfo.ConvertTime(context.AppointmentDate, pvhTimeZone);
+                var pvhTime = context.AppointmentDate.ToPortoVelhoTime();
             }
             @pvhTime.ToString("dd/MM/yyyy HH:mm")
         </MudTd>

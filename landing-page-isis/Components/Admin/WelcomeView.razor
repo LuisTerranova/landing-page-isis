@@ -1,6 +1,7 @@
 @page "/admin"
 @attribute [Authorize]
 @using landing_page_isis.Components.Layout
+@using landing_page_isis.Extensions
 @layout DashboardLayout
 @rendermode InteractiveServer
 
@@ -37,8 +38,7 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Today" Color="Color.Primary"
                                OnClick="@(async () =>
                                         {
-                                            var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-                                            _selectedDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, pvhTimeZone).Date;
+                                            _selectedDate = DateTime.UtcNow.ToPortoVelhoTime().Date;
                                             await LoadAppointments();
                                         })"/>
                 <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? 1 : 7))"/>
@@ -71,8 +71,7 @@
                     <div class="d-flex justify-space-between align-start mb-4">
                         <div>
                             @{
-                                var pvhTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Porto_Velho");
-                                var pvhTime = TimeZoneInfo.ConvertTime(app.Date, pvhTimeZone);
+                                var pvhTime = app.Date.ToPortoVelhoTime();
                             }
                             <MudText Typo="Typo.h6" Class="white-text" Style="font-weight: 700">@pvhTime.ToString("HH:mm")</MudText>
                             <MudText Typo="Typo.caption" Class="white-text-70 uppercase">@pvhTime.ToString("dddd, d MMM")</MudText>
