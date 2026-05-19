@@ -20,7 +20,7 @@ namespace landingpageisis.Migrations
                 newName: "patient_id");
 
             migrationBuilder.RenameIndex(
-                name: "IX_appointments_PatientId",
+                name: "IX_appointments_PacientId",
                 table: "appointments",
                 newName: "IX_appointments_patient_id");
 
@@ -48,7 +48,7 @@ namespace landingpageisis.Migrations
             migrationBuilder.RenameIndex(
                 name: "IX_appointments_patient_id",
                 table: "appointments",
-                newName: "IX_appointments_PatientId");
+                newName: "IX_appointments_PacientId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_appointments_patients_PatientId",
