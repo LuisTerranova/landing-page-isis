@@ -63,6 +63,14 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             .FirstOrDefaultAsync(a => a.Id == id && a.PatientId == patientId);
     }
 
+    public async Task<Appointment?> GetAppointmentWithPatient(Guid id, Guid patientId)
+    {
+        return await context
+            .Appointments
+            .Include(a => a.Patient)
+            .FirstOrDefaultAsync(a => a.Id == id && a.PatientId == patientId);
+    }
+
     public async Task<HandlerResult> CreateAppointment(Appointment appointment)
     {
         if (appointment == null)

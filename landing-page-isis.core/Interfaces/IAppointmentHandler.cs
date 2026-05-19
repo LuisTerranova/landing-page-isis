@@ -17,6 +17,7 @@ public interface IAppointmentHandler
         CancellationToken ct
     );
     Task<Appointment?> GetAppointment(Guid id, Guid patientId);
+    Task<Appointment?> GetAppointmentWithPatient(Guid id, Guid patientId);
     Task<HandlerResult> CreateAppointment(Appointment appointment);
     Task<HandlerResult> UpdateAppointment(Appointment appointment, Guid id);
     Task<HandlerResult> DeleteAppointment(Guid id);

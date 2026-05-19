@@ -65,20 +65,23 @@ public class EmailService(
         try
         {
             using var scope = services.CreateScope();
+
             var appointmentHandler =
                 scope.ServiceProvider.GetRequiredService<IAppointmentHandler>();
+            var patientHandler =
+                scope.ServiceProvider.GetRequiredService<IPatientHandler>();
 
             var nowInBr = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BrTimeZone);
-            var tomorrowBrDate = nowInBr.Date.AddDays(1);
+            var todayBrDate = nowInBr.Date;
 
-            var startOfTomorrowBrInUtc = new DateTimeOffset(
-                tomorrowBrDate,
-                BrTimeZone.GetUtcOffset(tomorrowBrDate)
+            var startOfTodayBrInUtc = new DateTimeOffset(
+                todayBrDate,
+                BrTimeZone.GetUtcOffset(todayBrDate)
             ).ToUniversalTime();
-            var endOfTomorrowBrInUtc = startOfTomorrowBrInUtc.AddDays(1).AddTicks(-1);
+            var endOfTomorrowBrInUtc = startOfTodayBrInUtc.AddDays(2).AddTicks(-1);
 
             var appointments = await appointmentHandler.GetAllAppointmentsByDateRange(
-                startOfTomorrowBrInUtc,
+                startOfTodayBrInUtc,
                 endOfTomorrowBrInUtc,
                 ct
             );
@@ -87,14 +90,22 @@ public class EmailService(
                 .Where(a => a.AppointmentStatus == AppointmentStatusEnum.Marcada && !a.ReminderSent)
                 .ToList();
 
+            var patientIds = toProcess.Select(a => a.PatientId).Distinct();
+            var emailMap = await patientHandler.GetPatientEmailMap(patientIds, ct);
+
+            var eligible = toProcess
+                .Where(a => emailMap.GetValueOrDefault(a.PatientId) != null)
+                .ToList();
+
             logger.LogInformation(
-                "Found {Count} appointments to notify for tomorrow (BR Time).",
-                toProcess.Count
+                "Found {Total} appointments, {Eligible} have an email.",
+                toProcess.Count,
+                eligible.Count
             );
 
-            foreach (var dto in toProcess)
+            foreach (var dto in eligible)
             {
-                var appointment = await appointmentHandler.GetAppointment(dto.Id, dto.PatientId);
+                var appointment = await appointmentHandler.GetAppointmentWithPatient(dto.Id, dto.PatientId);
                 if (appointment == null)
                     continue;
 
@@ -104,7 +115,7 @@ public class EmailService(
                     appointment.ReminderSent = true;
                     await appointmentHandler.UpdateAppointment(appointment, appointment.Id);
                     logger.LogInformation(
-                        "Lembrete enviado e marcado para consulta {Id}",
+                        "Lembrete enviado para consulta {Id}",
                         appointment.Id
                     );
                 }

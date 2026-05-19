@@ -69,6 +69,16 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         return new HandlerResult(true);
     }
 
+    public async Task<Dictionary<Guid, string?>> GetPatientEmailMap(IEnumerable<Guid> ids, CancellationToken ct)
+    {
+        var distinctIds = ids.Distinct().ToList();
+        return await context
+            .Patients
+            .Where(p => distinctIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.Email })
+            .ToDictionaryAsync(p => p.Id, p => p.Email, ct);
+    }
+
     public async Task<HandlerResult> DeletePatient(Guid id)
     {
         var patient = await context.Patients.FindAsync(id);

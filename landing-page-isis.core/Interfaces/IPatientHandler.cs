@@ -20,4 +20,5 @@ public interface IPatientHandler
         int pageSize,
         CancellationToken ct
     );
+    Task<Dictionary<Guid, string?>> GetPatientEmailMap(IEnumerable<Guid> ids, CancellationToken ct);
 }
