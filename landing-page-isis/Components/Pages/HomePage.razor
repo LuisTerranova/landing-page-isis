@@ -4,7 +4,58 @@
 @layout MainLayout
 @inject IJSRuntime Js
 
-<PageTitle>Psicóloga Isis Vitória</PageTitle>
+<PageTitle>Psicóloga Isis Vitória | Psicoterapia e Atendimento Online</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Psicóloga Isis Vitória - Psicoterapia e Atendimento Psicológico 100% Online (Remoto) para todo o Brasil e brasileiros no exterior. Abordagem Histórico-cultural." />
+    <meta name="keywords" content="psicóloga porto velho, psicóloga isis vitória, psicoterapia porto velho, psicologia histórico-cultural, psicoterapia online, atendimento online, terapia online, psicóloga online, psicoterapia individual, psicoterapia de casal, atendimento remoto" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://psi.isisvitoria.com.br/" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Psicóloga Isis Vitória | Psicoterapia e Atendimento Online" />
+    <meta property="og:description" content="Atendimento Psicológico 100% Online (Remoto) para todo o Brasil e brasileiros no exterior. Vamos juntos construir um espaço de desenvolvimento e reflexão?" />
+    <meta property="og:image" content="https://psi.isisvitoria.com.br/isis-photo.png" />
+    <meta property="og:url" content="https://psi.isisvitoria.com.br/" />
+    <meta property="og:site_name" content="Psicóloga Isis Vitória" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Psicóloga Isis Vitória | Psicoterapia e Atendimento Online" />
+    <meta name="twitter:description" content="Atendimento Psicológico 100% Online (Remoto) para todo o Brasil e brasileiros no exterior. Vamos juntos construir um espaço de desenvolvimento e reflexão?" />
+    <meta name="twitter:image" content="https://psi.isisvitoria.com.br/isis-photo.png" />
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "Psychologist",
+          "name": "Psicóloga Isis Vitória",
+          "image": "https://psi.isisvitoria.com.br/isis-photo.png",
+          "description": "Psicoterapia individual e de casal sob a abordagem da Psicologia Histórico-cultural. Atendimento 100% online (remoto) para pacientes em todo o Brasil e exterior.",
+          "address": {
+            "@@type": "PostalAddress",
+            "addressLocality": "Porto Velho",
+            "addressRegion": "RO",
+            "addressCountry": "BR"
+          },
+          "url": "https://psi.isisvitoria.com.br/",
+          "telephone": "@(Environment.GetEnvironmentVariable("CONTACT_PHONE") ?? "")",
+          "priceRange": "$$",
+          "knowsAbout": ["Psicologia Histórico-cultural", "Psicoterapia Individual", "Psicoterapia de Casal", "Desenvolvimento Humano"],
+          "offers": {
+            "@@type": "Offer",
+            "name": "Atendimento Psicológico Online",
+            "description": "Sessões de psicoterapia individual e de casal realizadas de forma 100% online por videochamada para pacientes em todo o Brasil e no exterior.",
+            "category": "Mental Health Services"
+          },
+          "sameAs": [
+            "https://www.instagram.com/psicologaisisvitoria"
+          ]
+        }
+    </script>
+</HeadContent>
 
 <div id="hero" class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%;">
     <MudContainer MaxWidth="MaxWidth.Large">
@@ -22,8 +73,17 @@
                     </MudText>
 
                     <MudText Typo="Typo.h5" Align="Align.Center"
-                             Style="font-weight: 300; line-height: 1.6; color: #555; max-width: 750px;" Class="mb-12">
+                             Style="font-weight: 300; line-height: 1.6; color: #555; max-width: 750px;" Class="mb-8">
                         Investir em psicoterapia é investir em uma vida mais leve e consciente. Vamos juntos construir um espaço de desenvolvimento e reflexão?
+                    </MudText>
+
+                    <div style="width: 65px; height: 3px; background-color: #7E0F20; border-radius: 2px;"
+                         class="mb-8 mx-auto">
+                    </div>
+
+                    <MudText Typo="Typo.h6" Align="Align.Center"
+                             Style="font-weight: 400; line-height: 1.6; color: #666; max-width: 750px;" Class="mb-12">
+                        Ofereço atendimento psicológico 100% online (remoto) para todo o Brasil e brasileiros no exterior.
                     </MudText>
 
                     <div class="d-flex flex-column align-center">
@@ -67,8 +127,8 @@
 
                     <MudText Typo="Typo.h6" Class="mb-6" Align="Align.Justify"
                              Style="font-weight: 400; line-height: 1.8; color: #444; font-size: 1.2rem;">
-                        O desenvolvimento humano é um processo contínuo e profudandmente interligado com as interações sociais e cultura em que o indivíduo está inserido.
-                        Pautada na <b>Psicologia Histórico-cultural</b> busco compreender o ser humano a partir de sua história de vida e das mediações que moldam sua subjetividade e personalidade.
+                        O desenvolvimento humano é um processo contínuo e profundamente interligado com as interações sociais e a cultura em que o indivíduo está inserido.
+                        Como psicóloga com base em Porto Velho - RO e realizando atendimento 100% online (remoto), pauto meu trabalho na <b>Psicologia Histórico-cultural</b> para compreender o ser humano a partir de sua história de vida e das mediações que moldam sua subjetividade e personalidade.
                     </MudText>
 
                     <MudStack Row="true" Spacing="3" Class="mt-4 flex-wrap justify-center justify-md-start">
@@ -119,7 +179,22 @@
                         Individual
                     </MudText>
                     <MudText Typo="Typo.body1" Align="Align.Center" Style="color: rgba(255,255,255,0.8); line-height: 1.7;">
-                        Um espaço seguro, sigiloso, criado a partir do afeto para explorar e entender sua subjetividade e resignificar sua história a partir da abordagem Histórico-cultural.
+                        Um espaço seguro, sigiloso, criado a partir do afeto para explorar e entender sua subjetividade e ressignificar sua história a partir da abordagem Histórico-cultural.
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                          Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
+                    <MudIcon Icon="@Icons.Material.Filled.LaptopMac" Style="color: white;" Size="Size.Large"
+                             Class="mb-4"/>
+                    <MudText Typo="Typo.h5" Style="color: white; font-weight: 700;" Class="mb-4">
+                        Atendimento
+                        Online
+                    </MudText>
+                    <MudText Typo="Typo.body1" Align="Align.Center" Style="color: rgba(255,255,255,0.8); line-height: 1.7;">
+                        Consultas remotas de psicoterapia por videochamada com o mesmo sigilo e eficácia. Flexibilidade de horários e comodidade para ser atendido de onde estiver.
                     </MudText>
                 </MudPaper>
             </MudItem>
@@ -133,7 +208,7 @@
                         Psicoterapia de Casal
                     </MudText>
                     <MudText Typo="Typo.body1" Align="Align.Center" Style="color: rgba(255,255,255,0.8); line-height: 1.7;">
-                        Um espaço intermediado para gerar conexão, resolver conflitos, e juntos aprender ferramentas para uma comunicação, e relação mais assertiva.
+                        Um espaço intermediado para gerar conexão, resolver conflitos, e juntos aprender ferramentas para uma comunicação e relação mais assertiva.
                     </MudText>
                 </MudPaper>
             </MudItem>

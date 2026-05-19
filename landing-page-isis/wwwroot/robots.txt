@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /logout
+Disallow: /logout/*
+
+Sitemap: https://psi.isisvitoria.com.br/sitemap.xml
