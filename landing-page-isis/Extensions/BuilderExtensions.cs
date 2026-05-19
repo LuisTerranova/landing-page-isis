@@ -84,6 +84,7 @@ public static class BuilderExtensions
         // Handlers Configuration
         builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
         builder.Services.AddScoped<IAppointmentRecordHandler, AppointmentRecordHandler>();
+        builder.Services.AddScoped<IAppointmentRecordExportHandler, AppointmentRecordExportHandler>();
         builder.Services.AddScoped<IAppointmentPackageHandler, AppointmentPackageHandler>();
         builder.Services.AddScoped<IPatientHandler, PatientHandler>();
         builder.Services.AddScoped<ILeadHandler, LeadHandler>();

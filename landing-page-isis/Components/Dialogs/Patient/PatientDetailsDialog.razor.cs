@@ -4,6 +4,7 @@ using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Extensions;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 using PatientModel = landing_page_isis.core.Models.Patient;
 
@@ -32,6 +33,12 @@ public partial class PatientDetailsDialog : ComponentBase
     [Inject]
     private IPatientHandler PatientHandler { get; set; } = null!;
 
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = null!;
+
+    [Inject]
+    private IAppointmentRecordExportHandler ExportHandler { get; set; } = null!;
+
     private bool _showCpf;
     private bool _isEditing;
     private bool _isFormValid;
@@ -46,6 +53,10 @@ public partial class PatientDetailsDialog : ComponentBase
     private int _recordPage;
     private int _totalRecords;
     private const int RecordsPageSize = 5;
+
+    // Export
+    private string _exportFormat = "pdf";
+    private bool _isExporting;
 
     // Packages
     private bool _isLoadingPackages;
@@ -304,6 +315,37 @@ public partial class PatientDetailsDialog : ComponentBase
             {
                 Snackbar.Add($"Erro ao excluir pacote: {response.Message}", Severity.Error);
             }
+        }
+    }
+
+    private async Task ExportRecords()
+    {
+        _isExporting = true;
+        StateHasChanged();
+
+        try
+        {
+            var bytes = await ExportHandler.ExportPatientRecords(Patient.Id, _exportFormat);
+
+            var contentType = _exportFormat == "pdf"
+                ? "application/pdf"
+                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+            var fileName = $"prontuario-{Patient.Name.Replace(" ", "-").ToLowerInvariant()}.{_exportFormat}";
+            var base64 = Convert.ToBase64String(bytes);
+
+            await JsRuntime.InvokeVoidAsync("downloadFile", fileName, contentType, base64);
+
+            Snackbar.Add("Prontuário exportado com sucesso!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao exportar prontuário: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExporting = false;
+            StateHasChanged();
         }
     }
 

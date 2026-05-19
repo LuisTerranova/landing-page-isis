@@ -67,7 +67,20 @@
                 <div class="pa-6">
                     <div class="d-flex justify-space-between align-center mb-4">
                         <MudText Typo="Typo.h6" Class="mr-2">Histórico do Paciente</MudText>
-                        <MudDatePicker Date="_recordsFilterDate" DateChanged="OnFilterDateChanged" OpenTo="OpenTo.Month" FixDay="1" DateFormat="MM/yyyy" Label="Filtrar por Mês" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 200px" />
+                        <div class="d-flex align-center gap-2">
+                            <MudSelect @bind-Value="_exportFormat" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 120px" Dense="true">
+                                <MudSelectItem Value="@("pdf")">PDF</MudSelectItem>
+                                <MudSelectItem Value="@("docx")">DOCX</MudSelectItem>
+                            </MudSelect>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportRecords" Disabled="_isExporting">
+                                @if (_isExporting)
+                                {
+                                    <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="ml-1" />
+                                }
+                                Exportar
+                            </MudButton>
+                            <MudDatePicker Date="_recordsFilterDate" DateChanged="OnFilterDateChanged" OpenTo="OpenTo.Month" FixDay="1" DateFormat="MM/yyyy" Label="Filtrar por Mês" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 200px" />
+                        </div>
                     </div>
 
                     @if (_isLoadingRecords)

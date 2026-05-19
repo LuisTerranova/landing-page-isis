@@ -23,6 +23,8 @@ public class AppointmentMap : IEntityTypeConfiguration<Appointment>
 
         builder.Property(a => a.ReminderSent).IsRequired().HasColumnName("reminder_sent");
 
+        builder.Property(a => a.PatientId).IsRequired().HasColumnName("patient_id");
+
         builder.Property(a => a.PackageId).IsRequired(false).HasColumnName("package_id");
 
         builder
