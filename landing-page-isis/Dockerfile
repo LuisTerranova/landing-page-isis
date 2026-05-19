@@ -3,6 +3,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     icu-devtools \
     tzdata \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
