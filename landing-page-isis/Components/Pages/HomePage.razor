@@ -55,6 +55,48 @@
           ]
         }
     </script>
+
+    <!-- FAQ Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@@type": "Question",
+              "name": "Como funciona a psicoterapia online?",
+              "acceptedAnswer": {
+                "@@type": "Answer",
+                "text": "As consultas são realizadas por videochamada em um ambiente seguro, sigiloso e em conformidade com as normas do Conselho Federal de Psicologia. Você só precisa de um dispositivo com acesso à internet e um local reservado que garanta sua privacidade durante a sessão."
+              }
+            },
+            {
+              "@@type": "Question",
+              "name": "O atendimento online é tão eficaz quanto o presencial?",
+              "acceptedAnswer": {
+                "@@type": "Answer",
+                "text": "Sim. Diversos estudos científicos e o próprio Conselho Federal de Psicologia (CFP) reconhecem a mesma eficácia clínica para o modelo online. A modalidade proporciona maior flexibilidade, elimina barreiras geográficas e economiza tempo de deslocamento, mantendo o acolhimento e o rigor científico."
+              }
+            },
+            {
+              "@@type": "Question",
+              "name": "Quem pode realizar psicoterapia online?",
+              "acceptedAnswer": {
+                "@@type": "Answer",
+                "text": "Qualquer pessoa (jovens, adultos e casais) em busca de autoconhecimento ou lidando com questões como ansiedade, estresse, transições de vida, angústias cotidianas e conflitos de relacionamento."
+              }
+            },
+            {
+              "@@type": "Question",
+              "name": "Como é feito o agendamento?",
+              "acceptedAnswer": {
+                "@@type": "Answer",
+                "text": "Basta preencher o formulário de contato abaixo ou clicar no botão flutuante do WhatsApp para conversarmos. Vamos alinhar suas necessidades e definir o melhor dia e horário para as sessões."
+              }
+            }
+          ]
+        }
+    </script>
 </HeadContent>
 
 <div id="hero" class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%;">
@@ -111,7 +153,7 @@
 <div id="sobre" class="d-flex align-center justify-center" style="min-height: 100vh; width: 100%;">
     <MudContainer MaxWidth="MaxWidth.Large">
         <MudPaper Elevation="0" Class="bg-transparent">
-            <MudGrid Spacing="10">
+            <MudGrid Spacing="6" AlignItems="AlignItems.Center">
                 <MudItem xs="12" md="7" Class="d-flex flex-column justify-center align-center align-md-start text-center text-md-start pe-md-12">
                     <MudText Typo="Typo.h6" Color="Color.Secondary"
                              Style="letter-spacing: 2px; font-weight: 300; margin-bottom: 10px">
@@ -147,8 +189,8 @@
                     </MudStack>
                 </MudItem>
 
-                <MudItem xs="12" md="5" Class="isis-photo photo-bg rounded-xl d-flex align-end justify-center pa-0">
-                    <MudImage Src="isis-photo.png" Alt="Isis Vitória" Class="rounded-xl isis-photo" Fluid="true"/>
+                <MudItem xs="12" md="5" Class="photo-bg rounded-xl d-flex align-end justify-center pa-0 mt-8 mt-md-0">
+                    <MudImage Src="isis-photo.png" Alt="Isis Vitória" Class="isis-photo" Fluid="true"/>
                 </MudItem>
             </MudGrid>
         </MudPaper>
@@ -170,7 +212,7 @@
 
         <MudGrid Spacing="6" Justify="Justify.Center">
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                <MudPaper Elevation="0" Class="pa-6 pa-md-10 rounded-xl d-flex flex-column align-center text-center"
                           Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
                     <MudIcon Icon="@Icons.Material.Filled.SelfImprovement" Style="color: white;" Size="Size.Large"
                              Class="mb-4"/>
@@ -185,7 +227,7 @@
             </MudItem>
 
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                <MudPaper Elevation="0" Class="pa-6 pa-md-10 rounded-xl d-flex flex-column align-center text-center"
                           Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
                     <MudIcon Icon="@Icons.Material.Filled.LaptopMac" Style="color: white;" Size="Size.Large"
                              Class="mb-4"/>
@@ -200,7 +242,7 @@
             </MudItem>
 
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="0" Class="pa-10 rounded-xl d-flex flex-column align-center text-center"
+                <MudPaper Elevation="0" Class="pa-6 pa-md-10 rounded-xl d-flex flex-column align-center text-center"
                           Style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); height: 100%;">
                     <MudIcon Icon="@Icons.Material.Filled.Groups" Style="color: white;" Size="Size.Large"
                              Class="mb-4"/>
@@ -216,6 +258,7 @@
     </MudContainer>
 </div>
 
+<FaqSection />
 
 <div id="contato">
     <LeadFormContact/>

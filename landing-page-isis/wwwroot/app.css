@@ -187,28 +187,56 @@ section {
 }
 
 .photo-bg {
-    background-color: transparent;
-    overflow: hidden;
+    position: relative !important;
+    background-color: transparent !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    height: 320px !important;
+    width: 280px !important;
+    margin: 0 auto !important;
+    max-width: 280px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.photo-bg::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background-color: #7E0F20;
+    z-index: 0;
 }
 
 .isis-photo {
-    width: 100%;
-    max-width: 220px;
-    height: auto;
-    object-fit: cover;
-    object-position: center;
+    position: relative;
+    z-index: 1;
+    max-height: 300px !important;
+    width: auto !important;
     display: block;
     margin: 0 auto;
 }
 
 @media (min-width: 960px) {
     .photo-bg {
-        background-color: #7E0F20;
+        height: 520px !important;
+        width: 420px !important;
+        max-width: 420px !important;
+    }
+
+    .photo-bg::before {
+        width: 380px !important;
+        height: 380px !important;
     }
 
     .isis-photo {
-        max-width: 100%;
-        /* Restaura no Desktop */
+        max-height: 500px !important;
     }
 }
 
@@ -332,5 +360,99 @@ section {
         height: 55px;
         bottom: 20px;
         right: 20px;
+    }
+}
+
+/* MudBlazor FAQ Expansion Panels Custom Styles (Interactive) */
+.faq-panels .mud-expand-panel {
+    border-radius: 16px !important;
+    margin-bottom: 16px !important;
+    border: 1px solid rgba(40, 75, 50, 0.15) !important;
+    background-color: #F7EAD5 !important;
+    box-shadow: none !important;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-panels .mud-expand-panel::before {
+    display: none !important; /* Remove MudBlazor default top border line */
+}
+
+.faq-panels .mud-expand-panel:hover {
+    border-color: #284B32 !important;
+    background-color: #F7EAD5 !important;
+}
+
+.faq-panels .mud-expand-panel.mud-panel-expanded {
+    border-color: #284B32 !important;
+    background-color: #F7EAD5 !important;
+}
+
+.faq-panels .mud-expand-panel-header {
+    padding: 24px !important;
+}
+
+.faq-panels .mud-expand-panel-header .mud-expand-panel-icon {
+    color: #7E0F20 !important;
+}
+
+.faq-panels .mud-expand-panel-content {
+    padding: 0 24px 24px 24px !important;
+}
+
+.faq-panels .mud-expand-panel-text {
+    font-family: 'Glacial Indifference', 'Roboto', sans-serif;
+    font-weight: bold;
+    color: #284B32;
+    font-size: 1.25rem !important;
+}
+
+.faq-panels .faq-answer {
+    line-height: 1.8;
+    color: #4A5568;
+    font-size: 1.15rem !important;
+}
+
+.faq-panels .faq-link {
+    color: #7E0F20;
+    text-decoration: underline;
+    font-weight: bold;
+    transition: color 0.2s ease-in-out;
+}
+
+.faq-panels .faq-link:hover {
+    color: #284B32;
+}
+
+/* Mobile Optimization Styles */
+@media (max-width: 960px) {
+    /* Scale down large MudBlazor headings on mobile to prevent overflow and awkward wrap */
+    .mud-typography-h1 {
+        font-size: 2.25rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .mud-typography-h2 {
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .mud-typography-h5 {
+        font-size: 1.1rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    .mud-typography-h6 {
+        font-size: 0.9rem !important;
+        letter-spacing: 2px !important;
+    }
+
+    /* Reduce excessive vertical paddings for sections on mobile screens */
+    #hero {
+        padding: 40px 0 !important;
+    }
+    
+    #sobre, #servicos, #contato, #faq {
+        padding: 40px 0 !important;
     }
 }
