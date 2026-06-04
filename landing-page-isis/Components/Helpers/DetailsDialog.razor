@@ -117,8 +117,8 @@
                                     <MudTextField @bind-Value="_coupleEditModel.PayerCpf" Label="CPF do Pagador"
                                                   ReadOnly="@(!_isEditingCouple)"
                                                   Variant="Variant.Outlined" Margin="Margin.Dense"
-                                                  MaxLength="14" Counter="14"
-                                                  Mask="@(new PatternMask("000.000.000-00"))" />
+                                                   MaxLength="14"
+                                                   Mask="_cpfMask" />
                                 </MudItem>
                             </MudGrid>
                         </MudForm>
@@ -164,7 +164,7 @@
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
                                     {
-                                        <MudTextField @bind-Value="_patientModel.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="14" Counter="14" Mask="_cpfMask" />
+                                        <MudTextField @bind-Value="_patientModel.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="14" Mask="_cpfMask" />
                                     }
                                     else
                                     {
@@ -188,7 +188,7 @@
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
                                     {
-                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="14" Counter="14" Mask="_cpfMask" />
+                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="14" Mask="_cpfMask" />
                                     }
                                     else
                                     {
