@@ -2,7 +2,7 @@
 @using landing_page_isis.core.Models
 @using landing_page_isis.core.Models.DTOs
 @using landing_page_isis.core
-
+@using landing_page_isis.core.Interfaces
 
 <MudDialog>
     <TitleContent>
@@ -15,20 +15,44 @@
         <MudForm @bind-IsValid="@_formValido">
             <MudGrid>
                 <MudItem xs="12">
-                    <MudAutocomplete T="PatientListItemDto"
-
-                                     Label="Paciente"
-
-                                     @bind-Value="_selectedPatient"
-
-                                     SearchFunc="@SearchPatient"
-                                     ToStringFunc="@(p => p == null ? "" : p.Name)"
-                                     Required="true"
-                                     Variant="Variant.Outlined"
-                                     ResetValueOnEmptyText="true"
-                                     ShowProgressIndicator="true"
-                                     ProgressIndicatorColor="Color.Primary"
-                                     Placeholder="Comece a digitar o nome do paciente..."/>
+                    <MudSelect T="string" Label="Tipo" @bind-Value="_appointmentType"
+                               Required="true" Variant="Variant.Outlined"
+                               @bind-Value:after="OnTypeChanged">
+                        <MudSelectItem Value="@("patient")">Paciente</MudSelectItem>
+                        <MudSelectItem Value="@("couple")">Casal</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    @if (_appointmentType == "patient")
+                    {
+                        <MudAutocomplete T="PatientListItemDto"
+                                         Label="Paciente"
+                                         @bind-Value="_selectedPatient"
+                                         SearchFunc="@SearchPatient"
+                                         ToStringFunc="@(p => p == null ? "" : p.Name)"
+                                         Required="true"
+                                         Variant="Variant.Outlined"
+                                         ResetValueOnEmptyText="true"
+                                         ShowProgressIndicator="true"
+                                         ProgressIndicatorColor="Color.Primary"
+                                         Placeholder="Comece a digitar o nome do paciente..."
+                                         @bind-Value:after="OnPatientChanged"/>
+                    }
+                    else
+                    {
+                        <MudAutocomplete T="CoupleListItemDto"
+                                         Label="Casal"
+                                         @bind-Value="_selectedCouple"
+                                         SearchFunc="@SearchCouple"
+                                         ToStringFunc="@(c => c == null ? "" : c.Name)"
+                                         Required="true"
+                                         Variant="Variant.Outlined"
+                                         ResetValueOnEmptyText="true"
+                                         ShowProgressIndicator="true"
+                                         ProgressIndicatorColor="Color.Primary"
+                                         Placeholder="Comece a digitar o nome do casal..."
+                                         @bind-Value:after="OnCoupleChanged"/>
+                    }
                 </MudItem>
                 <MudItem xs="6">
                     <MudDatePicker Label="Data da Consulta"
@@ -59,6 +83,24 @@
                         }
                     </MudSelect>
                 </MudItem>
+                <MudItem xs="12">
+                    <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                        Dados do Pagador
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Nome do Pagador"
+                                  @bind-Value="Model.PayerName" Variant="Variant.Outlined"
+                                  MaxLength="150" Counter="150"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="CPF do Pagador"
+                                  @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
+                                  MaxLength="14" Counter="14"
+                                  Mask="@(new PatternMask("000.000.000-00"))"/>
+                </MudItem>
             </MudGrid>
         </MudForm>
     </DialogContent>
@@ -74,6 +116,7 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
     [Inject] private IPatientHandler PatientHandler { get; set; } = null!;
+    [Inject] private ICoupleHandler CoupleHandler { get; set; } = null!;
 
     [Parameter] public Appointment Model { get; set; } = new();
     [Parameter] public string Titulo { get; set; } = "Novo Agendamento";
@@ -81,22 +124,85 @@
     private bool _formValido;
     private DateTime? _tempDate;
     private TimeSpan? _tempTime;
+    private string _appointmentType = "patient";
     private PatientListItemDto? _selectedPatient;
+    private CoupleListItemDto? _selectedCouple;
 
     [Inject] private IDialogService DialogService { get; set; } = null!;
     [Inject] private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        // For editing, load the specific patient object
-        if (Model.PatientId != Guid.Empty)
+        if (Model.PatientId.HasValue && Model.PatientId.Value != Guid.Empty)
         {
-            var full = await PatientHandler.GetPatient(Model.PatientId);
+            var full = await PatientHandler.GetPatient(Model.PatientId.Value);
             if (full != null)
             {
                 _selectedPatient = new PatientListItemDto(
                     full.Id, full.Name, full.Email, full.Phone, full.StateOfResidency
                 );
+                _appointmentType = "patient";
+                await PrefillPayerFromPatient(full);
+            }
+        }
+        else if (Model.CoupleId.HasValue)
+        {
+            var full = await CoupleHandler.GetCouple(Model.CoupleId.Value);
+            if (full != null)
+            {
+                _selectedCouple = new CoupleListItemDto(
+                    full.Id, full.Name, full.Patient1.Name, full.Patient2.Name,
+                    full.Patient1.Phone, full.Patient1.Email
+                );
+                _appointmentType = "couple";
+                if (!string.IsNullOrEmpty(full.PayerName))
+                {
+                    Model.PayerName ??= full.PayerName;
+                    Model.PayerCpf ??= full.PayerCpf;
+                }
+            }
+        }
+    }
+
+    private async Task PrefillPayerFromPatient(Patient patient)
+    {
+        if (!string.IsNullOrEmpty(patient.PayerName))
+        {
+            Model.PayerName ??= patient.PayerName;
+            Model.PayerCpf ??= patient.PayerCpf;
+        }
+    }
+
+    private async Task OnTypeChanged()
+    {
+        _selectedPatient = null;
+        _selectedCouple = null;
+        Model.PatientId = null;
+        Model.CoupleId = null;
+    }
+
+    private async Task OnPatientChanged()
+    {
+        if (_selectedPatient != null)
+        {
+            var full = await PatientHandler.GetPatient(_selectedPatient.Id);
+            if (full != null)
+            {
+                Model.PayerName = full.PayerName;
+                Model.PayerCpf = full.PayerCpf;
+            }
+        }
+    }
+
+    private async Task OnCoupleChanged()
+    {
+        if (_selectedCouple != null)
+        {
+            var full = await CoupleHandler.GetCouple(_selectedCouple.Id);
+            if (full != null)
+            {
+                Model.PayerName = full.PayerName;
+                Model.PayerCpf = full.PayerCpf;
             }
         }
     }
@@ -107,11 +213,16 @@
         return result.Items;
     }
 
+    private async Task<IEnumerable<CoupleListItemDto>> SearchCouple(string? value, CancellationToken ct)
+    {
+        var result = await CoupleHandler.QueryCouples(value ?? "", 0, 10, ct);
+        return result.Items;
+    }
+
     protected override void OnParametersSet()
     {
         if (Model.Id != Guid.Empty && Model.AppointmentDate != default)
         {
-            // For editing, convert the model's UTC DateTimeOffset to Porto Velho time for the pickers
             var localTime = Model.AppointmentDate.ToPortoVelhoTime();
             _tempDate = localTime.Date;
             _tempTime = localTime.TimeOfDay;
@@ -122,7 +233,7 @@
 
     private async Task Salvar()
     {
-        if (_selectedPatient != null)
+        if (_appointmentType == "patient" && _selectedPatient != null)
         {
             var packagesResponse = await PackageHandler.GetPackagesByPatientId(0, 1, _selectedPatient.Id, CancellationToken.None);
             var hasActive = packagesResponse.Items.Any(p => p is { Status: PackageStatus.Ativo, RemainingAppointments: > 0 });
@@ -133,24 +244,41 @@
                 var dialog = await DialogService.ShowAsync<ConfirmScheduleDialog>("Atenção", options);
                 var result = await dialog.Result;
                 if (result == null || result.Canceled)
-                {
                     return;
-                }
+            }
+        }
+        else if (_appointmentType == "couple" && _selectedCouple != null)
+        {
+            var packagesResponse = await PackageHandler.GetPackagesByCoupleId(0, 1, _selectedCouple.Id, CancellationToken.None);
+            var hasActive = packagesResponse.Items.Any(p => p is { Status: PackageStatus.Ativo, RemainingAppointments: > 0 });
+
+            if (!hasActive)
+            {
+                var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+                var dialog = await DialogService.ShowAsync<ConfirmScheduleDialog>("Atenção", options);
+                var result = await dialog.Result;
+                if (result == null || result.Canceled)
+                    return;
             }
         }
 
         if (_tempDate.HasValue && _tempTime.HasValue)
         {
-            // Combine Date and Time into a single local DateTime
             var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
-
-            // Create a DateTimeOffset using the Porto Velho extension
             Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
         }
 
-        Model.PatientId = _selectedPatient?.Id ?? Guid.Empty;
+        if (_appointmentType == "patient")
+        {
+            Model.PatientId = _selectedPatient?.Id;
+            Model.CoupleId = null;
+        }
+        else
+        {
+            Model.CoupleId = _selectedCouple?.Id;
+            Model.PatientId = null;
+        }
 
         MudDialog.Close(DialogResult.Ok(Model));
     }
-
 }

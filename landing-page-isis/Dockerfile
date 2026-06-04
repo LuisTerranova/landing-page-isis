@@ -20,6 +20,7 @@ WORKDIR /src
 # Copy project files first to optimize layer caching
 COPY ["landing-page-isis/landing-page-isis.csproj", "landing-page-isis/"]
 COPY ["landing-page-isis.core/landing-page-isis.core.csproj", "landing-page-isis.core/"]
+COPY ["landing-page-isis.Infrastructure/landing-page-isis.Infrastructure.csproj", "landing-page-isis.Infrastructure/"]
 
 # Restore dependencies
 RUN dotnet restore "landing-page-isis/landing-page-isis.csproj"

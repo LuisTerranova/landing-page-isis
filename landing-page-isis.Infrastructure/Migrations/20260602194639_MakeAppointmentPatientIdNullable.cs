@@ -1,30 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace landingpageisis.Migrations
 {
     /// <inheritdoc />
-    public partial class RenameAppointmentPatientIdToSnakeCase : Migration
+    public partial class MakeAppointmentPatientIdNullable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_appointments_patients_PatientId",
+                name: "FK_appointments_patients_patient_id",
                 table: "appointments"
             );
 
-            migrationBuilder.RenameColumn(
-                name: "PatientId",
+            migrationBuilder.AlterColumn<Guid>(
+                name: "patient_id",
                 table: "appointments",
-                newName: "patient_id"
-            );
-
-            migrationBuilder.RenameIndex(
-                name: "IX_appointments_PatientId",
-                table: "appointments",
-                newName: "IX_appointments_patient_id"
+                type: "uuid",
+                nullable: true,
+                oldClrType: typeof(Guid),
+                oldType: "uuid"
             );
 
             migrationBuilder.AddForeignKey(
@@ -32,8 +30,7 @@ namespace landingpageisis.Migrations
                 table: "appointments",
                 column: "patient_id",
                 principalTable: "patients",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade
+                principalColumn: "Id"
             );
         }
 
@@ -45,22 +42,21 @@ namespace landingpageisis.Migrations
                 table: "appointments"
             );
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.AlterColumn<Guid>(
                 name: "patient_id",
                 table: "appointments",
-                newName: "PatientId"
-            );
-
-            migrationBuilder.RenameIndex(
-                name: "IX_appointments_patient_id",
-                table: "appointments",
-                newName: "IX_appointments_PatientId"
+                type: "uuid",
+                nullable: false,
+                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
+                oldClrType: typeof(Guid),
+                oldType: "uuid",
+                oldNullable: true
             );
 
             migrationBuilder.AddForeignKey(
-                name: "FK_appointments_patients_PatientId",
+                name: "FK_appointments_patients_patient_id",
                 table: "appointments",
-                column: "PatientId",
+                column: "patient_id",
                 principalTable: "patients",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade

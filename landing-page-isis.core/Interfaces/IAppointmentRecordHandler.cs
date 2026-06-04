@@ -15,4 +15,5 @@ public interface IAppointmentRecordHandler
         DateTime? filterMonthYear,
         CancellationToken ct
     );
+    Task<AppointmentRecord?> GetAppointmentRecordByAppointmentId(Guid appointmentId);
 }

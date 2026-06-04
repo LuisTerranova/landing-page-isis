@@ -1,8 +1,9 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
+using landing_page_isis.Extensions;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using landing_page_isis.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace landing_page_isis.Components.Admin;
 
@@ -16,6 +17,9 @@ public partial class FinancesView : ComponentBase
     [Inject]
     private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
 
+    [Inject]
+    private ILogger<FinancesView> Logger { get; set; } = null!;
+
     #endregion
 
     #region Properties
@@ -23,14 +27,12 @@ public partial class FinancesView : ComponentBase
     private bool _loading = true;
 
     // Filters
-    private DateRange _dateRange = new DateRange(
-        new DateTime(DateTime.UtcNow.ToPortoVelhoTime().Year, DateTime.UtcNow.ToPortoVelhoTime().Month, 1),
-        new DateTime(
-            DateTime.UtcNow.ToPortoVelhoTime().Year,
-            DateTime.UtcNow.ToPortoVelhoTime().Month,
-            DateTime.DaysInMonth(DateTime.UtcNow.ToPortoVelhoTime().Year, DateTime.UtcNow.ToPortoVelhoTime().Month)
-        )
-    );
+    private DateTime? _startDate;
+    private DateTime? _endDate;
+
+    private string _rangeLabel => _startDate is not null && _endDate is not null
+        ? $"{_startDate:dd MMM} → {_endDate:dd MMM yyyy}"
+        : "";
 
     // KPIs
     private decimal _realizedRevenue;
@@ -48,6 +50,29 @@ public partial class FinancesView : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        var now = DateTime.UtcNow.ToPortoVelhoTime();
+        _startDate = new DateTime(now.Year, now.Month, 1);
+        _endDate = new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month));
+        await LoadFinances();
+    }
+
+    private void ShiftDateRange(int months)
+    {
+        if (_startDate is null || _endDate is null) return;
+        var daysDiff = (_endDate.Value - _startDate.Value).Days;
+        _startDate = _startDate.Value.AddMonths(months);
+        _endDate = _startDate.Value.AddDays(daysDiff);
+    }
+
+    private async Task PreviousMonth()
+    {
+        ShiftDateRange(-1);
+        await LoadFinances();
+    }
+
+    private async Task NextMonth()
+    {
+        ShiftDateRange(1);
         await LoadFinances();
     }
 
@@ -58,11 +83,8 @@ public partial class FinancesView : ComponentBase
 
         try
         {
-            var start = _dateRange?.Start ?? new DateTime(DateTime.UtcNow.ToPortoVelhoTime().Year, 1, 1);
-            var end = _dateRange?.End ?? new DateTime(DateTime.UtcNow.ToPortoVelhoTime().Year, 12, 31);
-
-            var startOffset = new DateTimeOffset(start.Date, TimeSpan.Zero);
-            var endOffset = new DateTimeOffset(end.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);
+            var startOffset = new DateTimeOffset(_startDate!.Value.Date, TimeSpan.Zero);
+            var endOffset = new DateTimeOffset(_endDate!.Value.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);
 
             var appointments = await AppointmentHandler.GetAllAppointmentsByDateRange(
                 startOffset,
@@ -136,7 +158,7 @@ public partial class FinancesView : ComponentBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading finances: {ex.Message}");
+            Logger.LogError(ex, "Error loading finances");
         }
         finally
         {

@@ -16,28 +16,27 @@ var app = builder.Build();
 
 app.ConfigurePipeline();
 
-app.MapGet("/health", async (AppDbContext db) =>
-{
-    try
+app.MapGet(
+    "/health",
+    async (AppDbContext db) =>
     {
-        await db.Database.CanConnectAsync();
-        return Results.Ok(new
+        try
         {
-            status = "Healthy",
-            timestamp = DateTime.UtcNow,
-            database = "Healthy"
-        });
-    }
-    catch
-    {
-        return Results.Ok(new
+            await db.Database.CanConnectAsync();
+            return Results.Ok(
+                new
+                {
+                    status = "Healthy",
+                    timestamp = DateTime.UtcNow,
+                }
+            );
+        }
+        catch
         {
-            status = "Degraded",
-            timestamp = DateTime.UtcNow,
-            database = "Unhealthy"
-        });
+            return Results.StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status503ServiceUnavailable);
+        }
     }
-});
+);
 
 await app.SeedAdmin();
 

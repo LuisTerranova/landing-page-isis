@@ -8,6 +8,7 @@ namespace landing_page_isis.Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Patient> Patients { get; set; }
+    public DbSet<Couple> Couples { get; set; }
     public DbSet<Lead> Leads { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Appointment> Appointments { get; set; }

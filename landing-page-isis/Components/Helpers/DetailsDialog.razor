@@ -1,0 +1,903 @@
+@namespace landing_page_isis.Components.Helpers
+@using landing_page_isis.Components.Dialogs.Appointment
+@using landing_page_isis.Components.Dialogs.Patient
+@using landing_page_isis.core.Interfaces
+@using landing_page_isis.core.Models
+@using landing_page_isis.core.Models.DTOs
+@using landing_page_isis.Extensions
+@using landing_page_isis.core
+@using PatientModel = landing_page_isis.core.Models.Patient
+@using Microsoft.JSInterop
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@(IsCouple ? Icons.Material.Filled.Favorite : Icons.Material.Filled.PersonSearch)" />
+            <MudText Typo="Typo.h6">Detalhes - @TitleName</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" ActivePanelIndexChanged="OnTabChanged">
+
+            @* === PERFIL === *@
+            <MudTabPanel Text="Perfil" Icon="@Icons.Material.Filled.Info">
+                <div class="pa-6">
+                    @if (IsCouple)
+                    {
+                        @* Couple profile - name & payer editable, partner data read-only *@
+                        <MudForm @ref="_coupleForm" @bind-IsValid="_isCoupleFormValid">
+                            <MudGrid>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="_coupleEditModel.Name" Label="Nome do Casal"
+                                                  ReadOnly="@(!_isEditingCouple)" Required="true"
+                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                  MaxLength="150" Counter="150" Immediate="true" />
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudExpansionPanels MultiExpansion="true" Elevation="0">
+                                        <MudExpansionPanel>
+                                            <TitleContent>
+                                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2"/>
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                                    Parceiro(a) 1 — @_coupleModel?.Patient1.Name
+                                                </MudText>
+                                            </TitleContent>
+                                            <ChildContent>
+                                                <MudGrid Class="mt-4">
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient1.Name" Label="Nome" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient1.Cpf.FormatCpf()" Label="CPF" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient1.BirthDate?.ToString("dd/MM/yyyy")" Label="Data de Nascimento" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient1.Email" Label="E-mail" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient1.Phone.FormatPhone()" Label="Telefone" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient1.StateOfResidency" Label="Estado (UF)" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </ChildContent>
+                                        </MudExpansionPanel>
+
+                                        <MudExpansionPanel>
+                                            <TitleContent>
+                                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2"/>
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                                    Parceiro(a) 2 — @_coupleModel?.Patient2.Name
+                                                </MudText>
+                                            </TitleContent>
+                                            <ChildContent>
+                                                <MudGrid Class="mt-4">
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient2.Name" Label="Nome" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient2.Cpf.FormatCpf()" Label="CPF" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient2.BirthDate?.ToString("dd/MM/yyyy")" Label="Data de Nascimento" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient2.Email" Label="E-mail" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient2.Phone.FormatPhone()" Label="Telefone" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Value="@_coupleModel?.Patient2.StateOfResidency" Label="Estado (UF)" Disabled="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </ChildContent>
+                                        </MudExpansionPanel>
+                                    </MudExpansionPanels>
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                                        Dados do Pagador
+                                    </MudText>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_coupleEditModel.PayerName" Label="Nome do Pagador"
+                                                  ReadOnly="@(!_isEditingCouple)"
+                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                  MaxLength="150" Counter="150" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_coupleEditModel.PayerCpf" Label="CPF do Pagador"
+                                                  ReadOnly="@(!_isEditingCouple)"
+                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                  MaxLength="14" Counter="14"
+                                                  Mask="@(new PatternMask("000.000.000-00"))" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudForm>
+
+                        <div class="d-flex justify-end mt-6 gap-2">
+                            @if (!_isEditingCouple)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="ToggleCoupleEdit">
+                                    Editar Perfil
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ToggleCoupleEdit">Cancelar</MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveCouple" Disabled="@(!_isCoupleFormValid)">Salvar Alterações</MudButton>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        @* Patient profile - editable *@
+                        <MudForm @bind-IsValid="_isFormValid">
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_patientModel.Name" Label="Nome" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="150" Counter="150" Immediate="true" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_patientModel.Email" Label="E-mail" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="255" Counter="255" Immediate="true" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_patientModel.Phone" Label="Telefone" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="11" Counter="11" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    @if (_isEditing)
+                                    {
+                                        <MudDatePicker Label="Data de Nascimento" @bind-Date="_tempBirthDate" Variant="Variant.Outlined" Margin="Margin.Dense" DateFormat="dd/MM/yyyy" Required="true" />
+                                    }
+                                    else
+                                    {
+                                        <MudTextField Value="@_patientModel.BirthDate?.ToString("dd/MM/yyyy")" Label="Data de Nascimento" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                    }
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    @if (_isEditing)
+                                    {
+                                        <MudTextField @bind-Value="_patientModel.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="14" Counter="14" Mask="@(new PatternMask("000.000.000-00"))" />
+                                    }
+                                    else
+                                    {
+                                        <MudTextField Value="@GetDisplayCpf()" Label="CPF" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      Adornment="Adornment.End" AdornmentIcon="@GetCpfIcon()" OnAdornmentClick="ToggleCpfObfuscation" AdornmentAriaLabel="Mostrar CPF" />
+                                    }
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_patientModel.StateOfResidency" Label="Estado (UF)" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="2" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                                        Dados do Pagador
+                                    </MudText>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_patientModel.PayerName" Label="Nome do Pagador" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="150" Counter="150" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    @if (_isEditing)
+                                    {
+                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="14" Counter="14" Mask="@(new PatternMask("000.000.000-00"))" />
+                                    }
+                                    else
+                                    {
+                                        <MudTextField Value="@GetDisplayPayerCpf()" Label="CPF do Pagador" ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      Adornment="Adornment.End" AdornmentIcon="@GetPayerCpfIcon()" OnAdornmentClick="TogglePayerCpfObfuscation" AdornmentAriaLabel="Mostrar CPF" />
+                                    }
+                                </MudItem>
+                            </MudGrid>
+                        </MudForm>
+
+                        <div class="d-flex justify-end mt-6 gap-2">
+                            @if (!_isEditing)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="ToggleEdit">Editar Perfil</MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ToggleEdit">Cancelar</MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" OnClick="SavePatient" Disabled="@(!_isFormValid)">Salvar Alterações</MudButton>
+                            }
+                        </div>
+                    }
+                </div>
+            </MudTabPanel>
+
+            @* === HISTÓRICO === *@
+            <MudTabPanel Text="Histórico" Icon="@Icons.Material.Filled.Assignment">
+                <div class="pa-6">
+                    @if (_patientCouple != null)
+                    {
+                        <MudAlert Severity="Severity.Warning" Class="mb-4">
+                            <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2"/>
+                            Este paciente faz parte do casal <b>@_patientCouple.Name</b>.
+                            Consulte os detalhes do casal para ver o histórico consolidado.
+                        </MudAlert>
+                    }
+
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6" Class="mr-2">@(IsCouple ? "Histórico do Casal" : "Histórico do Paciente")</MudText>
+                        <div class="d-flex align-center gap-2">
+                            <MudSelect @bind-Value="_exportFormat" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 120px" Dense="true">
+                                <MudSelectItem Value="@("pdf")">PDF</MudSelectItem>
+                                <MudSelectItem Value="@("docx")">DOCX</MudSelectItem>
+                            </MudSelect>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download" OnClick="ExportRecords" Disabled="_isExporting">
+                                @if (_isExporting)
+                                {
+                                    <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="ml-1" />
+                                }
+                                Exportar
+                            </MudButton>
+                            <MudDatePicker Date="_recordsFilterDate" DateChanged="OnFilterDateChanged" OpenTo="OpenTo.Month" FixDay="1" DateFormat="MM/yyyy" Label="Filtrar por Mês" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 200px" />
+                        </div>
+                    </div>
+
+                    @if (_isLoadingRecords)
+                    {
+                        <div class="d-flex justify-center my-4">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        </div>
+                    }
+                    else if (_records.Any())
+                    {
+                        <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px;">
+                            <MudExpansionPanels MultiExpansion="true" Elevation="2" Class="mb-3">
+                                @foreach (var record in _records)
+                                {
+                                    <MudExpansionPanel>
+                                        <TitleContent>
+                                            <div class="d-flex flex-column">
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                                    <b>Consulta:</b> @record.AppointmentDate?.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                                                </MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    <b>Criado:</b> @record.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                                                    @if (record.UpdatedAt.HasValue)
+                                                    {
+                                                        <span> | <b>Última Retificação:</b> @record.UpdatedAt.Value.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                                    }
+                                                </MudText>
+                                            </div>
+                                        </TitleContent>
+                                        <ChildContent>
+                                            <MudText Typo="Typo.body2" Style="white-space: pre-wrap; word-break: break-word;" Class="mb-3">
+                                                @record.Note
+                                            </MudText>
+                                            <div class="d-flex justify-end">
+                                                <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" OnClick="@(() => RectifyRecord(record))" StartIcon="@Icons.Material.Filled.Edit">
+                                                    Retificar
+                                                </MudButton>
+                                            </div>
+                                        </ChildContent>
+                                    </MudExpansionPanel>
+                                }
+                            </MudExpansionPanels>
+                            @if (_totalRecords > _records.Count)
+                            {
+                                <div class="d-flex justify-center mt-2">
+                                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="LoadMoreRecords">Ver Mais</MudButton>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">Nenhum prontuário encontrado.</MudAlert>
+                    }
+                </div>
+            </MudTabPanel>
+
+            @* === PACOTES === *@
+            <MudTabPanel Text="Pacotes" Icon="@Icons.Material.Filled.CardGiftcard">
+                <div class="pa-6">
+                    @if (_patientCouple != null)
+                    {
+                        <MudAlert Severity="Severity.Warning" Class="mb-4">
+                            <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2"/>
+                            Este paciente faz parte do casal <b>@_patientCouple.Name</b>.
+                            Os pacotes devem ser gerenciados pelos detalhes do casal.
+                        </MudAlert>
+                    }
+
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">Emissões de Pacotes</MudText>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="OpenCreatePackage">Novo Pacote</MudButton>
+                    </div>
+
+                    @if (_isLoadingPackages)
+                    {
+                        <div class="d-flex justify-center my-4">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        </div>
+                    }
+                    else if (_packages.Any())
+                    {
+                        <div class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                            @foreach (var pkg in _packages)
+                            {
+                                <MudPaper Elevation="1" Class="pa-3 d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.subtitle1"><b>Pacote de @pkg.TotalAppointments consultas</b></MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Default">
+                                            Restantes: <b>@pkg.RemainingAppointments</b> | Criado: @pkg.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy")
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            Pagamento: @pkg.PaymentMethod | Valor: @pkg.Price.ToString("C")
+                                        </MudText>
+                                    </div>
+                                    <div class="d-flex align-center gap-2">
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Class="@($"pkg-status-{pkg.Status.ToString().ToLower()}")">
+                                            @pkg.Status.ToString().ToUpper()
+                                        </MudChip>
+                                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditPackage(pkg))">Editar</MudMenuItem>
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" OnClick="@(() => DeletePackageAsync(pkg))">Excluir</MudMenuItem>
+                                        </MudMenu>
+                                    </div>
+                                </MudPaper>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">Nenhum pacote encontrado.</MudAlert>
+                    }
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+</MudDialog>
+
+@code {
+
+    // ==================== PARAMETERS ====================
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public PatientModel? Patient { get; set; }
+
+    [Parameter]
+    public Couple? Couple { get; set; }
+
+    private bool IsCouple => Couple != null;
+    private string TitleName => IsCouple ? Couple!.Name : Patient!.Name;
+
+    // ==================== INJECTED SERVICES ====================
+
+    [Inject] private IPatientHandler PatientHandler { get; set; } = null!;
+    [Inject] private ICoupleHandler CoupleHandler { get; set; } = null!;
+    [Inject] private IAppointmentRecordHandler RecordHandler { get; set; } = null!;
+    [Inject] private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
+    [Inject] private IDialogService DialogService { get; set; } = null!;
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+    [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] private IAppointmentRecordExportHandler ExportHandler { get; set; } = null!;
+    [Inject] private IAppointmentHandler AppointmentHandler { get; set; } = null!;
+
+    // ==================== PATIENT PROFILE STATE ====================
+
+    private bool _showCpf;
+    private bool _showPayerCpf;
+    private bool _isEditing;
+    private bool _isFormValid;
+    private PatientModel _patientModel = new();
+    private DateTime? _tempBirthDate;
+
+    // ==================== COUPLE STATE ====================
+
+    private MudForm _coupleForm = null!;
+    private Couple? _coupleModel;
+    private Couple? _patientCouple;
+    private bool _isEditingCouple;
+    private bool _isCoupleFormValid;
+    private Couple _coupleEditModel = new();
+
+    // ==================== RECORDS STATE ====================
+
+    private DateTime? _recordsFilterDate;
+    private bool _isLoadingRecords;
+    private bool _recordsLoaded;
+    private List<AppointmentRecordListItemDto> _records = new();
+    private int _recordPage;
+    private int _totalRecords;
+    private const int RecordsPageSize = 5;
+
+    // ==================== EXPORT STATE ====================
+
+    private string _exportFormat = "pdf";
+    private bool _isExporting;
+
+    // ==================== PACKAGES STATE ====================
+
+    private bool _isLoadingPackages;
+    private bool _packagesLoaded;
+    private List<AppointmentPackageListItemDto> _packages = new();
+
+    // ==================== LIFECYCLE ====================
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsCouple)
+        {
+            _coupleModel = Couple;
+            ResetCoupleEditModel();
+        }
+        else
+        {
+            ResetPatientModel();
+            _patientCouple = await CoupleHandler.GetCoupleByPatientId(Patient!.Id);
+        }
+    }
+
+    private void ResetPatientModel()
+    {
+        _patientModel = new PatientModel
+        {
+            Id = Patient!.Id,
+            Name = Patient.Name,
+            Email = Patient.Email,
+            Phone = Patient.Phone,
+            Cpf = Patient.Cpf,
+            BirthDate = Patient.BirthDate,
+            StateOfResidency = Patient.StateOfResidency,
+            PayerName = Patient.PayerName,
+            PayerCpf = Patient.PayerCpf,
+        };
+        _tempBirthDate = _patientModel.BirthDate?.ToDateTime(TimeOnly.MinValue);
+    }
+
+    // ==================== PATIENT PROFILE METHODS ====================
+
+    private void ToggleCpfObfuscation() => _showCpf = !_showCpf;
+    private void TogglePayerCpfObfuscation() => _showPayerCpf = !_showPayerCpf;
+
+    private void ToggleEdit()
+    {
+        if (!_isEditing)
+        {
+            _isEditing = true;
+        }
+        else
+        {
+            ResetPatientModel();
+            _isEditing = false;
+        }
+    }
+
+    private async Task SavePatient()
+    {
+        if (!_isFormValid) return;
+
+        _patientModel.BirthDate = _tempBirthDate.HasValue
+            ? DateOnly.FromDateTime(_tempBirthDate.Value)
+            : null;
+
+        var result = await PatientHandler.UpdatePatient(_patientModel);
+        if (result.Success)
+        {
+            Snackbar.Add("Dados atualizados com sucesso!", Severity.Success);
+
+            Patient!.Name = _patientModel.Name;
+            Patient.Email = _patientModel.Email;
+            Patient.Phone = _patientModel.Phone;
+            Patient.Cpf = _patientModel.Cpf;
+            Patient.BirthDate = _patientModel.BirthDate;
+            Patient.StateOfResidency = _patientModel.StateOfResidency;
+            Patient.PayerName = _patientModel.PayerName;
+            Patient.PayerCpf = _patientModel.PayerCpf;
+
+            _isEditing = false;
+        }
+        else
+        {
+            Snackbar.Add($"Erro ao atualizar: {result.Message}", Severity.Error);
+        }
+    }
+
+    private string GetDisplayCpf()
+    {
+        if (string.IsNullOrWhiteSpace(_patientModel.Cpf))
+            return "Não informado";
+        if (_showCpf)
+            return _patientModel.Cpf.FormatCpf();
+
+        var nums = new string(_patientModel.Cpf.Where(char.IsDigit).ToArray());
+        if (nums.Length < 3) return "***";
+        return $"***.***.***-{nums.Substring(nums.Length - 2)}";
+    }
+
+    private string GetCpfIcon() =>
+        _showCpf ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility;
+
+    private string GetDisplayPayerCpf()
+    {
+        if (string.IsNullOrWhiteSpace(_patientModel.PayerCpf))
+            return "Não informado";
+        if (_showPayerCpf)
+            return _patientModel.PayerCpf.FormatCpf();
+
+        var nums = new string(_patientModel.PayerCpf.Where(char.IsDigit).ToArray());
+        if (nums.Length < 3) return "***";
+        return $"***.***.***-{nums.Substring(nums.Length - 2)}";
+    }
+
+    private string GetPayerCpfIcon() =>
+        _showPayerCpf ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility;
+
+    // ==================== COUPLE PROFILE METHODS ====================
+
+    private void ResetCoupleEditModel()
+    {
+        _coupleEditModel = new Couple
+        {
+            Id = Couple!.Id,
+            Name = Couple.Name,
+            Patient1Id = Couple.Patient1Id,
+            Patient2Id = Couple.Patient2Id,
+            PayerName = Couple.PayerName,
+            PayerCpf = Couple.PayerCpf,
+            PolicySigned = Couple.PolicySigned,
+        };
+    }
+
+    private async Task ToggleCoupleEdit()
+    {
+        if (!_isEditingCouple)
+        {
+            _isEditingCouple = true;
+            await _coupleForm.ValidateAsync();
+        }
+        else
+        {
+            ResetCoupleEditModel();
+            _isEditingCouple = false;
+        }
+    }
+
+    private async Task SaveCouple()
+    {
+        var result = await CoupleHandler.UpdateCouple(_coupleEditModel);
+        if (result.Success)
+        {
+            Snackbar.Add("Dados do casal atualizados com sucesso!", Severity.Success);
+
+            Couple!.Name = _coupleEditModel.Name;
+            Couple.PayerName = _coupleEditModel.PayerName;
+            Couple.PayerCpf = _coupleEditModel.PayerCpf;
+            _coupleModel = Couple;
+
+            _isEditingCouple = false;
+        }
+        else
+        {
+            Snackbar.Add($"Erro ao atualizar: {result.Message}", Severity.Error);
+        }
+    }
+
+    // ==================== TAB HANDLING ====================
+
+    private async Task OnTabChanged(int index)
+    {
+        if (index == 1 && !_recordsLoaded)
+        {
+            await LoadRecordsAsync();
+        }
+        else if (index == 2 && !_packagesLoaded)
+        {
+            await LoadPackagesAsync();
+        }
+    }
+
+    // ==================== RECORDS ====================
+
+    private async Task OnFilterDateChanged(DateTime? newDate)
+    {
+        _recordsFilterDate = newDate;
+        _records.Clear();
+        _recordPage = 0;
+        await LoadRecordsAsync();
+    }
+
+    private async Task LoadRecordsAsync()
+    {
+        _isLoadingRecords = true;
+        StateHasChanged();
+
+        if (IsCouple)
+        {
+            var coupleId = Couple!.Id;
+            var appointments = await AppointmentHandler.GetAppointmentsByCoupleId(coupleId, CancellationToken.None);
+            foreach (var app in appointments)
+            {
+                var record = await RecordHandler.GetAppointmentRecordByAppointmentId(app.Id);
+                if (record != null)
+                {
+                    _records.Add(new AppointmentRecordListItemDto(
+                        record.Id,
+                        record.AppointmentId,
+                        app.AppointmentDate,
+                        record.Note ?? string.Empty,
+                        record.CreatedAt,
+                        record.UpdatedAt
+                    ));
+                }
+            }
+            _totalRecords = _records.Count;
+            _recordsLoaded = true;
+        }
+        else
+        {
+            var result = await RecordHandler.GetRecordsByPatientId(
+                _recordPage,
+                RecordsPageSize,
+                Patient!.Id,
+                _recordsFilterDate,
+                CancellationToken.None
+            );
+            _records.AddRange(result.Items);
+            _totalRecords = result.TotalItems;
+            _recordsLoaded = true;
+        }
+
+        _isLoadingRecords = false;
+    }
+
+    private async Task LoadMoreRecords()
+    {
+        _recordPage++;
+        await LoadRecordsAsync();
+    }
+
+    // ==================== PACKAGES ====================
+
+    private async Task LoadPackagesAsync()
+    {
+        _isLoadingPackages = true;
+        StateHasChanged();
+
+        PaginatedResponse<AppointmentPackageListItemDto> result;
+
+        if (IsCouple)
+        {
+            result = await PackageHandler.GetPackagesByCoupleId(0, 50, Couple!.Id, CancellationToken.None);
+        }
+        else
+        {
+            result = await PackageHandler.GetPackagesByPatientId(0, 50, Patient!.Id, CancellationToken.None);
+        }
+
+        _packages = result.Items.ToList();
+        _packagesLoaded = true;
+        _isLoadingPackages = false;
+    }
+
+    private async Task OpenCreatePackage()
+    {
+        Guid ownerId;
+        string? payerName;
+        string? payerCpf;
+
+        if (IsCouple)
+        {
+            ownerId = Couple!.Id;
+            payerName = Couple.PayerName;
+            payerCpf = Couple.PayerCpf;
+        }
+        else
+        {
+            ownerId = Patient!.Id;
+            payerName = Patient.PayerName;
+            payerCpf = Patient.PayerCpf;
+        }
+
+        var parameters = new DialogParameters<AppointmentPackageDialog>
+        {
+            {
+                x => x.Model,
+                new AppointmentPackage
+                {
+                    PayerName = payerName,
+                    PayerCpf = payerCpf,
+                }
+            },
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<AppointmentPackageDialog>(string.Empty, parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: AppointmentPackage newPackage })
+        {
+            if (IsCouple)
+            {
+                newPackage.CoupleId = ownerId;
+            }
+            else
+            {
+                newPackage.PatientId = ownerId;
+            }
+
+            var response = await PackageHandler.CreatePackage(newPackage);
+            if (response.Success)
+            {
+                Snackbar.Add("Pacote criado com sucesso!", Severity.Success);
+                _packagesLoaded = false;
+                await LoadPackagesAsync();
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao criar pacote: {response.Message}", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task OpenEditPackage(AppointmentPackageListItemDto pkg)
+    {
+        var parameters = new DialogParameters<AppointmentPackageDialog>
+        {
+            {
+                x => x.Model,
+                new AppointmentPackage
+                {
+                    Id = pkg.Id,
+                    PatientId = pkg.PatientId,
+                    TotalAppointments = pkg.TotalAppointments,
+                    RemainingAppointments = pkg.RemainingAppointments,
+                    Price = pkg.Price,
+                    Status = pkg.Status,
+                    PaymentMethod = pkg.PaymentMethod,
+                    CreatedAt = pkg.CreatedAt,
+                    PayerName = pkg.PayerName,
+                    PayerCpf = pkg.PayerCpf,
+                }
+            },
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<AppointmentPackageDialog>(string.Empty, parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: AppointmentPackage updatedPackage })
+        {
+            var response = await PackageHandler.UpdatePackage(updatedPackage);
+            if (response.Success)
+            {
+                Snackbar.Add("Pacote atualizado com sucesso!", Severity.Success);
+                _packagesLoaded = false;
+                await LoadPackagesAsync();
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao atualizar pacote: {response.Message}", Severity.Warning);
+            }
+        }
+    }
+
+    private async Task DeletePackageAsync(AppointmentPackageListItemDto pkg)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, BackdropClick = false, CloseButton = true };
+
+        var confirm = await DialogService.ShowMessageBoxAsync(
+            "Confirmar Exclusão",
+            $"Tem certeza que deseja apagar este pacote de {pkg.TotalAppointments} sessões?",
+            yesText: "Excluir",
+            cancelText: "Cancelar",
+            options: options
+        );
+
+        if (confirm == true)
+        {
+            var response = await PackageHandler.DeletePackage(pkg.Id);
+            if (response.Success)
+            {
+                Snackbar.Add("Pacote removido com sucesso.", Severity.Success);
+                _packagesLoaded = false;
+                await LoadPackagesAsync();
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao excluir pacote: {response.Message}", Severity.Error);
+            }
+        }
+    }
+
+    // ==================== EXPORT ====================
+
+    private async Task ExportRecords()
+    {
+        _isExporting = true;
+        StateHasChanged();
+
+        try
+        {
+            var ownerId = IsCouple ? Couple!.Id : Patient!.Id;
+            var ownerName = IsCouple ? Couple!.Name : Patient!.Name;
+            var bytes = await ExportHandler.ExportPatientRecords(ownerId, _exportFormat);
+
+            var contentType = _exportFormat == "pdf"
+                ? "application/pdf"
+                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+            var fileName = $"prontuario-{ownerName.Replace(" ", "-").ToLowerInvariant()}.{_exportFormat}";
+            var base64 = Convert.ToBase64String(bytes);
+
+            await JsRuntime.InvokeVoidAsync("downloadFile", fileName, contentType, base64);
+
+            Snackbar.Add("Prontuário exportado com sucesso!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao exportar prontuário: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    // ==================== RECTIFY ====================
+
+    private async Task RectifyRecord(AppointmentRecordListItemDto record)
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RectificationDialog>("Retificar Prontuário", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: string rectificationNote })
+        {
+            var updateRecord = new AppointmentRecord { Id = record.Id, Note = rectificationNote };
+
+            var updateResult = await RecordHandler.UpdateAppointmentRecord(updateRecord);
+            if (updateResult.Success)
+            {
+                Snackbar.Add("Retificação efetuada com sucesso!", Severity.Success);
+
+                _records.Clear();
+                _recordPage = 0;
+                _recordsLoaded = false;
+                await LoadRecordsAsync();
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao gerar retificação: {updateResult.Message}", Severity.Error);
+            }
+        }
+    }
+}

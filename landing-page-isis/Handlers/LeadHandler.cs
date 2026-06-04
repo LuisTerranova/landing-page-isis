@@ -4,19 +4,13 @@ using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace landing_page_isis.Handlers;
 
 public partial class LeadHandler(
-    AppDbContext context,
-    IHttpContextAccessor httpContextAccessor,
-    IMemoryCache cache
+    AppDbContext context
 ) : ILeadHandler
 {
-    private const string RateLimitPrefix = "lead_rate_limit_";
-    private string? RemoteIp =>
-        httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
     public async Task<PaginatedResponse<LeadListItemDto>> GetLeads(
         int page,
@@ -59,23 +53,6 @@ public partial class LeadHandler(
         if (lead == null)
             return new HandlerResult(false, "Dados não podem ser nulos.");
 
-        // Check Rate Limit
-        if (!string.IsNullOrEmpty(RemoteIp))
-        {
-            var cacheKey = $"{RateLimitPrefix}{RemoteIp}";
-            if (cache.TryGetValue(cacheKey, out int attempts) && attempts >= 3)
-            {
-                return new HandlerResult(
-                    false,
-                    "Muitas tentativas. Por favor, aguarde um minuto antes de enviar novamente."
-                );
-            }
-
-            // Increment attempts
-            attempts++;
-            cache.Set(cacheKey, attempts, TimeSpan.FromMinutes(1));
-        }
-
         if (!string.IsNullOrEmpty(lead.Phone))
             lead.Phone = OnlyNumbersRegex().Replace(lead.Phone, "");
 
@@ -88,7 +65,7 @@ public partial class LeadHandler(
     public async Task<HandlerResult> ApproveLead(Guid id)
     {
         var rowsAffected = await context
-            .Leads.Where(l => l.Id == id)
+            .Leads.Where(l => l.Id == id && l.LeadStatus == LeadStatusEnum.Novo)
             .ExecuteUpdateAsync(setters =>
                 setters.SetProperty(l => l.LeadStatus, LeadStatusEnum.Aprovado)
             );

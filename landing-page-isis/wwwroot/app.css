@@ -35,6 +35,12 @@
     overflow: hidden;
 }
 
+.schedule-card-couple {
+    background-color: var(--mud-palette-primary) !important;
+    position: relative;
+    overflow: hidden;
+}
+
 .schedule-card::after {
     content: '';
     position: absolute;

@@ -44,19 +44,47 @@ public static class BuilderExtensions
                 {
                     options.LoginPath = "/admin/login";
                     options.AccessDeniedPath = "/acesso-negado";
-                    options.ExpireTimeSpan = TimeSpan.FromDays(3);
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
                 }
             );
 
         builder.Services.AddAuthorization();
+
+        // Rate Limiting Configuration
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status429TooManyRequests;
+            
+            options.AddPolicy("auth-policy", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(5),
+                        QueueLimit = 0
+                    }));
+
+            options.AddPolicy("lead-policy", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 3,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    }));
+        });
 
         // Forwarded Headers (needed for HTTPS behind Proxy/Cloudflare)
         builder.Services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders =
                 ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            options.KnownIPNetworks.Clear();
-            options.KnownProxies.Clear();
+            // Trust Docker network and standard private IP ranges
+            options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("172.16.0.0"), 12));
+            options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("10.0.0.0"), 8));
+            options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("192.168.0.0"), 16));
         });
 
         // HSTS Configuration
@@ -84,9 +112,13 @@ public static class BuilderExtensions
         // Handlers Configuration
         builder.Services.AddScoped<IAppointmentHandler, AppointmentHandler>();
         builder.Services.AddScoped<IAppointmentRecordHandler, AppointmentRecordHandler>();
-        builder.Services.AddScoped<IAppointmentRecordExportHandler, AppointmentRecordExportHandler>();
+        builder.Services.AddScoped<
+            IAppointmentRecordExportHandler,
+            AppointmentRecordExportHandler
+        >();
         builder.Services.AddScoped<IAppointmentPackageHandler, AppointmentPackageHandler>();
         builder.Services.AddScoped<IPatientHandler, PatientHandler>();
+        builder.Services.AddScoped<ICoupleHandler, CoupleHandler>();
         builder.Services.AddScoped<ILeadHandler, LeadHandler>();
         builder.Services.AddScoped<IAuthHandler, AuthHandler>();
         builder.Services.AddHostedService<LeadsCleaningService>();

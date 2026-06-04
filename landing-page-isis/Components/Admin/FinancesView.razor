@@ -12,12 +12,18 @@
     </MudText>
 
     <MudPaper Class="pa-2 d-flex align-center gap-2" Elevation="1" Style="background-color: var(--mud-palette-surface);">
-        <MudDateRangePicker Label="Filtrar por Período" @bind-DateRange="_dateRange" 
-                            Margin="Margin.Dense" Variant="Variant.Outlined" 
-                            DateFormat="dd/MM/yyyy" Clearable="true" 
-                            PickerVariant="PickerVariant.Dialog"
-                            Style="max-width: 310px" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Color="Color.Primary" OnClick="PreviousMonth" />
+        <MudText Typo="Typo.subtitle1" Style="min-width: 200px; text-align: center; font-weight: 600;">
+            @_rangeLabel
+        </MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="NextMonth" />
+        <MudDatePicker Label="De" @bind-Date="_startDate"
+                        Margin="Margin.Dense" Variant="Variant.Outlined"
+                        DateFormat="dd/MM/yyyy" />
+        <MudDatePicker Label="Até" @bind-Date="_endDate"
+                        Margin="Margin.Dense" Variant="Variant.Outlined"
+                        DateFormat="dd/MM/yyyy" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
                    OnClick="LoadFinances" StartIcon="@Icons.Material.Filled.Search">
             Filtrar
         </MudButton>

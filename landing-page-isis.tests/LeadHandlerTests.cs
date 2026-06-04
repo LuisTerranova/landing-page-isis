@@ -2,10 +2,8 @@ using landing_page_isis.core;
 using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Moq;
 
 namespace landing_page_isis.tests;
 
@@ -13,8 +11,11 @@ public class LeadHandlerTests
 {
     private AppDbContext GetDatabaseContext()
     {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(connection, contextOwnsConnection: true)
             .Options;
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
@@ -23,11 +24,7 @@ public class LeadHandlerTests
 
     private LeadHandler CreateHandler(AppDbContext context)
     {
-        var httpContextAccessor = new Mock<IHttpContextAccessor>();
-        httpContextAccessor.Setup(x => x.HttpContext).Returns((HttpContext?)null);
-
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        return new LeadHandler(context, httpContextAccessor.Object, cache);
+        return new LeadHandler(context);
     }
 
     [Fact]
@@ -95,15 +92,17 @@ public class LeadHandlerTests
 
         for (int i = 0; i < 7; i++)
         {
-            context.Leads.Add(new Lead
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Lead {i}",
-                Email = $"lead{i}@email.com",
-                Phone = "11999999999",
-                Intent = "Interesse",
-                Created = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-i)),
-            });
+            context.Leads.Add(
+                new Lead
+                {
+                    Id = Guid.NewGuid(),
+                    Name = $"Lead {i}",
+                    Email = $"lead{i}@email.com",
+                    Phone = "11999999999",
+                    Intent = "Interesse",
+                    Created = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-i)),
+                }
+            );
         }
         await context.SaveChangesAsync();
 
@@ -132,14 +131,16 @@ public class LeadHandlerTests
         var handler = CreateHandler(context);
 
         var id = Guid.NewGuid();
-        context.Leads.Add(new Lead
-        {
-            Id = id,
-            Name = "Ana",
-            Email = "ana@email.com",
-            Phone = "11999999999",
-            Intent = "Quero informações.",
-        });
+        context.Leads.Add(
+            new Lead
+            {
+                Id = id,
+                Name = "Ana",
+                Email = "ana@email.com",
+                Phone = "11999999999",
+                Intent = "Quero informações.",
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.GetLead(id);
@@ -159,28 +160,30 @@ public class LeadHandlerTests
         Assert.Null(result);
     }
 
-    [Fact(Skip = "Uses ExecuteUpdateAsync not supported by InMemory provider")]
+    [Fact]
     public async Task ApproveLead_ShouldCreatePatient_WhenLeadExists()
     {
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
 
         var leadId = Guid.NewGuid();
-        context.Leads.Add(new Lead
-        {
-            Id = leadId,
-            Name = "João",
-            Email = "joao@email.com",
-            Phone = "11987654321",
-            Intent = "Quero marcar.",
-            PolicySigned = true,
-        });
+        context.Leads.Add(
+            new Lead
+            {
+                Id = leadId,
+                Name = "João",
+                Email = "joao@email.com",
+                Phone = "11987654321",
+                Intent = "Quero marcar.",
+                PolicySigned = true,
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.ApproveLead(leadId);
 
         Assert.True(result.Success);
-        var dbLead = await context.Leads.FindAsync(leadId);
+        var dbLead = await context.Leads.AsNoTracking().FirstOrDefaultAsync(l => l.Id == leadId);
         Assert.NotNull(dbLead);
         Assert.Equal(LeadStatusEnum.Aprovado, dbLead.LeadStatus);
 
@@ -190,7 +193,7 @@ public class LeadHandlerTests
         Assert.True(patient.PolicySigned);
     }
 
-    [Fact(Skip = "Uses ExecuteUpdateAsync not supported by InMemory provider")]
+    [Fact]
     public async Task ApproveLead_ShouldReturnFalse_WhenLeadNotFound()
     {
         await using var context = GetDatabaseContext();
@@ -209,14 +212,16 @@ public class LeadHandlerTests
         var handler = CreateHandler(context);
 
         var id = Guid.NewGuid();
-        context.Leads.Add(new Lead
-        {
-            Id = id,
-            Name = "Delete Me",
-            Email = "delete@email.com",
-            Phone = "11999999999",
-            Intent = "Test",
-        });
+        context.Leads.Add(
+            new Lead
+            {
+                Id = id,
+                Name = "Delete Me",
+                Email = "delete@email.com",
+                Phone = "11999999999",
+                Intent = "Test",
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.DeleteLead(id);
@@ -237,36 +242,72 @@ public class LeadHandlerTests
         Assert.Equal("Lead nao encontrado.", result.Message);
     }
 
-    [Fact(Skip = "Uses ExecuteUpdateAsync not supported by InMemory provider")]
+    [Fact]
     public async Task CleanLeads_ShouldMarkOldLeadsAsExpired()
     {
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
 
         context.Leads.AddRange(
-            new Lead { Id = Guid.NewGuid(), Name = "Novo", Email = "a@a.com", Phone = "11999999999", Intent = "", Created = DateOnly.FromDateTime(DateTime.UtcNow), LeadStatus = LeadStatusEnum.Novo },
-            new Lead { Id = Guid.NewGuid(), Name = "Velho", Email = "b@b.com", Phone = "11999999999", Intent = "", Created = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-20)), LeadStatus = LeadStatusEnum.Novo }
+            new Lead
+            {
+                Id = Guid.NewGuid(),
+                Name = "Novo",
+                Email = "a@a.com",
+                Phone = "11999999999",
+                Intent = "",
+                Created = DateOnly.FromDateTime(DateTime.UtcNow),
+                LeadStatus = LeadStatusEnum.Novo,
+            },
+            new Lead
+            {
+                Id = Guid.NewGuid(),
+                Name = "Velho",
+                Email = "b@b.com",
+                Phone = "11999999999",
+                Intent = "",
+                Created = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-20)),
+                LeadStatus = LeadStatusEnum.Novo,
+            }
         );
         await context.SaveChangesAsync();
 
         var result = await handler.CleanLeads(CancellationToken.None);
 
         Assert.True(result.Success);
-        var velho = await context.Leads.FirstAsync(l => l.Name == "Velho");
+        var velho = await context.Leads.AsNoTracking().FirstAsync(l => l.Name == "Velho");
         Assert.Equal(LeadStatusEnum.Expirado, velho.LeadStatus);
-        var novo = await context.Leads.FirstAsync(l => l.Name == "Novo");
+        var novo = await context.Leads.AsNoTracking().FirstAsync(l => l.Name == "Novo");
         Assert.Equal(LeadStatusEnum.Novo, novo.LeadStatus);
     }
 
-    [Fact(Skip = "Uses ExecuteUpdateAsync not supported by InMemory provider")]
+    [Fact]
     public async Task CleanLeads_ShouldDeleteVeryOldExpiredLeads()
     {
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
 
         context.Leads.AddRange(
-            new Lead { Id = Guid.NewGuid(), Name = "Old", Email = "old@a.com", Phone = "11999999999", Intent = "", Created = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-4)), LeadStatus = LeadStatusEnum.Expirado },
-            new Lead { Id = Guid.NewGuid(), Name = "Recent", Email = "recent@a.com", Phone = "11999999999", Intent = "", Created = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10)), LeadStatus = LeadStatusEnum.Expirado }
+            new Lead
+            {
+                Id = Guid.NewGuid(),
+                Name = "Old",
+                Email = "old@a.com",
+                Phone = "11999999999",
+                Intent = "",
+                Created = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-4)),
+                LeadStatus = LeadStatusEnum.Expirado,
+            },
+            new Lead
+            {
+                Id = Guid.NewGuid(),
+                Name = "Recent",
+                Email = "recent@a.com",
+                Phone = "11999999999",
+                Intent = "",
+                Created = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10)),
+                LeadStatus = LeadStatusEnum.Expirado,
+            }
         );
         await context.SaveChangesAsync();
 
@@ -282,11 +323,7 @@ public class LeadHandlerTests
         var context = GetDatabaseContext();
         var handler = CreateHandler(context);
 
-        var lead = new Lead
-        {
-            Name = "Maria",
-            Phone = "(11) 91234-5678",
-        };
+        var lead = new Lead { Name = "Maria", Phone = "(11) 91234-5678" };
 
         var url = handler.GetWhatsAppUrl(lead);
 

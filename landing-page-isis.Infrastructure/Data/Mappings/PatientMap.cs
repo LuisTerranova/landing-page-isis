@@ -57,6 +57,22 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
             .HasDefaultValue(false)
             .HasColumnName("policy_signed");
 
+        builder
+            .Property(p => p.PayerName)
+            .IsRequired(false)
+            .HasMaxLength(150)
+            .HasColumnName("payer_name");
+
+        builder
+            .Property(p => p.PayerCpf)
+            .IsRequired(false)
+            .HasMaxLength(255)
+            .HasColumnName("payer_cpf")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
+
         builder.HasMany(p => p.Appointments).WithOne(p => p.Patient);
     }
 }

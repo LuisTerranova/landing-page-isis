@@ -65,13 +65,15 @@ public class AppointmentRecordHandlerTests
         var handler = new AppointmentRecordHandler(context);
 
         var id = Guid.NewGuid();
-        context.AppointmentRecords.Add(new AppointmentRecord
-        {
-            Id = id,
-            AppointmentId = Guid.NewGuid(),
-            Note = "Original note.",
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
-        });
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = id,
+                AppointmentId = Guid.NewGuid(),
+                Note = "Original note.",
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            }
+        );
         await context.SaveChangesAsync();
 
         var updated = new AppointmentRecord
@@ -95,7 +97,9 @@ public class AppointmentRecordHandlerTests
         await using var context = GetDatabaseContext();
         var handler = new AppointmentRecordHandler(context);
 
-        var result = await handler.UpdateAppointmentRecord(new AppointmentRecord { Id = Guid.NewGuid() });
+        var result = await handler.UpdateAppointmentRecord(
+            new AppointmentRecord { Id = Guid.NewGuid() }
+        );
 
         Assert.False(result.Success);
         Assert.Equal("Nota não encontrada.", result.Message);
@@ -108,13 +112,15 @@ public class AppointmentRecordHandlerTests
         var handler = new AppointmentRecordHandler(context);
 
         var id = Guid.NewGuid();
-        context.AppointmentRecords.Add(new AppointmentRecord
-        {
-            Id = id,
-            AppointmentId = Guid.NewGuid(),
-            Note = "Paciente estável.",
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = id,
+                AppointmentId = Guid.NewGuid(),
+                Note = "Paciente estável.",
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.GetAppointmentRecordById(id);
@@ -152,17 +158,25 @@ public class AppointmentRecordHandlerTests
             };
             context.Appointments.Add(appointment);
 
-            context.AppointmentRecords.Add(new AppointmentRecord
-            {
-                Id = Guid.NewGuid(),
-                AppointmentId = appointment.Id,
-                Note = $"Record {i}",
-                CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-            });
+            context.AppointmentRecords.Add(
+                new AppointmentRecord
+                {
+                    Id = Guid.NewGuid(),
+                    AppointmentId = appointment.Id,
+                    Note = $"Record {i}",
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+                }
+            );
         }
         await context.SaveChangesAsync();
 
-        var result = await handler.GetRecordsByPatientId(0, 4, patientId, null, CancellationToken.None);
+        var result = await handler.GetRecordsByPatientId(
+            0,
+            4,
+            patientId,
+            null,
+            CancellationToken.None
+        );
 
         Assert.Equal(6, result.TotalItems);
         Assert.Equal(4, result.Items.Count());
@@ -174,7 +188,13 @@ public class AppointmentRecordHandlerTests
         await using var context = GetDatabaseContext();
         var handler = new AppointmentRecordHandler(context);
 
-        var result = await handler.GetRecordsByPatientId(0, 10, Guid.NewGuid(), null, CancellationToken.None);
+        var result = await handler.GetRecordsByPatientId(
+            0,
+            10,
+            Guid.NewGuid(),
+            null,
+            CancellationToken.None
+        );
 
         Assert.Equal(0, result.TotalItems);
         Assert.Empty(result.Items);
@@ -190,19 +210,47 @@ public class AppointmentRecordHandlerTests
         var now = DateTimeOffset.UtcNow;
 
         // Appointment in current month
-        var app1 = new Appointment { Id = Guid.NewGuid(), AppointmentDate = now, PatientId = patientId };
+        var app1 = new Appointment
+        {
+            Id = Guid.NewGuid(),
+            AppointmentDate = now,
+            PatientId = patientId,
+        };
         // Appointment in next month
-        var app2 = new Appointment { Id = Guid.NewGuid(), AppointmentDate = now.AddMonths(1), PatientId = patientId };
+        var app2 = new Appointment
+        {
+            Id = Guid.NewGuid(),
+            AppointmentDate = now.AddMonths(1),
+            PatientId = patientId,
+        };
 
         context.Appointments.AddRange(app1, app2);
         context.AppointmentRecords.AddRange(
-            new AppointmentRecord { Id = Guid.NewGuid(), AppointmentId = app1.Id, Note = "Current month", CreatedAt = now },
-            new AppointmentRecord { Id = Guid.NewGuid(), AppointmentId = app2.Id, Note = "Next month", CreatedAt = now.AddMonths(1) }
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = app1.Id,
+                Note = "Current month",
+                CreatedAt = now,
+            },
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = app2.Id,
+                Note = "Next month",
+                CreatedAt = now.AddMonths(1),
+            }
         );
         await context.SaveChangesAsync();
 
         var filter = new DateTime(now.Year, now.Month, 1);
-        var result = await handler.GetRecordsByPatientId(0, 10, patientId, filter, CancellationToken.None);
+        var result = await handler.GetRecordsByPatientId(
+            0,
+            10,
+            patientId,
+            filter,
+            CancellationToken.None
+        );
 
         Assert.Equal(1, result.TotalItems);
         Assert.Equal("Current month", result.Items.First().Note);

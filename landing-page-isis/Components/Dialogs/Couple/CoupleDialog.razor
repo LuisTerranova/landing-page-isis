@@ -1,0 +1,120 @@
+@namespace landing_page_isis.Components.Dialogs.Couple
+@using landing_page_isis.core.Models
+@using landing_page_isis.core.Models.DTOs
+@using landing_page_isis.core.Interfaces
+@using CoupleModel = landing_page_isis.core.Models.Couple
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-3 mb-n1"/>
+            @Titulo
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_formValido">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Nome do Casal" Required="true"
+                                  @bind-Value="Model.Name" Variant="Variant.Outlined"
+                                  MaxLength="150" Counter="150" Immediate="true"
+                                  HelperText="Ex: João & Maria"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudAutocomplete T="PatientListItemDto"
+                                     Label="Parceiro(a) 1"
+                                     @bind-Value="_selectedPatient1"
+                                     SearchFunc="@SearchPatient"
+                                     ToStringFunc="@(p => p == null ? "" : p.Name)"
+                                     Required="true"
+                                     Variant="Variant.Outlined"
+                                     ResetValueOnEmptyText="true"
+                                     ShowProgressIndicator="true"
+                                     ProgressIndicatorColor="Color.Primary"
+                                     Placeholder="Digite o nome..."/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudAutocomplete T="PatientListItemDto"
+                                     Label="Parceiro(a) 2"
+                                     @bind-Value="_selectedPatient2"
+                                     SearchFunc="@SearchPatient"
+                                     ToStringFunc="@(p => p == null ? "" : p.Name)"
+                                     Required="true"
+                                     Variant="Variant.Outlined"
+                                     ResetValueOnEmptyText="true"
+                                     ShowProgressIndicator="true"
+                                     ProgressIndicatorColor="Color.Primary"
+                                     Placeholder="Digite o nome..."/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                        Dados do Pagador (se diferente do casal)
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Nome do Pagador"
+                                  @bind-Value="Model.PayerName" Variant="Variant.Outlined"
+                                  MaxLength="150" Counter="150"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="CPF do Pagador"
+                                  @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
+                                  MaxLength="14" Counter="14"
+                                  Mask="@(new PatternMask("000.000.000-00"))"/>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar" Color="Color.Error">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   Disabled="@(!_formValido)" OnClick="Salvar">
+            Salvar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Inject] private IPatientHandler PatientHandler { get; set; } = null!;
+
+    [Parameter] public CoupleModel Model { get; set; } = new();
+    [Parameter] public string Titulo { get; set; } = "Novo Casal";
+
+    private bool _formValido;
+    private PatientListItemDto? _selectedPatient1;
+    private PatientListItemDto? _selectedPatient2;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model.Patient1Id != Guid.Empty)
+        {
+            var full = await PatientHandler.GetPatient(Model.Patient1Id);
+            if (full != null)
+                _selectedPatient1 = new PatientListItemDto(full.Id, full.Name, full.Email, full.Phone, full.StateOfResidency);
+        }
+        if (Model.Patient2Id != Guid.Empty)
+        {
+            var full = await PatientHandler.GetPatient(Model.Patient2Id);
+            if (full != null)
+                _selectedPatient2 = new PatientListItemDto(full.Id, full.Name, full.Email, full.Phone, full.StateOfResidency);
+        }
+    }
+
+    private async Task<IEnumerable<PatientListItemDto>> SearchPatient(string? value, CancellationToken ct)
+    {
+        var result = await PatientHandler.QueryPatients(value ?? "", 0, 10, ct);
+        return result.Items;
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Salvar()
+    {
+        Model.Patient1Id = _selectedPatient1?.Id ?? Guid.Empty;
+        Model.Patient2Id = _selectedPatient2?.Id ?? Guid.Empty;
+        MudDialog.Close(DialogResult.Ok(Model));
+    }
+}

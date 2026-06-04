@@ -17,6 +17,13 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
             .FirstOrDefaultAsync(ar => ar.Id == id);
     }
 
+    public async Task<AppointmentRecord?> GetAppointmentRecordByAppointmentId(Guid appointmentId)
+    {
+        return await context
+            .AppointmentRecords.AsNoTracking()
+            .FirstOrDefaultAsync(ar => ar.AppointmentId == appointmentId);
+    }
+
     public async Task<PaginatedResponse<AppointmentRecordListItemDto>> GetRecordsByPatientId(
         int page,
         int pageSize,

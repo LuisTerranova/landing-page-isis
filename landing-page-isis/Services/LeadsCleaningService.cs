@@ -9,6 +9,8 @@ public class LeadsCleaningService(IServiceProvider services, ILogger<LeadsCleani
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
+        await DoWork(ct);
+
         using PeriodicTimer timer = new(_period);
 
         while (await timer.WaitForNextTickAsync(ct))

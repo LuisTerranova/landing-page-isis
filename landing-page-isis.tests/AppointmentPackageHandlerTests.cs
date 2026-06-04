@@ -58,7 +58,7 @@ public class AppointmentPackageHandlerTests
         var result = await handler.CreatePackage(pkg);
 
         Assert.False(result.Success);
-        Assert.Equal("Paciente não informado.", result.Message);
+        Assert.Equal("Paciente ou casal não informado.", result.Message);
     }
 
     [Fact]
@@ -108,16 +108,18 @@ public class AppointmentPackageHandlerTests
         var handler = new AppointmentPackageHandler(context);
 
         var id = Guid.NewGuid();
-        context.AppointmentPackages.Add(new AppointmentPackage
-        {
-            Id = id,
-            PatientId = Guid.NewGuid(),
-            TotalAppointments = 10,
-            RemainingAppointments = 8,
-            Price = 500,
-            Status = PackageStatus.Ativo,
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = id,
+                PatientId = Guid.NewGuid(),
+                TotalAppointments = 10,
+                RemainingAppointments = 8,
+                Price = 500,
+                Status = PackageStatus.Ativo,
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
         await context.SaveChangesAsync();
 
         var updated = new AppointmentPackage
@@ -161,14 +163,16 @@ public class AppointmentPackageHandlerTests
         var handler = new AppointmentPackageHandler(context);
 
         var id = Guid.NewGuid();
-        context.AppointmentPackages.Add(new AppointmentPackage
-        {
-            Id = id,
-            PatientId = Guid.NewGuid(),
-            TotalAppointments = 5,
-            RemainingAppointments = 5,
-            Price = 300,
-        });
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = id,
+                PatientId = Guid.NewGuid(),
+                TotalAppointments = 5,
+                RemainingAppointments = 5,
+                Price = 300,
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.DeletePackage(id);
@@ -198,15 +202,17 @@ public class AppointmentPackageHandlerTests
         var patientId = Guid.NewGuid();
         for (int i = 0; i < 8; i++)
         {
-            context.AppointmentPackages.Add(new AppointmentPackage
-            {
-                Id = Guid.NewGuid(),
-                PatientId = patientId,
-                TotalAppointments = 5,
-                RemainingAppointments = 5,
-                Price = 300,
-                CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
-            });
+            context.AppointmentPackages.Add(
+                new AppointmentPackage
+                {
+                    Id = Guid.NewGuid(),
+                    PatientId = patientId,
+                    TotalAppointments = 5,
+                    RemainingAppointments = 5,
+                    Price = 300,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+                }
+            );
         }
         await context.SaveChangesAsync();
 
@@ -222,7 +228,12 @@ public class AppointmentPackageHandlerTests
         await using var context = GetDatabaseContext();
         var handler = new AppointmentPackageHandler(context);
 
-        var result = await handler.GetPackagesByPatientId(0, 10, Guid.NewGuid(), CancellationToken.None);
+        var result = await handler.GetPackagesByPatientId(
+            0,
+            10,
+            Guid.NewGuid(),
+            CancellationToken.None
+        );
 
         Assert.Equal(0, result.TotalItems);
         Assert.Empty(result.Items);
@@ -235,9 +246,33 @@ public class AppointmentPackageHandlerTests
         var handler = new AppointmentPackageHandler(context);
 
         context.AppointmentPackages.AddRange(
-            new AppointmentPackage { Id = Guid.NewGuid(), PatientId = Guid.NewGuid(), TotalAppointments = 5, RemainingAppointments = 5, Price = 300, CreatedAt = new DateTimeOffset(2025, 1, 15, 0, 0, 0, TimeSpan.Zero) },
-            new AppointmentPackage { Id = Guid.NewGuid(), PatientId = Guid.NewGuid(), TotalAppointments = 5, RemainingAppointments = 5, Price = 400, CreatedAt = new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero) },
-            new AppointmentPackage { Id = Guid.NewGuid(), PatientId = Guid.NewGuid(), TotalAppointments = 5, RemainingAppointments = 5, Price = 500, CreatedAt = new DateTimeOffset(2025, 12, 15, 0, 0, 0, TimeSpan.Zero) }
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                TotalAppointments = 5,
+                RemainingAppointments = 5,
+                Price = 300,
+                CreatedAt = new DateTimeOffset(2025, 1, 15, 0, 0, 0, TimeSpan.Zero),
+            },
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                TotalAppointments = 5,
+                RemainingAppointments = 5,
+                Price = 400,
+                CreatedAt = new DateTimeOffset(2025, 6, 15, 0, 0, 0, TimeSpan.Zero),
+            },
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                TotalAppointments = 5,
+                RemainingAppointments = 5,
+                Price = 500,
+                CreatedAt = new DateTimeOffset(2025, 12, 15, 0, 0, 0, TimeSpan.Zero),
+            }
         );
         await context.SaveChangesAsync();
 
@@ -256,7 +291,10 @@ public class AppointmentPackageHandlerTests
         var handler = new AppointmentPackageHandler(context);
 
         var result = await handler.GetAllPackagesByDateRange(
-            DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), CancellationToken.None);
+            DateTimeOffset.UtcNow.AddDays(-1),
+            DateTimeOffset.UtcNow.AddDays(1),
+            CancellationToken.None
+        );
 
         Assert.Empty(result);
     }

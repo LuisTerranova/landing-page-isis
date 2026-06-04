@@ -41,11 +41,28 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (patient == null)
             return new HandlerResult(false, "Dados inválidos.");
 
+        if (string.IsNullOrWhiteSpace(patient.Name))
+            return new HandlerResult(false, "Nome é obrigatório.");
+
+        if (patient.Name.Length > 150)
+            return new HandlerResult(false, "Nome deve ter no máximo 150 caracteres.");
+
+        if (!string.IsNullOrEmpty(patient.Email) && !EmailRegex().IsMatch(patient.Email))
+            return new HandlerResult(false, "E-mail inválido.");
+
         if (!string.IsNullOrEmpty(patient.Phone))
+        {
             patient.Phone = OnlyNumbersRegex().Replace(patient.Phone, "");
+            if (patient.Phone.Length < 10 || patient.Phone.Length > 11)
+                return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
+        }
 
         if (!string.IsNullOrEmpty(patient.Cpf))
+        {
             patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
+            if (patient.Cpf.Length != 11)
+                return new HandlerResult(false, "CPF inválido. Deve ter 11 dígitos.");
+        }
 
         context.Patients.Add(patient);
         await context.SaveChangesAsync();
@@ -58,23 +75,42 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (existing == null)
             return new HandlerResult(false, "Paciente não encontrado.");
 
+        if (string.IsNullOrWhiteSpace(patient.Name))
+            return new HandlerResult(false, "Nome é obrigatório.");
+
+        if (patient.Name.Length > 150)
+            return new HandlerResult(false, "Nome deve ter no máximo 150 caracteres.");
+
+        if (!string.IsNullOrEmpty(patient.Email) && !EmailRegex().IsMatch(patient.Email))
+            return new HandlerResult(false, "E-mail inválido.");
+
         if (!string.IsNullOrEmpty(patient.Phone))
+        {
             patient.Phone = OnlyNumbersRegex().Replace(patient.Phone, "");
+            if (patient.Phone.Length < 10 || patient.Phone.Length > 11)
+                return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
+        }
 
         if (!string.IsNullOrEmpty(patient.Cpf))
+        {
             patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
+            if (patient.Cpf.Length != 11)
+                return new HandlerResult(false, "CPF inválido. Deve ter 11 dígitos.");
+        }
 
         context.Entry(existing).CurrentValues.SetValues(patient);
         await context.SaveChangesAsync();
         return new HandlerResult(true);
     }
 
-    public async Task<Dictionary<Guid, string?>> GetPatientEmailMap(IEnumerable<Guid> ids, CancellationToken ct)
+    public async Task<Dictionary<Guid, string?>> GetPatientEmailMap(
+        IEnumerable<Guid> ids,
+        CancellationToken ct
+    )
     {
         var distinctIds = ids.Distinct().ToList();
         return await context
-            .Patients
-            .Where(p => distinctIds.Contains(p.Id))
+            .Patients.Where(p => distinctIds.Contains(p.Id))
             .Select(p => new { p.Id, p.Email })
             .ToDictionaryAsync(p => p.Id, p => p.Email, ct);
     }
@@ -119,4 +155,7 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
 
     [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
     private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
+    private static partial System.Text.RegularExpressions.Regex EmailRegex();
 }

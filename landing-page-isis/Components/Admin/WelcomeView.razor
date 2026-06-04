@@ -7,6 +7,37 @@
 
 <PageTitle>Agenda | Isis Vitória</PageTitle>
 
+@if (PendingRecordsCount > 0)
+{
+    <MudPaper Elevation="4" Class="pa-4 mb-6 d-flex align-center gap-4" Style="border-radius: 16px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
+        <MudIcon Icon="@Icons.Material.Filled.AssignmentLate" Color="Color.Inherit" Style="font-size: 2rem;"/>
+        <div>
+            <MudText Typo="Typo.subtitle1" Class="white-text" Style="font-weight: 700;">
+                Prontuários Pendentes: @PendingRecordsCount
+            </MudText>
+            <MudText Typo="Typo.body2" Class="white-text-70">
+                Consultas aguardando finalização e atualização de prontuário.
+            </MudText>
+        </div>
+        <MudSpacer/>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Inherit" OnClick="@(async () => await LoadPendingCount())"/>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Elevation="2" Class="pa-4 mb-6 d-flex align-center gap-4" Style="border-radius: 16px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);">
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Inherit" Style="font-size: 2rem;"/>
+        <div>
+            <MudText Typo="Typo.subtitle1" Class="white-text" Style="font-weight: 700;">
+                Nenhum prontuário pendente
+            </MudText>
+            <MudText Typo="Typo.body2" Class="white-text-70">
+                Todas as consultas estão em dia!
+            </MudText>
+        </div>
+    </MudPaper>
+}
+
 <MudGrid>
     <MudItem xs="12" class="d-flex align-end justify-space-between mb-8">
         <div>
@@ -67,7 +98,9 @@
         @foreach (var app in _appointments)
         {
             <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="4" Class="pa-6 hover-elevate transition-all schedule-card" Style="border-radius: 20px;">
+                <MudPaper Elevation="4"
+                          Class="@(app.IsCouple ? "pa-6 hover-elevate transition-all schedule-card-couple" : "pa-6 hover-elevate transition-all schedule-card")"
+                          Style="border-radius: 20px;">
                     <div class="d-flex justify-space-between align-start mb-4">
                         <div>
                             @{
@@ -90,7 +123,9 @@
                         <MudAvatar Color="Color.Primary" Size="Size.Medium" Style="border: 2px solid rgba(255,255,255,0.2)">@app.PatientName[0]</MudAvatar>
                         <div>
                             <MudText Typo="Typo.body1" Class="white-text" Style="font-weight: 700">@app.PatientName</MudText>
-                            <MudText Typo="Typo.body2" Class="white-text-70">Consulta Terapêutica</MudText>
+                            <MudText Typo="Typo.body2" Class="white-text-70">
+                                @(app.IsCouple ? "Consulta terapêutica - Casal" : "Consulta Terapêutica")
+                            </MudText>
                         </div>
                     </div>
 
@@ -101,6 +136,11 @@
                             @app.Price.ToString("C")
                         </MudText>
                     </div>
+
+                    @if (app.IsCouple)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="white-text" Style="position: absolute; bottom: 8px; right: 8px; font-size: 1.2rem;"/>
+                    }
                 </MudPaper>
             </MudItem>
         }

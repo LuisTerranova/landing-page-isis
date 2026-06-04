@@ -14,11 +14,13 @@
             <MudGrid>
                 <MudItem xs="12">
                     <MudTextField T="string" Label="Nome Completo" Required="true"
-                                  @bind-Value="Model.Name" Variant="Variant.Outlined"/>
+                                  @bind-Value="Model.Name" Variant="Variant.Outlined"
+                                  MaxLength="150" Counter="150" Immediate="true"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF" Required="true"
                                   @bind-Value="Model.Cpf" Variant="Variant.Outlined"
+                                  MaxLength="14" Counter="14"
                                   Mask="@(new PatternMask("000.000.000-00"))"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
@@ -31,16 +33,36 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="E-mail" Required="true"
-                                  @bind-Value="Model.Email" Variant="Variant.Outlined"/>
+                                  @bind-Value="Model.Email" Variant="Variant.Outlined"
+                                  MaxLength="255" Counter="255" Immediate="true"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="Telefone" Required="true"
-                                  @bind-Value="Model.Phone" Variant="Variant.Outlined"/>
+                                  @bind-Value="Model.Phone" Variant="Variant.Outlined"
+                                  MaxLength="11" Counter="11"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="Estado"
                                   @bind-Value="Model.StateOfResidency" Variant="Variant.Outlined"
                                   MaxLength="2" HelperText="Sigla do estado"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                        Dados do Pagador (se diferente do paciente)
+                    </MudText>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Nome do Pagador"
+                                  @bind-Value="Model.PayerName" Variant="Variant.Outlined"
+                                  MaxLength="150" Counter="150"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="CPF do Pagador"
+                                  @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
+                                  MaxLength="14" Counter="14"
+                                  Mask="@(new PatternMask("000.000.000-00"))"/>
                 </MudItem>
             </MudGrid>
         </MudForm>

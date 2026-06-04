@@ -7,37 +7,84 @@
 
 <PageTitle>Pacientes | Isis Vitória</PageTitle>
 
-
 <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
     PACIENTES
 </MudText>
 
-<GenericTable @ref="_patientsTable"
-              TItem="PatientListItemDto"
-              ServerData="@ServerReload"
-              OnCreate="@(OpenCreate)"
-              OnDelete="@(DeletePatient)"
-              ShowSearchBar="true"
-              @bind-SearchQuery="_searchQuery">
+<div class="d-flex align-center gap-4 mb-4">
+    <MudButton OnClick="@(() => ShowCouples = false)"
+               Variant="@(ShowCouples ? Variant.Text : Variant.Filled)"
+               Color="@(ShowCouples ? Color.Default : Color.Primary)"
+               Class="px-6 rounded-l-xl">
+        Indivíduos
+    </MudButton>
+    <MudButton OnClick="@(() => ShowCouples = true)"
+               Variant="@(ShowCouples ? Variant.Filled : Variant.Text)"
+               Color="@(ShowCouples ? Color.Primary : Color.Default)"
+               Class="px-6 rounded-r-xl">
+        Casais
+    </MudButton>
+</div>
 
-    <HeaderColumns>
-        <MudTh>Nome</MudTh>
-        <MudTh>E-mail</MudTh>
-        <MudTh>Telefone</MudTh>
-        <MudTh>Estado</MudTh>
-    </HeaderColumns>
+@if (!ShowCouples)
+{
+    <GenericTable @ref="_patientsTable"
+                  TItem="PatientListItemDto"
+                  ServerData="@ServerReload"
+                  OnCreate="@(OpenCreate)"
+                  OnDelete="@(DeletePatient)"
+                  ShowSearchBar="true"
+                  @bind-SearchQuery="_searchQuery">
 
-    <RowColumns>
-        <MudTd DataLabel="Nome">@context.Name</MudTd>
-        <MudTd DataLabel="E-mail">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
-        <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
-        <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
-    </RowColumns>
+        <HeaderColumns>
+            <MudTh>Nome</MudTh>
+            <MudTh>E-mail</MudTh>
+            <MudTh>Telefone</MudTh>
+            <MudTh>Estado</MudTh>
+        </HeaderColumns>
 
-    <CustomActions>
-        <MudMenuItem OnClick="@(() => OpenDetails(context))">
-            <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
-        </MudMenuItem>
-    </CustomActions>
-</GenericTable>
+        <RowColumns>
+            <MudTd DataLabel="Nome">@context.Name</MudTd>
+            <MudTd DataLabel="E-mail">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
+            <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+            <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
+        </RowColumns>
 
+        <CustomActions>
+            <MudMenuItem OnClick="@(() => OpenDetails(context))">
+                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
+            </MudMenuItem>
+        </CustomActions>
+    </GenericTable>
+}
+else
+{
+    <GenericTable @ref="_couplesTable"
+                  TItem="CoupleListItemDto"
+                  ServerData="@CoupleServerReload"
+                  OnCreate="@(OpenCreateCouple)"
+                  OnDelete="@(DeleteCouple)"
+                  ShowSearchBar="true"
+                  @bind-SearchQuery="_coupleSearchQuery">
+
+        <HeaderColumns>
+            <MudTh>Nome do Casal</MudTh>
+            <MudTh>Parceiro 1</MudTh>
+            <MudTh>Parceiro 2</MudTh>
+            <MudTh>Telefone</MudTh>
+        </HeaderColumns>
+
+        <RowColumns>
+            <MudTd DataLabel="Casal">@context.Name</MudTd>
+            <MudTd DataLabel="Parceiro 1">@context.Partner1Name</MudTd>
+            <MudTd DataLabel="Parceiro 2">@context.Partner2Name</MudTd>
+            <MudTd DataLabel="Telefone">@context.Partner1Phone.FormatPhone()</MudTd>
+        </RowColumns>
+
+        <CustomActions>
+            <MudMenuItem OnClick="@(() => OpenCoupleDetails(context))">
+                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
+            </MudMenuItem>
+        </CustomActions>
+    </GenericTable>
+}

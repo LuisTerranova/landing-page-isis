@@ -30,33 +30,39 @@ public class AppointmentRecordExportHandlerTests
         var patientId = Guid.NewGuid();
         var appointmentId = Guid.NewGuid();
 
-        context.Patients.Add(new Patient
-        {
-            Id = patientId,
-            Name = "Maria Silva",
-            Phone = "69999999999",
-            Email = "maria@test.com",
-            Cpf = "12345678901",
-        });
+        context.Patients.Add(
+            new Patient
+            {
+                Id = patientId,
+                Name = "Maria Silva",
+                Phone = "69999999999",
+                Email = "maria@test.com",
+                Cpf = "12345678901",
+            }
+        );
 
-        context.Appointments.Add(new Appointment
-        {
-            Id = appointmentId,
-            PatientId = patientId,
-            AppointmentDate = DateTimeOffset.UtcNow.AddDays(-1),
-            AppointmentStatus = AppointmentStatusEnum.Realizada,
-            Price = 100,
-        });
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = patientId,
+                AppointmentDate = DateTimeOffset.UtcNow.AddDays(-1),
+                AppointmentStatus = AppointmentStatusEnum.Realizada,
+                Price = 100,
+            }
+        );
 
         for (int i = 0; i < recordCount; i++)
         {
-            context.AppointmentRecords.Add(new AppointmentRecord
-            {
-                Id = Guid.NewGuid(),
-                AppointmentId = appointmentId,
-                Note = $"Nota da sessão {i + 1}.",
-                CreatedAt = DateTimeOffset.UtcNow.AddDays(-recordCount + i),
-            });
+            context.AppointmentRecords.Add(
+                new AppointmentRecord
+                {
+                    Id = Guid.NewGuid(),
+                    AppointmentId = appointmentId,
+                    Note = $"Nota da sessão {i + 1}.",
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-recordCount + i),
+                }
+            );
         }
 
         await context.SaveChangesAsync();
@@ -101,12 +107,14 @@ public class AppointmentRecordExportHandlerTests
         var context = GetDatabaseContext();
         var patientId = Guid.NewGuid();
 
-        context.Patients.Add(new Patient
-        {
-            Id = patientId,
-            Name = "João",
-            Phone = "69988888888",
-        });
+        context.Patients.Add(
+            new Patient
+            {
+                Id = patientId,
+                Name = "João",
+                Phone = "69988888888",
+            }
+        );
         await context.SaveChangesAsync();
 
         var handler = new AppointmentRecordExportHandler(context);
@@ -124,7 +132,8 @@ public class AppointmentRecordExportHandlerTests
         var handler = new AppointmentRecordExportHandler(context);
 
         var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-            handler.ExportPatientRecords(Guid.NewGuid(), "pdf"));
+            handler.ExportPatientRecords(Guid.NewGuid(), "pdf")
+        );
 
         Assert.Equal("Paciente não encontrado.", ex.Message);
     }
@@ -136,7 +145,8 @@ public class AppointmentRecordExportHandlerTests
         var handler = new AppointmentRecordExportHandler(context);
 
         var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
-            handler.ExportPatientRecords(patientId, "txt"));
+            handler.ExportPatientRecords(patientId, "txt")
+        );
 
         Assert.Contains("Formato inválido", ex.Message);
     }

@@ -2,7 +2,9 @@ using landing_page_isis.core.ApplicationUser;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace landing_page_isis.Data;
 
@@ -15,6 +17,7 @@ public static class DatabaseSeed
         await context.Database.MigrateAsync();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
 
         if (context.Users.Any())
         {
@@ -43,7 +46,7 @@ public static class DatabaseSeed
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            Console.WriteLine("Admin email or password not found in configuration");
+            logger.LogWarning("Admin email or password not found in configuration");
             return;
         }
 

@@ -12,7 +12,9 @@ public class AppointmentPackageMap : IEntityTypeConfiguration<AppointmentPackage
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.PatientId).IsRequired().HasColumnName("patient_id");
+        builder.Property(x => x.PatientId).IsRequired(false).HasColumnName("patient_id");
+
+        builder.Property(x => x.CoupleId).IsRequired(false).HasColumnName("couple_id");
 
         builder.Property(x => x.TotalAppointments).IsRequired().HasColumnName("total_appointments");
 
@@ -38,6 +40,22 @@ public class AppointmentPackageMap : IEntityTypeConfiguration<AppointmentPackage
         builder.Property(x => x.CreatedAt).IsRequired().HasColumnName("created_at");
 
         builder.Property(x => x.UpdatedAt).IsRequired(false).HasColumnName("updated_at");
+
+        builder
+            .Property(x => x.PayerName)
+            .IsRequired(false)
+            .HasMaxLength(150)
+            .HasColumnName("payer_name");
+
+        builder
+            .Property(x => x.PayerCpf)
+            .IsRequired(false)
+            .HasMaxLength(255)
+            .HasColumnName("payer_cpf")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
 
         builder
             .HasOne(x => x.Patient)

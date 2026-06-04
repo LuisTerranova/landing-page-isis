@@ -86,7 +86,7 @@ public partial class LeadsView : ComponentBase
             MaxWidth = MaxWidth.Medium,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true
+            CloseButton = true,
         };
 
         await DialogService.ShowAsync<LeadIntentDialog>("Visualizar Intenção", parameters, options);
@@ -94,7 +94,12 @@ public partial class LeadsView : ComponentBase
 
     private async Task DeleteLead(LeadListItemDto lead)
     {
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, BackdropClick = false, CloseButton = true };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            BackdropClick = false,
+            CloseButton = true,
+        };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
@@ -122,7 +127,12 @@ public partial class LeadsView : ComponentBase
 
     private async Task ApproveLead(LeadListItemDto lead)
     {
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, BackdropClick = false, CloseButton = true };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            BackdropClick = false,
+            CloseButton = true,
+        };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Aprovação",

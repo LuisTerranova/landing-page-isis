@@ -1,7 +1,8 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
-using Microsoft.AspNetCore.Components;
 using landing_page_isis.Extensions;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 
 namespace landing_page_isis.Components.Admin;
 
@@ -11,6 +12,9 @@ public partial class WelcomeView : ComponentBase
 
     [Inject]
     private IAppointmentHandler AppointmentHandler { get; set; } = null!;
+
+    [Inject]
+    private ILogger<WelcomeView> Logger { get; set; } = null!;
 
     #endregion
 
@@ -27,6 +31,7 @@ public partial class WelcomeView : ComponentBase
     private int _currentPage = 1;
     private int _pageSize = 9;
     private int _totalItems = 0;
+    private int PendingRecordsCount { get; set; }
 
     #endregion
 
@@ -35,7 +40,14 @@ public partial class WelcomeView : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         _selectedDate = DateTime.UtcNow.ToPortoVelhoTime().Date;
+        await LoadPendingCount();
         await LoadAppointments();
+    }
+
+    private async Task LoadPendingCount()
+    {
+        PendingRecordsCount = await AppointmentHandler.CountPendingRecordsAsync();
+        StateHasChanged();
     }
 
     private async Task OnSearch(string query)
@@ -66,17 +78,18 @@ public partial class WelcomeView : ComponentBase
                     default
                 );
                 _totalItems = queryResult.TotalItems;
-                _appointments = queryResult
-                    .Items.Select(a => new AppointmentViewModel
-                    {
-                        Id = a.Id,
-                        Date = a.AppointmentDate,
-                        PatientName = a.PatientName ?? "N/A",
-                        Status = a.AppointmentStatus,
-                        Price = a.Price,
-                    })
-                    .OrderByDescending(a => a.Date)
-                    .ToList();
+        _appointments = queryResult
+            .Items.Select(a => new AppointmentViewModel
+            {
+                Id = a.Id,
+                Date = a.AppointmentDate,
+                PatientName = a.PatientName ?? "N/A",
+                Status = a.AppointmentStatus,
+                Price = a.Price,
+                IsCouple = a.CoupleId.HasValue,
+            })
+            .OrderByDescending(a => a.Date)
+            .ToList();
             }
             else
             {
@@ -127,6 +140,7 @@ public partial class WelcomeView : ComponentBase
                         PatientName = a.PatientName ?? "N/A",
                         Status = a.AppointmentStatus,
                         Price = a.Price,
+                        IsCouple = a.CoupleId.HasValue,
                     })
                     .OrderBy(a => a.Date)
                     .ToList();
@@ -134,7 +148,7 @@ public partial class WelcomeView : ComponentBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading appointments: {ex.Message}");
+            Logger.LogError(ex, "Error loading appointments");
             _appointments = [];
         }
         finally
@@ -189,6 +203,7 @@ public partial class WelcomeView : ComponentBase
         public string PatientName { get; set; } = "";
         public AppointmentStatusEnum Status { get; set; }
         public decimal Price { get; set; }
+        public bool IsCouple { get; set; }
     }
 
     #endregion

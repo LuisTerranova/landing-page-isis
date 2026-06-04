@@ -36,12 +36,60 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
             .Select(p => new AppointmentPackageListItemDto(
                 p.Id,
                 p.PatientId,
+                p.CoupleId,
                 p.TotalAppointments,
                 p.RemainingAppointments,
                 p.Price,
                 p.Status,
                 p.CreatedAt,
-                p.PaymentMethod
+                p.PaymentMethod,
+                p.PayerName,
+                p.PayerCpf
+            ))
+            .ToListAsync(ct);
+
+        return new PaginatedResponse<AppointmentPackageListItemDto>(
+            items,
+            totalItems,
+            page,
+            pageSize
+        );
+    }
+
+    public async Task<PaginatedResponse<AppointmentPackageListItemDto>> GetPackagesByCoupleId(
+        int page,
+        int pageSize,
+        Guid coupleId,
+        CancellationToken ct
+    )
+    {
+        var query = context.AppointmentPackages.AsNoTracking().Where(ap => ap.CoupleId == coupleId);
+        var totalItems = await query.CountAsync(ct);
+
+        if (totalItems <= 0)
+            return new PaginatedResponse<AppointmentPackageListItemDto>(
+                [],
+                totalItems,
+                page,
+                pageSize
+            );
+
+        var items = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .Select(p => new AppointmentPackageListItemDto(
+                p.Id,
+                p.PatientId,
+                p.CoupleId,
+                p.TotalAppointments,
+                p.RemainingAppointments,
+                p.Price,
+                p.Status,
+                p.CreatedAt,
+                p.PaymentMethod,
+                p.PayerName,
+                p.PayerCpf
             ))
             .ToListAsync(ct);
 
@@ -55,8 +103,11 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
 
     public async Task<HandlerResult> CreatePackage(AppointmentPackage package)
     {
-        if (package.PatientId == Guid.Empty)
-            return new HandlerResult(false, "Paciente não informado.");
+        if (
+            (!package.PatientId.HasValue || package.PatientId.Value == Guid.Empty)
+            && package.CoupleId == null
+        )
+            return new HandlerResult(false, "Paciente ou casal não informado.");
 
         if (package.TotalAppointments <= 0)
             return new HandlerResult(false, "O número total de consultas deve ser maior que zero.");
@@ -115,12 +166,15 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
             .Select(p => new AppointmentPackageListItemDto(
                 p.Id,
                 p.PatientId,
+                p.CoupleId,
                 p.TotalAppointments,
                 p.RemainingAppointments,
                 p.Price,
                 p.Status,
                 p.CreatedAt,
-                p.PaymentMethod
+                p.PaymentMethod,
+                p.PayerName,
+                p.PayerCpf
             ))
             .ToListAsync(ct);
     }

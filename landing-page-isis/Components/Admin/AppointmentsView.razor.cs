@@ -75,7 +75,7 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Small,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true
+            CloseButton = true,
         };
 
         var dialog = await DialogService.ShowAsync<AppointmentDialog>(
@@ -102,10 +102,7 @@ public partial class AppointmentsView : ComponentBase
 
     private async Task EditAppointment(AppointmentListItemDto appointment)
     {
-        var fullAppointment = await AppointmentHandler.GetAppointment(
-            appointment.Id,
-            appointment.PatientId
-        );
+        var fullAppointment = await AppointmentHandler.GetAppointmentById(appointment.Id);
         if (fullAppointment == null)
             return;
 
@@ -121,7 +118,10 @@ public partial class AppointmentsView : ComponentBase
                     AppointmentStatus = fullAppointment.AppointmentStatus,
                     Price = fullAppointment.Price,
                     PatientId = fullAppointment.PatientId,
+                    CoupleId = fullAppointment.CoupleId,
                     PackageId = fullAppointment.PackageId,
+                    PayerName = fullAppointment.PayerName,
+                    PayerCpf = fullAppointment.PayerCpf,
                 }
             },
         };
@@ -131,7 +131,7 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Small,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true
+            CloseButton = true,
         };
         var dialog = await DialogService.ShowAsync<AppointmentDialog>(
             "Editar Agendamento",
@@ -157,7 +157,12 @@ public partial class AppointmentsView : ComponentBase
 
     private async Task DeleteAppointment(AppointmentListItemDto appointment)
     {
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, BackdropClick = false, CloseButton = true };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            BackdropClick = false,
+            CloseButton = true,
+        };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Exclusão",
@@ -185,7 +190,7 @@ public partial class AppointmentsView : ComponentBase
 
     private async Task MarkAsCompleted(AppointmentListItemDto dto)
     {
-        var appointment = await AppointmentHandler.GetAppointment(dto.Id, dto.PatientId);
+        var appointment = await AppointmentHandler.GetAppointmentById(dto.Id);
         if (appointment == null)
             return;
 
@@ -199,7 +204,7 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Medium,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true
+            CloseButton = true,
         };
 
         var dialog = await DialogService.ShowAsync<AppointmentRecordDialog>(

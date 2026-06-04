@@ -10,44 +10,33 @@ namespace landingpageisis.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Drop old FKs referencing pacients table
             migrationBuilder.DropForeignKey(
-                name: "FK_appointment_packages_pacients_pacient_id",
-                table: "appointment_packages");
+                name: "FK_appointment_packages_pacients_patient_id",
+                table: "appointment_packages"
+            );
 
             migrationBuilder.DropForeignKey(
-                name: "FK_appointments_pacients_PacientId",
-                table: "appointments");
+                name: "FK_appointments_pacients_PatientId",
+                table: "appointments"
+            );
 
-            migrationBuilder.RenameColumn(
-                name: "pacient_id",
-                table: "appointment_packages",
-                newName: "patient_id");
+            // Rename table pacients -> patients
+            migrationBuilder.DropPrimaryKey(name: "PK_pacients", table: "pacients");
 
-            migrationBuilder.RenameColumn(
-                name: "PacientId",
-                table: "appointments",
-                newName: "PatientId");
+            migrationBuilder.RenameTable(name: "pacients", newName: "patients");
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_pacients",
-                table: "pacients");
+            migrationBuilder.AddPrimaryKey(name: "PK_patients", table: "patients", column: "Id");
 
-            migrationBuilder.RenameTable(
-                name: "pacients",
-                newName: "patients");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_patients",
-                table: "patients",
-                column: "Id");
-
+            // Recreate FKs pointing to new patients table
             migrationBuilder.AddForeignKey(
                 name: "FK_appointment_packages_patients_patient_id",
                 table: "appointment_packages",
                 column: "patient_id",
                 principalTable: "patients",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Cascade
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_appointments_patients_PatientId",
@@ -55,7 +44,8 @@ namespace landingpageisis.Migrations
                 column: "PatientId",
                 principalTable: "patients",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Cascade
+            );
         }
 
         /// <inheritdoc />
@@ -63,50 +53,37 @@ namespace landingpageisis.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_appointment_packages_patients_patient_id",
-                table: "appointment_packages");
+                table: "appointment_packages"
+            );
 
             migrationBuilder.DropForeignKey(
                 name: "FK_appointments_patients_PatientId",
-                table: "appointments");
+                table: "appointments"
+            );
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_patients",
-                table: "patients");
+            migrationBuilder.DropPrimaryKey(name: "PK_patients", table: "patients");
 
-            migrationBuilder.RenameTable(
-                name: "patients",
-                newName: "pacients");
+            migrationBuilder.RenameTable(name: "patients", newName: "pacients");
 
-            migrationBuilder.RenameColumn(
-                name: "patient_id",
-                table: "appointment_packages",
-                newName: "pacient_id");
-
-            migrationBuilder.RenameColumn(
-                name: "PatientId",
-                table: "appointments",
-                newName: "PacientId");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_pacients",
-                table: "pacients",
-                column: "Id");
+            migrationBuilder.AddPrimaryKey(name: "PK_pacients", table: "pacients", column: "Id");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_appointment_packages_pacients_pacient_id",
+                name: "FK_appointment_packages_pacients_patient_id",
                 table: "appointment_packages",
                 column: "patient_id",
                 principalTable: "pacients",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Cascade
+            );
 
             migrationBuilder.AddForeignKey(
-                name: "FK_appointments_pacients_PacientId",
+                name: "FK_appointments_pacients_PatientId",
                 table: "appointments",
                 column: "PatientId",
                 principalTable: "pacients",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Cascade
+            );
         }
     }
 }

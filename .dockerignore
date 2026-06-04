@@ -23,3 +23,7 @@
 **/values.dev.yaml
 LICENSE
 README.md
+
+# Exclude test project from Docker build context
+**/landing-page-isis.tests/
+**/.env.example

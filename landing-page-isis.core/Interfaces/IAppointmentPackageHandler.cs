@@ -11,6 +11,12 @@ public interface IAppointmentPackageHandler
         Guid patientId,
         CancellationToken ct
     );
+    Task<PaginatedResponse<AppointmentPackageListItemDto>> GetPackagesByCoupleId(
+        int page,
+        int pageSize,
+        Guid coupleId,
+        CancellationToken ct
+    );
     Task<HandlerResult> CreatePackage(AppointmentPackage package);
     Task<HandlerResult> UpdatePackage(AppointmentPackage package);
     Task<HandlerResult> DeletePackage(Guid id);

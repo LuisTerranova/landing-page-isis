@@ -41,7 +41,7 @@
             "addressCountry": "BR"
           },
           "url": "https://psi.isisvitoria.com.br/",
-          "telephone": "@(Environment.GetEnvironmentVariable("CONTACT_PHONE") ?? "")",
+          "telephone": @(System.Text.Json.JsonSerializer.Serialize(Environment.GetEnvironmentVariable("CONTACT_PHONE") ?? "")),
           "priceRange": "$$",
           "knowsAbout": ["Psicologia Histórico-cultural", "Psicoterapia Individual", "Psicoterapia de Casal", "Desenvolvimento Humano"],
           "offers": {
@@ -270,7 +270,7 @@
         if (firstRender)
         {
             // Removes automatic visual focus
-            await Js.InvokeVoidAsync("eval", "document.activeElement?.blur()");
+            await Js.InvokeVoidAsync("blurActiveElement");
         }
     }
 }

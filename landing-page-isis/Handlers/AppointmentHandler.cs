@@ -15,7 +15,10 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         CancellationToken ct
     )
     {
-        var query = context.Appointments.Include(a => a.Patient).AsNoTracking();
+        var query = context
+            .Appointments.Include(a => a.Patient)
+            .Include(a => a.Couple)
+            .AsNoTracking();
 
         var totalItems = await query.CountAsync(ct);
 
@@ -38,6 +41,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     {
         var query = context
             .Appointments.Include(a => a.Patient)
+            .Include(a => a.Couple)
             .AsNoTracking()
             .Where(a => a.PatientId == patientId);
 
@@ -66,9 +70,16 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     public async Task<Appointment?> GetAppointmentWithPatient(Guid id, Guid patientId)
     {
         return await context
-            .Appointments
-            .Include(a => a.Patient)
+            .Appointments.Include(a => a.Patient)
             .FirstOrDefaultAsync(a => a.Id == id && a.PatientId == patientId);
+    }
+
+    public async Task<Appointment?> GetAppointmentById(Guid id)
+    {
+        return await context
+            .Appointments.Include(a => a.Patient)
+            .Include(a => a.Couple)
+            .FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<HandlerResult> CreateAppointment(Appointment appointment)
@@ -79,8 +90,11 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (appointment.Price < 0)
             return new HandlerResult(false, "O preço não pode ser negativo.");
 
-        if (appointment.PatientId == Guid.Empty)
-            return new HandlerResult(false, "Selecione um paciente válido.");
+        if (
+            (!appointment.PatientId.HasValue || appointment.PatientId.Value == Guid.Empty)
+            && appointment.CoupleId == null
+        )
+            return new HandlerResult(false, "Selecione um paciente ou casal válido.");
 
         // Normalize to UTC for PostgreSQL compatibility
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
@@ -92,14 +106,31 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (isOccupied)
             return new HandlerResult(false, "Este horário já possui um agendamento.");
 
-        var activePackage = await context
-            .AppointmentPackages.Where(p =>
-                p.PatientId == appointment.PatientId
-                && p.Status == PackageStatus.Ativo
-                && p.RemainingAppointments > 0
-            )
-            .OrderBy(p => p.CreatedAt)
-            .FirstOrDefaultAsync();
+        // Find active package — check for patient or couple
+        AppointmentPackage? activePackage = null;
+
+        if (appointment.PatientId.HasValue && appointment.PatientId.Value != Guid.Empty)
+        {
+            activePackage = await context
+                .AppointmentPackages.Where(p =>
+                    p.PatientId == appointment.PatientId
+                    && p.Status == PackageStatus.Ativo
+                    && p.RemainingAppointments > 0
+                )
+                .OrderBy(p => p.CreatedAt)
+                .FirstOrDefaultAsync();
+        }
+        else if (appointment.CoupleId.HasValue)
+        {
+            activePackage = await context
+                .AppointmentPackages.Where(p =>
+                    p.CoupleId == appointment.CoupleId
+                    && p.Status == PackageStatus.Ativo
+                    && p.RemainingAppointments > 0
+                )
+                .OrderBy(p => p.CreatedAt)
+                .FirstOrDefaultAsync();
+        }
 
         if (activePackage != null)
         {
@@ -129,8 +160,11 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (appointment.Price < 0)
             return new HandlerResult(false, "O preço não pode ser negativo.");
 
-        if (appointment.PatientId == Guid.Empty)
-            return new HandlerResult(false, "Selecione um paciente válido.");
+        if (
+            (!appointment.PatientId.HasValue || appointment.PatientId.Value == Guid.Empty)
+            && appointment.CoupleId == null
+        )
+            return new HandlerResult(false, "Selecione um paciente ou casal válido.");
 
         if (
             appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada
@@ -188,6 +222,21 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             .ToListAsync(ct);
     }
 
+    public async Task<List<AppointmentListItemDto>> GetAppointmentsByCoupleId(
+        Guid coupleId,
+        CancellationToken ct
+    )
+    {
+        return await context
+            .Appointments.AsNoTracking()
+            .Include(a => a.Patient)
+            .Include(a => a.Couple)
+            .Where(a => a.CoupleId == coupleId)
+            .OrderByDescending(a => a.AppointmentDate)
+            .Select(a => ToListItemDto(a))
+            .ToListAsync(ct);
+    }
+
     public async Task<PaginatedResponse<AppointmentListItemDto>> GetAppointmentsByDateRange(
         DateTimeOffset start,
         DateTimeOffset end,
@@ -199,6 +248,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         var query = context
             .Appointments.AsNoTracking()
             .Include(a => a.Patient)
+            .Include(a => a.Couple)
             .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end);
 
         var totalItems = await query.CountAsync(ct);
@@ -220,10 +270,16 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         CancellationToken ct
     )
     {
-        var queryable = context.Appointments.Include(a => a.Patient).AsNoTracking();
+        var queryable = context
+            .Appointments.Include(a => a.Patient)
+            .Include(a => a.Couple)
+            .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query))
-            queryable = queryable.Where(a => a.Patient != null && a.Patient.Name.Contains(query));
+            queryable = queryable.Where(a =>
+                (a.Patient != null && a.Patient.Name.Contains(query))
+                || (a.Couple != null && a.Couple.Name.Contains(query))
+            );
 
         var totalItems = await queryable.CountAsync(ct);
 
@@ -240,13 +296,25 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         return new PaginatedResponse<AppointmentListItemDto>(items, totalItems, page, pageSize);
     }
 
+    public async Task<int> CountPendingRecordsAsync()
+    {
+        var now = DateTimeOffset.UtcNow;
+        return await context
+            .Appointments.AsNoTracking()
+            .CountAsync(a =>
+                a.AppointmentDate <= now && a.AppointmentStatus == AppointmentStatusEnum.Marcada
+            );
+    }
+
     private static AppointmentListItemDto ToListItemDto(Appointment a)
     {
+        var displayName = a.Couple?.Name ?? a.Patient?.Name;
         return new AppointmentListItemDto(
             a.Id,
             a.AppointmentDate,
             a.PatientId,
-            a.Patient?.Name,
+            a.CoupleId,
+            displayName,
             a.AppointmentStatus,
             a.Price,
             a.ReminderSent,

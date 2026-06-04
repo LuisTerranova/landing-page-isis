@@ -4,12 +4,16 @@ public class Appointment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public DateTimeOffset AppointmentDate { get; set; }
-    public Guid PatientId { get; set; }
+    public Guid? PatientId { get; set; }
     public Patient? Patient { get; set; }
+    public Guid? CoupleId { get; set; }
+    public Couple? Couple { get; set; }
     public AppointmentStatusEnum AppointmentStatus { get; set; } = AppointmentStatusEnum.Marcada;
     public decimal Price { get; set; }
     public bool ReminderSent { get; set; } = false;
     public Guid? PackageId { get; set; }
     public AppointmentPackage? Package { get; set; }
     public AppointmentRecord? Record { get; set; }
+    public string? PayerName { get; set; }
+    public string? PayerCpf { get; set; }
 }

@@ -15,19 +15,10 @@ public static class AesEncryptionService
 
         var key = Encoding.UTF8.GetBytes(secret);
 
-        switch (key.Length)
-        {
-            case < 32:
-            {
-                var padded = new byte[32];
-                Array.Copy(key, padded, Math.Min(key.Length, 32));
-                return padded;
-            }
-            case > 32:
-                return key[..32];
-            default:
-                return key;
-        }
+        if (key.Length != 32)
+            throw new InvalidOperationException("ENCRYPTION_KEY must be exactly 32 bytes (UTF-8).");
+
+        return key;
     }
 
     public static string Encrypt(string plainText)
@@ -82,9 +73,9 @@ public static class AesEncryptionService
 
             return srDecrypt.ReadToEnd();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine(ex.Message);
+            // Decryption failure (returns empty string to prevent disclosure/crashes)
             return string.Empty;
         }
     }

@@ -68,8 +68,7 @@ public class EmailService(
 
             var appointmentHandler =
                 scope.ServiceProvider.GetRequiredService<IAppointmentHandler>();
-            var patientHandler =
-                scope.ServiceProvider.GetRequiredService<IPatientHandler>();
+            var patientHandler = scope.ServiceProvider.GetRequiredService<IPatientHandler>();
 
             var nowInBr = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BrTimeZone);
             var todayBrDate = nowInBr.Date;
@@ -90,11 +89,16 @@ public class EmailService(
                 .Where(a => a.AppointmentStatus == AppointmentStatusEnum.Marcada && !a.ReminderSent)
                 .ToList();
 
-            var patientIds = toProcess.Select(a => a.PatientId).Distinct();
+            var patientIds = toProcess
+                .Where(a => a.PatientId.HasValue)
+                .Select(a => a.PatientId!.Value)
+                .Distinct();
             var emailMap = await patientHandler.GetPatientEmailMap(patientIds, ct);
 
             var eligible = toProcess
-                .Where(a => emailMap.GetValueOrDefault(a.PatientId) != null)
+                .Where(a =>
+                    a.PatientId.HasValue && emailMap.GetValueOrDefault(a.PatientId.Value) != null
+                )
                 .ToList();
 
             logger.LogInformation(
@@ -105,7 +109,7 @@ public class EmailService(
 
             foreach (var dto in eligible)
             {
-                var appointment = await appointmentHandler.GetAppointmentWithPatient(dto.Id, dto.PatientId);
+                var appointment = await appointmentHandler.GetAppointmentById(dto.Id);
                 if (appointment == null)
                     continue;
 
@@ -114,10 +118,7 @@ public class EmailService(
                 {
                     appointment.ReminderSent = true;
                     await appointmentHandler.UpdateAppointment(appointment, appointment.Id);
-                    logger.LogInformation(
-                        "Lembrete enviado para consulta {Id}",
-                        appointment.Id
-                    );
+                    logger.LogInformation("Lembrete enviado para consulta {Id}", appointment.Id);
                 }
             }
         }
