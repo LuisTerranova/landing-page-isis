@@ -54,7 +54,7 @@
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
-                                  Mask="_cpfMask"/>
+                                  MaxLength="14" Counter="14"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -78,7 +78,6 @@
     public bool ShowPatientCoupleSelector { get; set; }
 
     private bool _formValido;
-    private PatternMask _cpfMask = new("000.000.000-00");
     private string _packageOwnerType = "patient";
 
     protected override void OnParametersSet()
