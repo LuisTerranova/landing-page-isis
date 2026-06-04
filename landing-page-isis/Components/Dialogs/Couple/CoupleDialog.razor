@@ -62,7 +62,7 @@
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
                                   MaxLength="14" Counter="14"
-                                  Mask="@(new PatternMask("000.000.000-00"))"/>
+                                  Mask="_cpfMask"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -84,6 +84,7 @@
     [Parameter] public string Titulo { get; set; } = "Novo Casal";
 
     private bool _formValido;
+    private PatternMask _cpfMask = new("000.000.000-00");
     private PatientListItemDto? _selectedPatient1;
     private PatientListItemDto? _selectedPatient2;
 

@@ -146,7 +146,7 @@
                                     <MudTextField @bind-Value="_patientModel.Name" Label="Nome" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="150" Counter="150" Immediate="true" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.Email" Label="E-mail" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="255" Counter="255" Immediate="true" />
+                                    <MudTextField @bind-Value="_patientModel.Email" Label="E-mail" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="255" Counter="255" Immediate="true" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudTextField @bind-Value="_patientModel.Phone" Label="Telefone" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="11" Counter="11" />
@@ -164,7 +164,7 @@
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
                                     {
-                                        <MudTextField @bind-Value="_patientModel.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="14" Counter="14" Mask="@(new PatternMask("000.000.000-00"))" />
+                                        <MudTextField @bind-Value="_patientModel.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="14" Counter="14" Mask="_cpfMask" />
                                     }
                                     else
                                     {
@@ -188,7 +188,7 @@
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
                                     {
-                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="14" Counter="14" Mask="@(new PatternMask("000.000.000-00"))" />
+                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="14" Counter="14" Mask="_cpfMask" />
                                     }
                                     else
                                     {
@@ -390,6 +390,7 @@
 
     // ==================== PATIENT PROFILE STATE ====================
 
+    private PatternMask _cpfMask = new("000.000.000-00");
     private bool _showCpf;
     private bool _showPayerCpf;
     private bool _isEditing;

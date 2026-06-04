@@ -21,7 +21,7 @@
                     <MudTextField T="string" Label="CPF" Required="true"
                                   @bind-Value="Model.Cpf" Variant="Variant.Outlined"
                                   MaxLength="14" Counter="14"
-                                  Mask="@(new PatternMask("000.000.000-00"))"/>
+                                  Mask="_cpfMask"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudDatePicker Label="Data de Nascimento"
@@ -32,7 +32,7 @@
                                    Editable="true"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="E-mail" Required="true"
+                    <MudTextField T="string" Label="E-mail"
                                   @bind-Value="Model.Email" Variant="Variant.Outlined"
                                   MaxLength="255" Counter="255" Immediate="true"/>
                 </MudItem>
@@ -62,7 +62,7 @@
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
                                   MaxLength="14" Counter="14"
-                                  Mask="@(new PatternMask("000.000.000-00"))"/>
+                                  Mask="_cpfMask"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -84,6 +84,7 @@
 
     private bool _formValido;
     private DateTime? _tempBirthDate;
+    private PatternMask _cpfMask = new("000.000.000-00");
 
     protected override void OnParametersSet()
     {
