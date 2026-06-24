@@ -36,9 +36,3 @@ jobs:
           docker compose up -d
           docker image prune -f
           rm -f .env
-
-      - name: Build and Start Demo Stack
-        run: |
-          docker compose -f compose-demo.yaml build
-          docker compose -f compose-demo.yaml up -d
-          docker image prune -f
