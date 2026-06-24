@@ -1,4 +1,4 @@
-# 🌿 Landing Page - Isis Vitória
+# Landing Page - Isis Vitória
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512bd4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Blazor](https://img.shields.io/badge/Blazor-Interactive%20Server-512bd4?logo=blazor)](https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor)
@@ -68,7 +68,7 @@ A forma mais rápida e recomendada de rodar o projeto é utilizando **Docker**, 
 ### 3. Rodar
 Na raiz do projeto, execute:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 A aplicação estará disponível em `http://localhost:8080`. O banco de dados e as tabelas são criados automaticamente na primeira execução.
 
@@ -79,13 +79,18 @@ A aplicação estará disponível em `http://localhost:8080`. O banco de dados e
 Se desejar rodar o projeto manualmente sem Docker para desenvolvimento:
 - Certifique-se de ter o [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) instalado.
 - Configure um banco PostgreSQL local e atualize a string de conexão em `appsettings.Development.json`.
-- Utilize o comando `dotnet ef database update` para gerenciar o esquema do banco via migrations.
+- As migrations do EF Core estão no projeto `landing-page-isis.Infrastructure`. Para aplicar as migrations:
+  ```bash
+  dotnet ef database update --project landing-page-isis.Infrastructure --startup-project landing-page-isis
+  ```
+- Execute a aplicação com `dotnet run --project landing-page-isis`.
 
 ---
 
 ## 📂 Estrutura da Solução
 - `landing-page-isis/`: Aplicação Web principal (Blazor Server).
 - `landing-page-isis.core/`: Lógica de domínio, modelos e interfaces.
+- `landing-page-isis.Infrastructure/`: Camada de infraestrutura — persistência (EF Core), migrations e serviços (criptografia).
 - `landing-page-isis.tests/`: Testes unitários com xUnit.
 
 ---
@@ -95,5 +100,5 @@ Este software é um projeto proprietário desenvolvido para a psicóloga autôno
 
 ---
 <p align="center">
-  Desenvolvido com 🌿 por Luis Terranova
+  Desenvolvido por Luis Terranova
 </p>
