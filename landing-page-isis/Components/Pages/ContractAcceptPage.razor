@@ -1,0 +1,245 @@
+@page "/contrato/{Token}"
+@using landing_page_isis.core
+@using landing_page_isis.core.Models
+@using RazorLight
+@rendermode InteractiveServer
+@inject IContractHandler ContractHandler
+@inject ISnackbar Snackbar
+@inject RazorLightEngine RazorLight
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-16" Style="min-height: 75vh;">
+    @if (_loading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true"
+                             Size="Size.Large" Class="d-flex justify-center" />
+        <MudText Typo="Typo.body1" Class="mt-4 text-center">Carregando contrato...</MudText>
+    }
+    else if (_contract == null)
+    {
+        <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px;">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Color="Color.Error" Class="mt-4">Link inválido</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">O link que você acessou não é válido ou já expirou.</MudText>
+        </MudPaper>
+    }
+    else if (_contract.Status == ContractStatus.Ativo)
+    {
+        <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px;">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Color="Color.Success" Class="mt-4">Contrato já aceito</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Este contrato foi aceito em @_contract.AcceptedAt?.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm").
+            </MudText>
+            @if (_redirectSeconds > 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-4">
+                    Redirecionando para a página inicial em @_redirectSeconds segundos...
+                </MudText>
+            }
+        </MudPaper>
+    }
+    else if (_contract.Status == ContractStatus.Cancelado)
+    {
+        <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px;">
+            <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Color="Color.Error" Class="mt-4">Contrato cancelado</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">Este contrato foi cancelado. Entre em contato pelo WhatsApp (69) 99223-4931.</MudText>
+        </MudPaper>
+    }
+    else if (_expired)
+    {
+        <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px;">
+            <MudIcon Icon="@Icons.Material.Filled.TimerOff" Color="Color.Warning" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Color="Color.Warning" Class="mt-4">Link expirado</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                O link de aceitação expirou (válido por 2 dias). Entre em contato pelo WhatsApp (69) 99223-4931 para reenviarmos.
+            </MudText>
+        </MudPaper>
+    }
+    else if (_contract.Status == ContractStatus.AguardandoAceitacao && !_cpfVerified)
+    {
+        <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px; max-width: 500px; margin: 0 auto;">
+            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Primary" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Style="color: #284B32; font-weight: 700;" Class="mt-4">Confirme sua identidade</MudText>
+            <MudText Typo="Typo.body1" Class="mt-4 mb-6">
+                Para sua segurança, confirme os <strong>3 últimos dígitos</strong> do CPF cadastrado.
+            </MudText>
+
+            <div class="d-flex flex-column align-center" style="gap: 8px;">
+                <MudText Typo="Typo.body2">
+                    CPF: <strong>XXX.XXX.XXX-</strong>
+                </MudText>
+
+                <MudTextField T="string"
+                              Variant="Variant.Outlined"
+                              Label="Últimos 3 dígitos"
+                              @bind-Value="_cpfInput"
+                              MaxLength="3"
+                              Style="width: 160px;"
+                              Error="@(!string.IsNullOrEmpty(_cpfError))"
+                              ErrorText="@_cpfError" />
+
+                <MudButton Variant="Variant.Filled"
+                           Style="background-color: #284B32; color: white; font-weight: 700; border-radius: 12px; height: 48px; width: 160px;"
+                           OnClick="ConfirmCpf">
+                    Confirmar
+                </MudButton>
+            </div>
+        </MudPaper>
+    }
+    else if (_contract.Status == ContractStatus.AguardandoAceitacao)
+    {
+        <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
+            Revisão do Contrato
+        </MudText>
+        <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-6 text-center">
+            Por favor, leia atentamente o contrato abaixo e clique em "Aceitar Contrato" para confirmar.
+        </MudText>
+
+        <MudPaper Elevation="4" Class="pa-0" Style="border-radius: 24px; overflow: hidden;">
+            <div style="width: 100%; height: 60vh;">
+                <iframe srcdoc="@_contract.ContractDocumentHtml"
+                        style="width: 100%; height: 100%; border: none;">
+                </iframe>
+            </div>
+        </MudPaper>
+
+        <div class="d-flex justify-center mt-6">
+            <MudButton Variant="Variant.Filled"
+                       Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px; padding: 0 48px;"
+                       OnClick="AcceptContract"
+                       Disabled="@(_accepting)">
+                @if (_accepting)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Processando...</MudText>
+                }
+                else
+                {
+                    <MudText>ACEITAR CONTRATO</MudText>
+                }
+            </MudButton>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private Contract? _contract;
+    private bool _loading = true;
+    private bool _expired;
+    private bool _accepting;
+
+    private bool _cpfVerified;
+    private string _cpfInput = string.Empty;
+    private string _cpfError = string.Empty;
+
+    private int _redirectSeconds;
+    private CancellationTokenSource? _redirectCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _contract = await ContractHandler.GetContractByToken(Token);
+
+        if (_contract is { Status: ContractStatus.AguardandoAceitacao }
+            && _contract.CreatedAt.AddDays(2) < DateTimeOffset.UtcNow)
+        {
+            _expired = true;
+        }
+
+        if (_contract is { Status: ContractStatus.Ativo })
+        {
+            StartRedirectTimer();
+        }
+
+        _loading = false;
+    }
+
+    private void StartRedirectTimer()
+    {
+        _redirectSeconds = 5;
+        _redirectCts = CancellationTokenSource.CreateLinkedTokenSource(new CancellationToken());
+        _ = RedirectAfterDelayAsync(_redirectCts.Token);
+    }
+
+    private async Task RedirectAfterDelayAsync(CancellationToken ct)
+    {
+        while (_redirectSeconds > 0 && !ct.IsCancellationRequested)
+        {
+            await Task.Delay(1000, ct);
+            _redirectSeconds--;
+            await InvokeAsync(StateHasChanged);
+        }
+
+        if (!ct.IsCancellationRequested)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    public void Dispose()
+    {
+        _redirectCts?.Cancel();
+        _redirectCts?.Dispose();
+    }
+
+    private void ConfirmCpf()
+    {
+        _cpfError = string.Empty;
+
+        if (string.IsNullOrEmpty(_contract?.PatientCpf))
+        {
+            _cpfVerified = true;
+            return;
+        }
+
+        var digits = new string(_contract.PatientCpf.Where(char.IsDigit).ToArray());
+        var lastThree = digits.Length >= 3 ? digits[^3..] : digits;
+
+        if (_cpfInput.Trim() != lastThree)
+        {
+            _cpfError = "Os dígitos não conferem. Tente novamente.";
+            return;
+        }
+
+        _cpfVerified = true;
+    }
+
+    private async Task AcceptContract()
+    {
+        _accepting = true;
+        try
+        {
+            var result = await ContractHandler.AcceptContract(Token);
+            if (result.Success)
+            {
+                var contract = await ContractHandler.GetContractByToken(Token);
+                if (contract != null)
+                {
+                    var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", contract);
+                    contract.ContractDocumentHtml = html;
+                    await ContractHandler.UpdateContract(contract);
+                    _contract = contract;
+                }
+
+                StartRedirectTimer();
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add($"Erro: {result.Message}", Severity.Error);
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Ocorreu um erro inesperado ao processar a aceitação.", Severity.Error);
+        }
+        finally
+        {
+            _accepting = false;
+        }
+    }
+}

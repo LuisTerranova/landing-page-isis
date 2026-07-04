@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using landing_page_isis.Infrastructure.Data;
@@ -11,9 +12,11 @@ using landing_page_isis.Infrastructure.Data;
 namespace landingpageisis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702184451_AddContractEntity")]
+    partial class AddContractEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,15 +213,6 @@ namespace landingpageisis.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AcceptanceToken")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("acceptance_token");
-
-                    b.Property<DateTimeOffset?>("AcceptedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("accepted_at");
-
                     b.Property<string>("ContractDocumentHtml")
                         .HasColumnType("text")
                         .HasColumnName("contract_document_html");
@@ -234,10 +228,6 @@ namespace landingpageisis.Migrations
                     b.Property<Guid?>("PackageId")
                         .HasColumnType("uuid")
                         .HasColumnName("package_id");
-
-                    b.Property<decimal?>("PackagePrice")
-                        .HasColumnType("numeric")
-                        .HasColumnName("package_price");
 
                     b.Property<DateOnly?>("PatientBirthDate")
                         .HasColumnType("date")
@@ -273,6 +263,11 @@ namespace landingpageisis.Migrations
                     b.Property<decimal?>("Price")
                         .HasColumnType("numeric")
                         .HasColumnName("price");
+
+                    b.Property<string>("ProfessionalName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("professional_name");
 
                     b.Property<string>("Status")
                         .IsRequired()

@@ -1,0 +1,145 @@
+@page "/formulario"
+@using landing_page_isis.core.Models
+@rendermode InteractiveServer
+@inject IContractHandler ContractHandler
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-16">
+    <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
+        Formulário de Cadastro
+    </MudText>
+    <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-10 text-center">
+        Preencha seus dados para iniciarmos o processo. Após o envio, um de nossos profissionais entrará em contato.
+    </MudText>
+
+    <MudPaper Elevation="4" Class="pa-8" Style="border-radius: 24px;">
+        <EditForm Model="@_contract" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Nome Completo" Variant="Variant.Outlined"
+                                  @bind-Value="_contract.PatientName" For="@(() => _contract.PatientName)"
+                                  MaxLength="150" Counter="150"
+                                  FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
+                                  @bind-Value="_contract.PatientCpf" For="@(() => _contract.PatientCpf)"
+                                  Mask="@(new PatternMask("000.000.000-00"))"
+                                  FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
+                                  @bind-Value="_contract.PatientEmail" For="@(() => _contract.PatientEmail)"
+                                  MaxLength="255" Counter="255" Immediate="true"
+                                  FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Telefone (WhatsApp)" Variant="Variant.Outlined"
+                                  @bind-Value="_contract.PatientPhone" For="@(() => _contract.PatientPhone)"
+                                  MaxLength="11" Counter="11"
+                                  FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Estado (UF)" Variant="Variant.Outlined"
+                                  @bind-Value="_contract.PatientState" For="@(() => _contract.PatientState)"
+                                  MaxLength="2"
+                                  FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Data de Nascimento"
+                                   @bind-Date="_tempBirthDate"
+                                   Variant="Variant.Outlined"
+                                   DateFormat="dd/MM/yyyy"
+                                   Editable="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDivider DividerType="DividerType.Middle" Class="my-4" />
+                </MudItem>
+                <MudItem xs="12">
+                    <div class="d-flex align-center">
+                        <MudCheckBox @bind-Value="_termsAccepted" />
+                        <MudText Typo="Typo.body2" Class="ml-2">
+                            Declaro que li e aceito os
+                            <MudLink Href="javascript:void(0)" OnClick="@(async () => await ShowConsentDialog())" Typo="Typo.body2" Style="color: #7E0F20; font-weight: 700; text-decoration: underline;">
+                                Termos de Consentimento
+                            </MudLink>
+                            e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
+                        </MudText>
+                    </div>
+                </MudItem>
+            </MudGrid>
+
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                       Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px;"
+                       FullWidth="true"
+                       Class="mt-6"
+                       Disabled="@(_processing || !_termsAccepted)">
+                @if (_processing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Enviando...</MudText>
+                }
+                else
+                {
+                    <MudText>Enviar Dados</MudText>
+                }
+            </MudButton>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private Contract _contract = new();
+    private bool _processing;
+    private bool _termsAccepted;
+    private DateTime? _tempBirthDate;
+
+    private async Task ShowConsentDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ConsentDialog>("", options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            _termsAccepted = true;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!_termsAccepted)
+        {
+            Snackbar.Add("É necessário aceitar os termos para continuar.", Severity.Warning);
+            return;
+        }
+
+        _contract.TermsAccepted = true;
+        _contract.PatientBirthDate = _tempBirthDate.HasValue ? DateOnly.FromDateTime(_tempBirthDate.Value) : null;
+
+        _processing = true;
+        try
+        {
+            var result = await ContractHandler.CreateContract(_contract);
+            if (result.Success)
+            {
+                Snackbar.Add("Seus dados foram enviados com sucesso! Em breve entraremos em contato.", Severity.Success);
+                _contract = new Contract();
+                _tempBirthDate = null;
+                _termsAccepted = false;
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao enviar: {result.Message}", Severity.Error);
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Ocorreu um erro inesperado ao enviar seus dados.", Severity.Error);
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+}

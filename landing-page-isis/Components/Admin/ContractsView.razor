@@ -1,0 +1,60 @@
+@page "/admin/contratos"
+@attribute [Authorize]
+@using landing_page_isis.Components.Layout
+@using landing_page_isis.core.Models.DTOs
+@using landing_page_isis.core
+@layout DashboardLayout
+@rendermode InteractiveServer
+
+<PageTitle>Contratos | Isis Vitória</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6" Color="Color.Secondary" Style="font-weight: 800">
+    CONTRATOS
+</MudText>
+
+<GenericTable @ref="_table"
+              TItem="ContractListItemDto"
+              ServerData="@ServerReload"
+              OnDelete="@(DeleteContract)"
+              ShowSearchBar="false"
+              ShowCreateButton="false">
+
+    <HeaderColumns>
+        <MudTh>ID</MudTh>
+        <MudTh>Nome</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Tipo</MudTh>
+        <MudTh>Valor</MudTh>
+        <MudTh>Criado em</MudTh>
+    </HeaderColumns>
+
+    <RowColumns>
+        <MudTd DataLabel="ID">
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@context.FormId</MudChip>
+        </MudTd>
+        <MudTd DataLabel="Nome">@context.PatientName</MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">
+                @context.Status
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Tipo">@(context.Type?.ToString() ?? "—")</MudTd>
+        <MudTd DataLabel="Valor">@(context.Price.HasValue ? $"R$ {context.Price.Value:F2}" : "—")</MudTd>
+        <MudTd DataLabel="Criado em">@context.CreatedAt.ToOffset(TimeSpan.FromHours(-4)).ToString("dd/MM/yyyy")</MudTd>
+    </RowColumns>
+
+    <CustomActions>
+        <MudMenuItem OnClick="@(() => OpenEdit(context))">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> Editar
+        </MudMenuItem>
+        <MudMenuItem OnClick="@(() => OpenViewDocument(context))">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Ver Documento
+        </MudMenuItem>
+        @if (context.Status == ContractStatus.AguardandoAceitacao)
+        {
+            <MudMenuItem OnClick="@(() => CopyLink(context))">
+                <MudIcon Icon="@Icons.Material.Filled.Link" Class="me-2" /> Copiar Link
+            </MudMenuItem>
+        }
+    </CustomActions>
+</GenericTable>

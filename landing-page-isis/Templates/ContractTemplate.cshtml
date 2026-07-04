@@ -1,0 +1,390 @@
+@using landing_page_isis.core
+@using landing_page_isis.core.Models
+@using landing_page_isis.Extensions
+@model Contract
+@{
+    var typeText = Model.Type switch
+    {
+        ContractType.Pacote => "Pacote Mensal de Sessões",
+        ContractType.Avulso => "Sessão Avulsa",
+        _ => ""
+    };
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Prestação de Serviços Psicológicos</title>
+    <style>
+        body {
+            font-family: 'Glacial Indifference', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #284B32;
+            margin: 0;
+            padding: 0;
+            background-color: #F7EAD5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8dcc8;
+        }
+
+        .header {
+            background-color: #284B32;
+            color: #F7EAD5;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 50px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #7E0F20;
+            border-bottom: 2px solid #7E0F20;
+            padding-bottom: 8px;
+            margin-top: 36px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .party-box {
+            background-color: #F7EAD5;
+            border-left: 4px solid #284B32;
+            padding: 20px 24px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 24px;
+        }
+
+        .party-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #7E0F20;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .party-box p {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+
+        .clause {
+            margin-bottom: 20px;
+        }
+
+        .clause h3 {
+            font-size: 15px;
+            color: #284B32;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .clause p {
+            font-size: 14px;
+            text-align: justify;
+            margin: 0;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .details-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e8dcc8;
+        }
+
+        .details-table td:first-child {
+            font-weight: 700;
+            color: #7E0F20;
+            width: 40%;
+        }
+
+        .signature-section {
+            margin-top: 60px;
+            text-align: center;
+        }
+
+        .signature-line {
+            width: 60%;
+            margin: 40px auto 8px auto;
+            border-bottom: 1px solid #284B32;
+        }
+
+        .signature-section p {
+            font-size: 13px;
+            color: #7E0F20;
+            margin: 4px 0;
+        }
+
+        .footer {
+            background-color: #F7EAD5;
+            color: #284B32;
+            padding: 24px 40px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #e8dcc8;
+        }
+
+        .footer strong {
+            color: #7E0F20;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Contrato de Prestação de Serviços Psicológicos</h1>
+        <div class="subtitle">Documento gerado em @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-4)).ToString("dd/MM/yyyy 'às' HH:mm") (Horário de Porto Velho)</div>
+    </div>
+    <div class="content">
+        <h2>PARTES</h2>
+
+        <div class="party-box">
+            <h3>CONTRATANTE</h3>
+            <p><strong>Nome:</strong> @Model.PatientName</p>
+            <p><strong>CPF:</strong> @Model.PatientCpf.FormatCpf()</p>
+            @if (!string.IsNullOrEmpty(Model.PatientEmail))
+            {
+                <p><strong>E-mail:</strong> @Model.PatientEmail</p>
+            }
+            <p><strong>Telefone:</strong> @Model.PatientPhone.FormatPhone()</p>
+            @if (!string.IsNullOrEmpty(Model.PatientState))
+            {
+                <p><strong>Estado:</strong> @Model.PatientState</p>
+            }
+            @if (Model.PatientBirthDate.HasValue)
+            {
+                <p><strong>Data de Nascimento:</strong> @Model.PatientBirthDate.Value.ToString("dd/MM/yyyy")</p>
+            }
+        </div>
+
+        <div class="party-box">
+            <h3>CONTRATADA</h3>
+            <p><strong>Nome:</strong> Isis Vitória Alves da Silva Barbosa</p>
+            <p><strong>Profissão:</strong> Psicóloga Clínica</p>
+            <p><strong>Contato:</strong> (69) 99223-4931</p>
+        </div>
+
+        <h2>DETALHES DO CONTRATO</h2>
+
+        <table class="details-table">
+            <tr>
+                <td>Modalidade</td>
+                <td>@(typeText ?? "—")</td>
+            </tr>
+            @if (Model.Price.HasValue)
+            {
+                <tr>
+                    <td>Valor por Sessão</td>
+                    <td>R$ @Model.Price.Value.ToString("F2")</td>
+                </tr>
+            }
+            @if (Model.Type == ContractType.Pacote)
+            {
+                @if (Model.InitialAppointments.HasValue)
+                {
+                    <tr>
+                        <td>Sessões por Pacote</td>
+                        <td>@Model.InitialAppointments.Value sessões mensais</td>
+                    </tr>
+                }
+                @if (Model.PackagePrice.HasValue)
+                {
+                    <tr>
+                        <td>Valor do Pacote Mensal</td>
+                        <td>R$ @Model.PackagePrice.Value.ToString("F2")</td>
+                    </tr>
+                }
+            }
+        </table>
+
+        <h2>CLÁUSULAS</h2>
+
+        <div class="clause">
+            <h3>CLÁUSULA 1ª — DO OBJETO</h3>
+            <p>
+                O presente contrato tem por objeto a prestação de serviços psicológicos pela CONTRATADA
+                ao CONTRATANTE, compreendendo sessões de psicoterapia individual, a serem realizadas em
+                consultório ou por meio digital (online), conforme previamente acordado entre as partes.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 2ª — DOS HONORÁRIOS</h3>
+            @if (Model.Type == ContractType.Pacote)
+            {
+                <p>
+                    Para maior conforto financeiro, o CONTRATANTE poderá optar pelo pagamento por sessão
+                    avulsa ou por pacote mensal.
+                </p>
+                <p>
+                    O valor de cada sessão avulsa é de <strong>R$ @Model.Price.GetValueOrDefault().ToString("F2")</strong>.
+                </p>
+                <p>
+                    No modelo de pacote mensal, o presente contrato contempla
+                    <strong>@Model.InitialAppointments.GetValueOrDefault() sessões mensais</strong> ao valor de
+                    <strong>R$ @Model.PackagePrice.GetValueOrDefault().ToString("F2")</strong>, a ser quitado antes
+                    do início da primeira sessão de cada mês, na primeira semana do mês de referência.
+                </p>
+            }
+            else
+            {
+                <p>
+                    O valor de cada sessão é de <strong>R$ @Model.Price.GetValueOrDefault().ToString("F2")</strong>.
+                    O pagamento deverá ser efetuado antes do início de cada sessão.
+                </p>
+            }
+            <p>
+                O pagamento poderá ser realizado através de:
+            </p>
+            <p>
+                Pix: (69) 99223-4931<br>
+                Transferência bancária: Banco Inter (077) — Agência: 0001, Conta: 6559473-8
+            </p>
+            <p>
+                Para pagamento via cartão de crédito, será acrescida a taxa da operadora,
+                com o valor exato a ser simulado previamente.
+            </p>
+            <p>
+                Os valores serão reajustados anualmente a partir do mês de fevereiro, com base no
+                índice de inflação acumulada no ano anterior, conforme divulgado pelo Banco Central.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 3ª — DO CANCELAMENTO E ATRASOS</h3>
+            <p>
+                As sessões terão duração aproximada de 50 (cinquenta) minutos, com frequência
+                semanal acordada entre as partes. A tolerância máxima de atraso é de 20 (vinte)
+                minutos; após esse prazo, a sessão será reagendada.
+            </p>
+            <p>
+                O cancelamento ou reagendamento deverá ser comunicado com, no mínimo, 24 (vinte e
+                quatro) horas de antecedência. O não comparecimento sem o devido aviso prévio
+                implicará na cobrança integral da sessão, inclusive para sessões integrantes de
+                pacote mensal.
+            </p>
+            <p>
+                A CONTRATADA compromete-se com a pontualidade e assiduidade. Em caso de eventual
+                ausência ou emergência, o CONTRATANTE será comunicado com a devida antecedência;
+                não sendo possível o aviso prévio, a sessão será compensada em data oportuna.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 4ª — DO SIGILO PROFISSIONAL</h3>
+            <p>
+                A CONTRATADA obriga-se a manter absoluto sigilo sobre todas as informações, dados
+                e conteúdo das sessões, em conformidade com o Código de Ética Profissional do
+                Psicólogo (Resolução CFP nº 010/2005). As informações somente serão reveladas a
+                terceiros mediante autorização expressa e por escrito do CONTRATANTE, ressalvadas
+                as exceções legais previstas no Art. 9º e Art. 10º do referido código, como
+                situações de risco à vida, comunicação de crime ou determinação judicial. O
+                registro das sessões será armazenado em prontuário eletrônico seguro, conforme
+                a Resolução CFP nº 001/2009.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 5ª — DA COMUNICAÇÃO</h3>
+            <p>
+                A comunicação entre as partes dar-se-á preferencialmente durante as sessões. Para
+                assuntos administrativos, o CONTRATANTE poderá entrar em contato pelo telefone
+                (69) 99223-4931 (WhatsApp). A CONTRATADA retornará assim que possível,
+                no prazo máximo de 24 (vinte e quatro) horas.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 6ª — DA VIGÊNCIA E RESCISÃO</h3>
+            <p>
+                O presente contrato entra em vigor a partir da data de sua aceitação, vigorando
+                por prazo indeterminado enquanto durar o processo terapêutico. Ambas as partes
+                poderão rescindir o contrato a qualquer momento, mediante comunicação expressa.
+                Recomenda-se a realização de uma sessão de encerramento para avaliação do processo
+                e orientações finais. Em caso de desistência do pacote mensal após o pagamento,
+                os valores não serão reembolsados, salvo acordo expresso entre as partes.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 7ª — DA PROTEÇÃO DE DADOS (LGPD)</h3>
+            <p>
+                A CONTRATADA compromete-se a tratar os dados pessoais do CONTRATANTE em conformidade
+                com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018), utilizando-os
+                exclusivamente para os fins do presente contrato e mantendo-os armazenados de forma
+                segura. O CONTRATANTE declara ter lido e concordado com a Política de Privacidade
+                disponível no site da CONTRATADA. Os dados sensíveis relativos à saúde serão
+                tratados com as salvaguardas adicionais previstas no Art. 11 da LGPD.
+            </p>
+        </div>
+
+        <div class="clause">
+            <h3>CLÁUSULA 8ª — DAS DISPOSIÇÕES GERAIS</h3>
+            <p>
+                Este contrato representa o acordo integral entre as partes, selando o compromisso
+                terapêutico. Quaisquer alterações nas condições aqui pactuadas deverão ser
+                formalizadas mediante aditivo contratual. Fica eleito o foro da comarca de
+                Porto Velho/RO para dirimir quaisquer questões oriundas deste contrato.
+            </p>
+        </div>
+
+        <div class="signature-section">
+            <p>Porto Velho/RO, @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-4)).ToString("dd 'de' MMMM 'de' yyyy")</p>
+
+            <div class="signature-line"></div>
+            <p><strong>@Model.PatientName</strong></p>
+            <p>CONTRATANTE</p>
+
+            @if (Model.AcceptedAt.HasValue)
+            {
+                <p style="margin-top: 16px;">
+                    Contrato aceito eletronicamente em
+                    @Model.AcceptedAt.Value.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm")
+                    (Horário de Brasília)
+                </p>
+            }
+
+            <div class="signature-line" style="margin-top: 50px;"></div>
+            <p><strong>Isis Vitória Alves da Silva Barbosa</strong></p>
+            <p>CONTRATADA</p>
+        </div>
+    </div>
+    <div class="footer">
+        <p>
+            <strong>Isis Vitória Alves da Silva Barbosa</strong> — Psicóloga Clínica<br>
+            Este documento foi gerado eletronicamente e é válido como contrato de prestação de serviços.
+        </p>
+    </div>
+</div>
+</body>
+</html>

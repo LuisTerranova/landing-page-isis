@@ -1,0 +1,57 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace landing_page_isis.core.Models;
+
+public class Contract
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required(ErrorMessage = "Nome é obrigatório")]
+    [MaxLength(150, ErrorMessage = "Nome deve ter no máximo 150 caracteres")]
+    public string PatientName { get; set; } = string.Empty;
+
+    [MaxLength(14, ErrorMessage = "CPF inválido")]
+    public string? PatientCpf { get; set; }
+
+    [MaxLength(255, ErrorMessage = "E-mail deve ter no máximo 255 caracteres")]
+    [EmailAddress(ErrorMessage = "E-mail inválido")]
+    public string? PatientEmail { get; set; }
+
+    [RegularExpression(
+        @"^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$",
+        ErrorMessage = "Telefone inválido. Use (XX) 9XXXX-XXXX"
+    )]
+    [MaxLength(11, ErrorMessage = "Telefone deve ter no máximo 11 dígitos")]
+    public string PatientPhone { get; set; } = string.Empty;
+
+    [MaxLength(2, ErrorMessage = "Estado deve ser a sigla de 2 letras")]
+    public string? PatientState { get; set; }
+
+    public DateOnly? PatientBirthDate { get; set; }
+
+    public bool TermsAccepted { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset? UpdatedAt { get; set; }
+
+    public ContractStatus Status { get; set; } = ContractStatus.Rascunho;
+
+    public decimal? Price { get; set; }
+
+    public int? InitialAppointments { get; set; }
+
+    public ContractType? Type { get; set; }
+
+    public decimal? PackagePrice { get; set; }
+
+    public string? AcceptanceToken { get; set; }
+
+    public DateTimeOffset? AcceptedAt { get; set; }
+
+    public string? ContractDocumentHtml { get; set; }
+
+    public Guid? PackageId { get; set; }
+
+    public AppointmentPackage? Package { get; set; }
+}

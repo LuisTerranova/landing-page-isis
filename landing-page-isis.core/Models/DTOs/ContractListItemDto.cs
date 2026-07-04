@@ -1,0 +1,11 @@
+namespace landing_page_isis.core.Models.DTOs;
+
+public record ContractListItemDto(
+    Guid Id,
+    string FormId,
+    string PatientName,
+    ContractStatus Status,
+    ContractType? Type,
+    decimal? Price,
+    DateTimeOffset CreatedAt
+);

@@ -74,6 +74,16 @@ public static class BuilderExtensions
                         Window = TimeSpan.FromMinutes(1),
                         QueueLimit = 0
                     }));
+
+            options.AddPolicy("contract-policy", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 2,
+                        Window = TimeSpan.FromMinutes(5),
+                        QueueLimit = 0
+                    }));
         });
 
         // Forwarded Headers (needed for HTTPS behind Proxy/Cloudflare)
@@ -121,6 +131,7 @@ public static class BuilderExtensions
         builder.Services.AddScoped<ICoupleHandler, CoupleHandler>();
         builder.Services.AddScoped<ILeadHandler, LeadHandler>();
         builder.Services.AddScoped<IAuthHandler, AuthHandler>();
+        builder.Services.AddScoped<IContractHandler, ContractHandler>();
         builder.Services.AddHostedService<LeadsCleaningService>();
 
         // Email Service Configuration

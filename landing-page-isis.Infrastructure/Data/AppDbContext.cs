@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Appointment> Appointments { get; set; }
     public DbSet<AppointmentRecord> AppointmentRecords { get; set; }
     public DbSet<AppointmentPackage> AppointmentPackages { get; set; }
+    public DbSet<Contract> Contracts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
