@@ -1,3 +1,4 @@
+using landing_page_isis.Components.Dialogs;
 using landing_page_isis.Components.Dialogs.Couple;
 using landing_page_isis.Components.Dialogs.Patient;
 using landing_page_isis.Components.Helpers;
@@ -25,6 +26,9 @@ public partial class PatientsView : ComponentBase
 
     [Inject]
     private ICoupleHandler CoupleHandler { get; set; } = null!;
+
+    [Inject]
+    private IContractHandler ContractHandler { get; set; } = null!;
 
     #endregion
 
@@ -181,6 +185,69 @@ public partial class PatientsView : ComponentBase
             options
         );
         await dialog.Result;
+    }
+
+    private async Task HandleContract(PatientListItemDto dto)
+    {
+        var fullPatient = await PatientHandler.GetPatient(dto.Id);
+        if (fullPatient == null)
+            return;
+
+        var existingContract = await ContractHandler.GetContractByPatientId(dto.Id);
+
+        Contract contractModel;
+        if (existingContract != null)
+        {
+            contractModel = existingContract;
+        }
+        else
+        {
+            contractModel = new Contract
+            {
+                PatientId = dto.Id,
+                PatientName = fullPatient.Name,
+                PatientCpf = fullPatient.Cpf,
+                PatientEmail = fullPatient.Email,
+                PatientPhone = fullPatient.Phone,
+                PatientState = fullPatient.StateOfResidency,
+                PatientBirthDate = fullPatient.BirthDate,
+                TermsAccepted = fullPatient.PolicySigned,
+            };
+
+            var createResult = await ContractHandler.CreateContract(contractModel);
+            if (!createResult.Success)
+            {
+                Snackbar.Add($"Erro ao criar contrato: {createResult.Message}", Severity.Error);
+                return;
+            }
+        }
+
+        var parameters = new DialogParameters<ContractDialog>
+        {
+            { x => x.Model, contractModel }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = false,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<ContractDialog>(
+            "Editar Contrato",
+            parameters,
+            options
+        );
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            Snackbar.Add("Contrato salvo com sucesso.", Severity.Success);
+            await _patientsTable.ReloadAsync();
+        }
     }
 
     #endregion

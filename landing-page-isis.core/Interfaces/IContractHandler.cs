@@ -16,4 +16,12 @@ public interface IContractHandler
     Task<HandlerResult> UpdateContract(Contract contract);
     Task<HandlerResult> AcceptContract(string token);
     Task<HandlerResult> DeleteContract(Guid id);
+    Task<PaginatedResponse<ContractListItemDto>> QueryContracts(
+        string query,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    );
+    Task<HandlerResult> ConvertToPatient(Guid id);
+    Task<Contract?> GetContractByPatientId(Guid patientId);
 }

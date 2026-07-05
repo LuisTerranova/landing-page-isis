@@ -56,24 +56,9 @@
             </MudText>
 
             <MudGrid>
-                <MudItem xs="12" md="4">
+                <MudItem xs="12" md="6">
                     <MudNumericField T="decimal?" Label="Valor por Sessão (R$)" Variant="Variant.Outlined"
                                      @bind-Value="Model.Price" Format="F2" />
-                </MudItem>
-                <MudItem xs="12" md="4">
-                    <MudNumericField T="int?" Label="Sessões por Pacote" Variant="Variant.Outlined"
-                                     @bind-Value="Model.InitialAppointments" />
-                </MudItem>
-                <MudItem xs="12" md="4">
-                    <MudNumericField T="decimal?" Label="Valor do Pacote Mensal (R$)" Variant="Variant.Outlined"
-                                     @bind-Value="Model.PackagePrice" Format="F2" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudSelect T="ContractType?" Label="Tipo de Contrato" Variant="Variant.Outlined"
-                               @bind-Value="Model.Type">
-                        <MudSelectItem T="ContractType?" Value="ContractType.Pacote">Pacote</MudSelectItem>
-                        <MudSelectItem T="ContractType?" Value="ContractType.Avulso">Avulso</MudSelectItem>
-                    </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudSelect T="ContractStatus" Label="Status" Variant="Variant.Outlined"
@@ -84,16 +69,15 @@
                         <MudSelectItem T="ContractStatus" Value="ContractStatus.Cancelado">Cancelado</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="12">
-                    @if (Model.Price.HasValue && Model.PackagePrice.HasValue && Model.InitialAppointments.HasValue && Model.InitialAppointments > 0)
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-2">
-                            Avulso: R$ @Model.Price.Value.ToString("F2") por sessão |
-                            Pacote: @Model.InitialAppointments sessões por R$ @Model.PackagePrice.Value.ToString("F2")
-                            (R$ @((Model.PackagePrice.Value / Model.InitialAppointments.Value).ToString("F2"))/sessão)
-                        </MudText>
-                    }
-                </MudItem>
+                @if (Model.PatientId.HasValue)
+                {
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Info">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                            Vinculado ao paciente <strong>@Model.PatientName</strong>
+                        </MudAlert>
+                    </MudItem>
+                }
             </MudGrid>
         </MudForm>
     </DialogContent>

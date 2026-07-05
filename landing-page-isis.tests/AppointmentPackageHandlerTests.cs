@@ -298,4 +298,33 @@ public class AppointmentPackageHandlerTests
 
         Assert.Empty(result);
     }
+
+    [Fact]
+    public async Task GetPackagesByCoupleId_ShouldReturnPaginatedPackages()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+
+        var coupleId = Guid.NewGuid();
+        for (int i = 0; i < 4; i++)
+        {
+            context.AppointmentPackages.Add(new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = coupleId,
+                TotalAppointments = 10,
+                RemainingAppointments = 10,
+                Price = 800,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-i)
+            });
+        }
+        await context.SaveChangesAsync();
+
+        var result = await handler.GetPackagesByCoupleId(0, 2, coupleId, CancellationToken.None);
+
+        Assert.Equal(4, result.TotalItems);
+        Assert.Equal(2, result.Items.Count());
+        Assert.All(result.Items, pkg => Assert.Equal(coupleId, pkg.CoupleId));
+    }
 }
+

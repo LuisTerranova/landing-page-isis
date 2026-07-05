@@ -43,7 +43,7 @@ public class PatientHandlerTests
             Id = Guid.NewGuid(),
             Name = "Test Patient",
             Phone = "(11) 98765-4321",
-            Cpf = "123.456.789-00",
+            Cpf = "529.982.247-25",
             Email = "test@example.com",
         };
 
@@ -54,7 +54,7 @@ public class PatientHandlerTests
         var dbPatient = await context.Patients.FindAsync(patient.Id);
         Assert.NotNull(dbPatient);
         Assert.Equal("11987654321", dbPatient.Phone);
-        Assert.Equal("12345678900", dbPatient.Cpf);
+        Assert.Equal("52998224725", dbPatient.Cpf);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class PatientHandlerTests
             Id = id,
             Name = "New Name",
             Phone = "(22) 1234-5678",
-            Cpf = "987.654.321-11",
+            Cpf = "529.982.247-25",
             Email = "new@example.com",
         };
 
@@ -147,7 +147,7 @@ public class PatientHandlerTests
         Assert.NotNull(dbPatient);
         Assert.Equal("New Name", dbPatient.Name);
         Assert.Equal("2212345678", dbPatient.Phone);
-        Assert.Equal("98765432111", dbPatient.Cpf);
+        Assert.Equal("52998224725", dbPatient.Cpf);
     }
 
     [Fact]
@@ -207,4 +207,50 @@ public class PatientHandlerTests
         Assert.False(result.Success);
         Assert.Equal("Paciente não encontrado.", result.Message);
     }
+
+    [Fact]
+    public async Task GetPatientEmailMap_ShouldReturnCorrectMap()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new PatientHandler(context);
+
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        var id3 = Guid.NewGuid();
+
+        var p1 = new Patient { Id = id1, Name = "A", Email = "a@test.com", Phone = "11" };
+        var p2 = new Patient { Id = id2, Name = "B", Email = "b@test.com", Phone = "22" };
+        var p3 = new Patient { Id = id3, Name = "C", Email = null, Phone = "33" };
+        context.Patients.AddRange(p1, p2, p3);
+        await context.SaveChangesAsync();
+
+        var ids = new List<Guid> { id1, id2, id3, Guid.NewGuid() };
+        var map = await handler.GetPatientEmailMap(ids, CancellationToken.None);
+
+        Assert.Equal(3, map.Count);
+        Assert.Equal("a@test.com", map[id1]);
+        Assert.Equal("b@test.com", map[id2]);
+        Assert.Null(map[id3]);
+    }
+
+    [Fact]
+    public async Task QueryPatients_ShouldReturnFilteredPatients()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new PatientHandler(context);
+
+        context.Patients.AddRange(
+            new Patient { Id = Guid.NewGuid(), Name = "John Doe", Phone = "11" },
+            new Patient { Id = Guid.NewGuid(), Name = "Jane Doe", Phone = "22" },
+            new Patient { Id = Guid.NewGuid(), Name = "Bob Smith", Phone = "33" }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.QueryPatients("Doe", 0, 10, CancellationToken.None);
+
+        Assert.Equal(2, result.TotalItems);
+        Assert.Contains(result.Items, p => p.Name == "John Doe");
+        Assert.Contains(result.Items, p => p.Name == "Jane Doe");
+    }
 }
+

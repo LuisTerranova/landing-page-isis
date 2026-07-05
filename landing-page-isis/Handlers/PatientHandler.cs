@@ -1,4 +1,5 @@
 using landing_page_isis.core;
+using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
@@ -60,8 +61,8 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (!string.IsNullOrEmpty(patient.Cpf))
         {
             patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
-            if (patient.Cpf.Length != 11)
-                return new HandlerResult(false, "CPF inválido. Deve ter 11 dígitos.");
+            if (!CpfValidator.IsValid(patient.Cpf))
+                return new HandlerResult(false, "CPF inválido.");
         }
 
         context.Patients.Add(patient);
@@ -94,8 +95,8 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (!string.IsNullOrEmpty(patient.Cpf))
         {
             patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
-            if (patient.Cpf.Length != 11)
-                return new HandlerResult(false, "CPF inválido. Deve ter 11 dígitos.");
+            if (!CpfValidator.IsValid(patient.Cpf))
+                return new HandlerResult(false, "CPF inválido.");
         }
 
         context.Entry(existing).CurrentValues.SetValues(patient);

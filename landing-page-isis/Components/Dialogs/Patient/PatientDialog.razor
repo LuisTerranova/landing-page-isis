@@ -1,4 +1,5 @@
 @namespace landing_page_isis.Components.Dialogs.Patient
+@using landing_page_isis.core.Helpers
 @using landing_page_isis.core.Models
 @using PatientModel = landing_page_isis.core.Models.Patient
 
@@ -20,6 +21,7 @@
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF" Required="true"
                                   @bind-Value="Model.Cpf" Variant="Variant.Outlined"
+                                  Validation="@(new Func<string, string?>(v => CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
                                   MaxLength="11" Counter="11"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
@@ -60,6 +62,7 @@
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
+                                  Validation="@(new Func<string, string?>(v => string.IsNullOrEmpty(v) || CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
                                   MaxLength="11" Counter="11"/>
                 </MudItem>
             </MudGrid>

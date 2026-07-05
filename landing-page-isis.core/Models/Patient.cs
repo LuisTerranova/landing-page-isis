@@ -38,4 +38,6 @@ public class Patient
     public string? PayerCpf { get; set; }
 
     public IEnumerable<Appointment>? Appointments { get; set; }
+
+    public Contract? Contract { get; set; }
 }

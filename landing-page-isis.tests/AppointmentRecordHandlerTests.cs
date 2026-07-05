@@ -255,4 +255,29 @@ public class AppointmentRecordHandlerTests
         Assert.Equal(1, result.TotalItems);
         Assert.Equal("Current month", result.Items.First().Note);
     }
+
+    [Fact]
+    public async Task GetAppointmentRecordByAppointmentId_ShouldReturnRecord_WhenExists()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appId = Guid.NewGuid();
+        var recordId = Guid.NewGuid();
+        context.AppointmentRecords.Add(new AppointmentRecord
+        {
+            Id = recordId,
+            AppointmentId = appId,
+            Note = "Sessão tranquila.",
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.GetAppointmentRecordByAppointmentId(appId);
+
+        Assert.NotNull(result);
+        Assert.Equal(recordId, result.Id);
+        Assert.Equal("Sessão tranquila.", result.Note);
+    }
 }
+

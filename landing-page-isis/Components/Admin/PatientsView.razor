@@ -54,6 +54,9 @@
             <MudMenuItem OnClick="@(() => OpenDetails(context))">
                 <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
             </MudMenuItem>
+            <MudMenuItem OnClick="@(() => HandleContract(context))">
+                <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2"/> Contrato
+            </MudMenuItem>
         </CustomActions>
     </GenericTable>
 }

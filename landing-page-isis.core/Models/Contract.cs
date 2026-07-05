@@ -54,4 +54,8 @@ public class Contract
     public Guid? PackageId { get; set; }
 
     public AppointmentPackage? Package { get; set; }
+
+    public Guid? PatientId { get; set; }
+
+    public Patient? Patient { get; set; }
 }

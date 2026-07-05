@@ -1,3 +1,5 @@
+using landing_page_isis.core;
+using landing_page_isis.core;
 using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
@@ -471,4 +473,217 @@ public class AppointmentHandlerTests
         // We are testing that it DOES work for exact match.
         Assert.NotEmpty(resultExact.Items);
     }
+
+    [Fact]
+    public async Task CountPendingRecordsAsync_ShouldReturnCorrectCount()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var pId = Guid.NewGuid();
+        context.Patients.Add(new Patient { Id = pId, Name = "Test Patient" });
+
+        // Add 2 past appointments marked as "Marcada" (Pending record check)
+        context.Appointments.AddRange(
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow.AddHours(-2),
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+                PatientId = pId
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow.AddHours(-1),
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+                PatientId = pId
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow.AddHours(-3),
+                AppointmentStatus = AppointmentStatusEnum.Realizada, // completed, not counted
+                PatientId = pId
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow.AddHours(2), // future, not counted
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+                PatientId = pId
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var count = await handler.CountPendingRecordsAsync();
+
+        Assert.Equal(2, count);
+    }
+
+    [Fact]
+    public async Task GetAppointmentById_ShouldReturnAppointment_WhenExists()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var appId = Guid.NewGuid();
+        var pId = Guid.NewGuid();
+        context.Patients.Add(new Patient { Id = pId, Name = "Test Patient" });
+        context.Appointments.Add(new Appointment
+        {
+            Id = appId,
+            AppointmentDate = DateTime.UtcNow,
+            PatientId = pId
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.GetAppointmentById(appId);
+
+        Assert.NotNull(result);
+        Assert.Equal(appId, result.Id);
+        Assert.NotNull(result.Patient);
+        Assert.Equal("Test Patient", result.Patient.Name);
+    }
+
+    [Fact]
+    public async Task GetAppointmentWithPatient_ShouldReturnAppointmentWithPatient_WhenExists()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var appId = Guid.NewGuid();
+        var pId = Guid.NewGuid();
+        context.Patients.Add(new Patient { Id = pId, Name = "Test Patient" });
+        context.Appointments.Add(new Appointment
+        {
+            Id = appId,
+            AppointmentDate = DateTime.UtcNow,
+            PatientId = pId
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.GetAppointmentWithPatient(appId, pId);
+
+        Assert.NotNull(result);
+        Assert.Equal(appId, result.Id);
+        Assert.NotNull(result.Patient);
+        Assert.Equal("Test Patient", result.Patient.Name);
+    }
+
+    [Fact]
+    public async Task GetAppointmentsByCoupleId_ShouldReturnAppointments_WhenExists()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var coupleId = Guid.NewGuid();
+        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999" };
+        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999" };
+        context.Patients.AddRange(p1, p2);
+
+        var couple = new Couple { Id = coupleId, Name = "Couple", Patient1 = p1, Patient2 = p2 };
+        context.Couples.Add(couple);
+
+        context.Appointments.AddRange(
+            new Appointment { Id = Guid.NewGuid(), AppointmentDate = DateTime.UtcNow.AddDays(-1), CoupleId = coupleId },
+            new Appointment { Id = Guid.NewGuid(), AppointmentDate = DateTime.UtcNow, CoupleId = coupleId },
+            new Appointment { Id = Guid.NewGuid(), AppointmentDate = DateTime.UtcNow, CoupleId = Guid.NewGuid() } // other couple
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.GetAppointmentsByCoupleId(coupleId, CancellationToken.None);
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task RefundPackageCredit_OnCancellation_ShouldIncrementRemainingAppointments()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var patientId = Guid.NewGuid();
+        context.Patients.Add(new Patient { Id = patientId, Name = "Test Patient" });
+
+        var package = new AppointmentPackage
+        {
+            Id = Guid.NewGuid(),
+            PatientId = patientId,
+            TotalAppointments = 10,
+            RemainingAppointments = 5,
+            Status = PackageStatus.Esgotado
+        };
+        context.AppointmentPackages.Add(package);
+
+        var appId = Guid.NewGuid();
+        var app = new Appointment
+        {
+            Id = appId,
+            AppointmentDate = DateTime.UtcNow,
+            PatientId = patientId,
+            PackageId = package.Id,
+            AppointmentStatus = AppointmentStatusEnum.Marcada
+        };
+        context.Appointments.Add(app);
+        await context.SaveChangesAsync();
+
+        // Cancel appointment
+        var updatedApp = new Appointment
+        {
+            Id = appId,
+            AppointmentDate = app.AppointmentDate,
+            PatientId = patientId,
+            PackageId = package.Id,
+            AppointmentStatus = AppointmentStatusEnum.Cancelada
+        };
+
+        var result = await handler.UpdateAppointment(updatedApp, appId);
+
+        Assert.True(result.Success);
+        var dbPackage = await context.AppointmentPackages.FindAsync(package.Id);
+        Assert.NotNull(dbPackage);
+        Assert.Equal(6, dbPackage.RemainingAppointments);
+        Assert.Equal(PackageStatus.Ativo, dbPackage.Status);
+    }
+
+    [Fact]
+    public async Task RefundPackageCredit_OnDeletion_ShouldIncrementRemainingAppointments()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var patientId = Guid.NewGuid();
+        context.Patients.Add(new Patient { Id = patientId, Name = "Test Patient" });
+
+        var package = new AppointmentPackage
+        {
+            Id = Guid.NewGuid(),
+            PatientId = patientId,
+            TotalAppointments = 10,
+            RemainingAppointments = 9,
+            Status = PackageStatus.Ativo
+        };
+        context.AppointmentPackages.Add(package);
+
+        var appId = Guid.NewGuid();
+        var app = new Appointment
+        {
+            Id = appId,
+            AppointmentDate = DateTime.UtcNow,
+            PatientId = patientId,
+            PackageId = package.Id,
+            AppointmentStatus = AppointmentStatusEnum.Marcada
+        };
+        context.Appointments.Add(app);
+        await context.SaveChangesAsync();
+
+        var result = await handler.DeleteAppointment(appId);
+
+        Assert.True(result.Success);
+        var dbPackage = await context.AppointmentPackages.FindAsync(package.Id);
+        Assert.NotNull(dbPackage);
+        Assert.Equal(10, dbPackage.RemainingAppointments);
+    }
 }
+

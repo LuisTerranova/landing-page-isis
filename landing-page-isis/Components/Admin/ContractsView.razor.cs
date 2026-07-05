@@ -27,7 +27,11 @@ public partial class ContractsView : ComponentBase
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
 
+    [Inject]
+    private IPatientHandler PatientHandler { get; set; } = null!;
+
     private GenericTable<ContractListItemDto> _table = null!;
+    private string _searchQuery = string.Empty;
 
     private async Task<TableData<ContractListItemDto>> ServerReload(
         TableState state,
@@ -36,7 +40,21 @@ public partial class ContractsView : ComponentBase
     {
         try
         {
-            var result = await ContractHandler.GetContracts(state.Page, state.PageSize, ct);
+            PaginatedResponse<ContractListItemDto> result;
+
+            if (string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                result = await ContractHandler.GetContracts(state.Page, state.PageSize, ct);
+            }
+            else
+            {
+                result = await ContractHandler.QueryContracts(
+                    _searchQuery,
+                    state.Page,
+                    state.PageSize,
+                    ct
+                );
+            }
 
             return new TableData<ContractListItemDto>
             {
@@ -158,6 +176,39 @@ public partial class ContractsView : ComponentBase
         };
 
         await DialogService.ShowAsync<DocumentViewDialog>("Visualizar Contrato", parameters, options);
+    }
+
+    private async Task ConvertToPatient(ContractListItemDto dto)
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            BackdropClick = false,
+            CloseButton = true,
+        };
+
+        var confirm = await DialogService.ShowMessageBoxAsync(
+            "Confirmar Conversão",
+            $"Transformar {dto.PatientName} em paciente? Os dados do contrato serão usados para criar um novo paciente.",
+            yesText: "Criar Paciente",
+            cancelText: "Cancelar",
+            options: options
+        );
+
+        if (confirm == true)
+        {
+            var result = await ContractHandler.ConvertToPatient(dto.Id);
+
+            if (result.Success)
+            {
+                Snackbar.Add("Paciente criado com sucesso!", Severity.Success);
+                await _table.ReloadAsync();
+            }
+            else
+            {
+                Snackbar.Add(result.Message ?? "Erro ao criar paciente.", Severity.Error);
+            }
+        }
     }
 
     private static Color GetStatusColor(ContractStatus status) => status switch

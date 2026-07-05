@@ -1,4 +1,5 @@
 @page "/formulario"
+@using landing_page_isis.core.Helpers
 @using landing_page_isis.core.Models
 @rendermode InteractiveServer
 @inject IContractHandler ContractHandler
@@ -28,6 +29,7 @@
                     <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
                                   @bind-Value="_contract.PatientCpf" For="@(() => _contract.PatientCpf)"
                                   Mask="@(new PatternMask("000.000.000-00"))"
+                                  Validation="@(new Func<string, string?>(v => CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
                                   FullWidth="true" />
                 </MudItem>
                 <MudItem xs="12" md="6">

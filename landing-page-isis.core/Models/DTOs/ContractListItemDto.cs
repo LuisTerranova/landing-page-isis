@@ -7,5 +7,6 @@ public record ContractListItemDto(
     ContractStatus Status,
     ContractType? Type,
     decimal? Price,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    Guid? PatientId = null
 );

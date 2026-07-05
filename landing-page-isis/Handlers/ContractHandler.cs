@@ -1,4 +1,5 @@
 using landing_page_isis.core;
+using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
@@ -41,7 +42,8 @@ public partial class ContractHandler(
                 c.Status,
                 c.Type,
                 c.Price,
-                c.CreatedAt
+                c.CreatedAt,
+                c.PatientId
             })
             .ToListAsync(ct);
 
@@ -52,7 +54,8 @@ public partial class ContractHandler(
             c.Status,
             c.Type,
             c.Price,
-            c.CreatedAt
+            c.CreatedAt,
+            c.PatientId
         )).ToList();
 
         return new PaginatedResponse<ContractListItemDto>(items, totalItems, page, pageSize);
@@ -101,12 +104,29 @@ public partial class ContractHandler(
         if (!string.IsNullOrEmpty(contract.PatientCpf))
         {
             contract.PatientCpf = OnlyNumbersRegex().Replace(contract.PatientCpf, "");
-            if (contract.PatientCpf.Length != 11)
-                return new HandlerResult(false, "CPF inválido. Deve ter 11 dígitos.");
+            if (!CpfValidator.IsValid(contract.PatientCpf))
+                return new HandlerResult(false, "CPF inválido.");
         }
 
         if (!contract.TermsAccepted)
             return new HandlerResult(false, "É necessário aceitar os termos.");
+
+        if (!string.IsNullOrEmpty(contract.PatientCpf))
+        {
+            var existingInContracts = await context.Contracts
+                .Where(c => c.PatientCpf != null)
+                .ToListAsync();
+
+            if (existingInContracts.Any(c => c.PatientCpf == contract.PatientCpf))
+                return new HandlerResult(false, "Já existe um cadastro com este CPF.");
+
+            var existingInPatients = await context.Patients
+                .Where(p => p.Cpf != null)
+                .ToListAsync();
+
+            if (existingInPatients.Any(p => CpfValidator.Strip(p.Cpf) == contract.PatientCpf))
+                return new HandlerResult(false, "Já existe um cadastro com este CPF.");
+        }
 
         contract.CreatedAt = DateTimeOffset.UtcNow;
         context.Contracts.Add(contract);
@@ -142,9 +162,6 @@ public partial class ContractHandler(
             return new HandlerResult(false, "Contrato não encontrado.");
 
         existing.Price = contract.Price;
-        existing.InitialAppointments = contract.InitialAppointments;
-        existing.Type = contract.Type;
-        existing.PackagePrice = contract.PackagePrice;
         existing.AcceptanceToken = contract.AcceptanceToken;
         existing.ContractDocumentHtml = contract.ContractDocumentHtml;
         existing.Status = contract.Status;
@@ -164,6 +181,98 @@ public partial class ContractHandler(
         context.Contracts.Remove(contract);
         await context.SaveChangesAsync();
         return new HandlerResult(true);
+    }
+
+    public async Task<PaginatedResponse<ContractListItemDto>> QueryContracts(
+        string query,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
+    {
+        var queryable = context.Contracts.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query))
+            queryable = queryable.Where(c => c.PatientName.Contains(query));
+
+        var totalItems = await queryable.CountAsync(ct);
+
+        if (totalItems <= 0)
+            return new PaginatedResponse<ContractListItemDto>([], totalItems, page, pageSize);
+
+        var rawItems = await queryable
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip(page * pageSize)
+            .Take(pageSize)
+            .Select(c => new
+            {
+                c.Id,
+                c.PatientName,
+                c.Status,
+                c.Type,
+                c.Price,
+                c.CreatedAt,
+                c.PatientId
+            })
+            .ToListAsync(ct);
+
+        var items = rawItems.Select(c => new ContractListItemDto(
+            c.Id,
+            c.CreatedAt.ToString("yyMMdd") + "-" + c.Id.ToString().Substring(0, 4).ToUpper(),
+            c.PatientName,
+            c.Status,
+            c.Type,
+            c.Price,
+            c.CreatedAt,
+            c.PatientId
+        )).ToList();
+
+        return new PaginatedResponse<ContractListItemDto>(items, totalItems, page, pageSize);
+    }
+
+    public async Task<HandlerResult> ConvertToPatient(Guid id)
+    {
+        var contract = await context.Contracts.FindAsync(id);
+        if (contract == null)
+            return new HandlerResult(false, "Contrato não encontrado.");
+
+        if (contract.PatientId.HasValue)
+            return new HandlerResult(false, "Este contrato já está vinculado a um paciente.");
+
+        var phone = !string.IsNullOrEmpty(contract.PatientPhone)
+            ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
+            : contract.PatientPhone;
+
+        var cpf = !string.IsNullOrEmpty(contract.PatientCpf)
+            ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
+            : contract.PatientCpf;
+
+        var patient = new Patient
+        {
+            Name = contract.PatientName,
+            Cpf = cpf,
+            Email = contract.PatientEmail,
+            Phone = phone,
+            StateOfResidency = contract.PatientState,
+            BirthDate = contract.PatientBirthDate,
+            PolicySigned = contract.TermsAccepted,
+        };
+
+        context.Patients.Add(patient);
+        await context.SaveChangesAsync();
+
+        contract.PatientId = patient.Id;
+        contract.UpdatedAt = DateTimeOffset.UtcNow;
+        await context.SaveChangesAsync();
+
+        return new HandlerResult(true);
+    }
+
+    public async Task<Contract?> GetContractByPatientId(Guid patientId)
+    {
+        return await context.Contracts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.PatientId == patientId);
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]

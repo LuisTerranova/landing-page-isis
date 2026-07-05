@@ -2,14 +2,6 @@
 @using landing_page_isis.core.Models
 @using landing_page_isis.Extensions
 @model Contract
-@{
-    var typeText = Model.Type switch
-    {
-        ContractType.Pacote => "Pacote Mensal de Sessões",
-        ContractType.Avulso => "Sessão Avulsa",
-        _ => ""
-    };
-}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -194,38 +186,17 @@
             <p><strong>Contato:</strong> (69) 99223-4931</p>
         </div>
 
-        <h2>DETALHES DO CONTRATO</h2>
+        @if (Model.Price.HasValue)
+        {
+            <h2>VALOR DE REFERÊNCIA</h2>
 
-        <table class="details-table">
-            <tr>
-                <td>Modalidade</td>
-                <td>@(typeText ?? "—")</td>
-            </tr>
-            @if (Model.Price.HasValue)
-            {
+            <table class="details-table">
                 <tr>
                     <td>Valor por Sessão</td>
                     <td>R$ @Model.Price.Value.ToString("F2")</td>
                 </tr>
-            }
-            @if (Model.Type == ContractType.Pacote)
-            {
-                @if (Model.InitialAppointments.HasValue)
-                {
-                    <tr>
-                        <td>Sessões por Pacote</td>
-                        <td>@Model.InitialAppointments.Value sessões mensais</td>
-                    </tr>
-                }
-                @if (Model.PackagePrice.HasValue)
-                {
-                    <tr>
-                        <td>Valor do Pacote Mensal</td>
-                        <td>R$ @Model.PackagePrice.Value.ToString("F2")</td>
-                    </tr>
-                }
-            }
-        </table>
+            </table>
+        }
 
         <h2>CLÁUSULAS</h2>
 
@@ -240,31 +211,14 @@
 
         <div class="clause">
             <h3>CLÁUSULA 2ª — DOS HONORÁRIOS</h3>
-            @if (Model.Type == ContractType.Pacote)
-            {
-                <p>
-                    Para maior conforto financeiro, o CONTRATANTE poderá optar pelo pagamento por sessão
-                    avulsa ou por pacote mensal.
-                </p>
-                <p>
-                    O valor de cada sessão avulsa é de <strong>R$ @Model.Price.GetValueOrDefault().ToString("F2")</strong>.
-                </p>
-                <p>
-                    No modelo de pacote mensal, o presente contrato contempla
-                    <strong>@Model.InitialAppointments.GetValueOrDefault() sessões mensais</strong> ao valor de
-                    <strong>R$ @Model.PackagePrice.GetValueOrDefault().ToString("F2")</strong>, a ser quitado antes
-                    do início da primeira sessão de cada mês, na primeira semana do mês de referência.
-                </p>
-            }
-            else
-            {
-                <p>
-                    O valor de cada sessão é de <strong>R$ @Model.Price.GetValueOrDefault().ToString("F2")</strong>.
-                    O pagamento deverá ser efetuado antes do início de cada sessão.
-                </p>
-            }
             <p>
-                O pagamento poderá ser realizado através de:
+                O valor de cada sessão avulsa é de <strong>R$ @Model.Price.GetValueOrDefault().ToString("F2")</strong>.
+                O CONTRATANTE poderá optar, mês a mês, entre o pagamento por sessão avulsa ou pela adesão
+                ao pacote mensal de sessões, conforme valores vigentes no momento de cada adesão.
+            </p>
+            <p>
+                O pagamento deverá ser efetuado antes do início de cada sessão, podendo ser realizado
+                através de:
             </p>
             <p>
                 Pix: (69) 99223-4931<br>
@@ -361,18 +315,18 @@
         <div class="signature-section">
             <p>Porto Velho/RO, @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-4)).ToString("dd 'de' MMMM 'de' yyyy")</p>
 
-            <div class="signature-line"></div>
-            <p><strong>@Model.PatientName</strong></p>
-            <p>CONTRATANTE</p>
-
             @if (Model.AcceptedAt.HasValue)
             {
-                <p style="margin-top: 16px;">
+                <p>
                     Contrato aceito eletronicamente em
                     @Model.AcceptedAt.Value.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm")
                     (Horário de Brasília)
                 </p>
             }
+
+            <div class="signature-line"></div>
+            <p><strong>@Model.PatientName</strong></p>
+            <p>CONTRATANTE</p>
 
             <div class="signature-line" style="margin-top: 50px;"></div>
             <p><strong>Isis Vitória Alves da Silva Barbosa</strong></p>
