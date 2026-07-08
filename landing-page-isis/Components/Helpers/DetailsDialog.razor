@@ -906,8 +906,23 @@
         _isLoadingContract = true;
         StateHasChanged();
 
-        var ownerId = IsCouple ? Couple!.Id : Patient!.Id;
-        var contract = await ContractHandler.GetContractByPatientId(ownerId);
+        Contract? contract;
+        if (IsCouple)
+        {
+            contract = await ContractHandler.GetContractByCoupleId(Couple!.Id);
+        }
+        else
+        {
+            var couple = await CoupleHandler.GetCoupleByPatientId(Patient!.Id);
+            if (couple != null)
+            {
+                contract = await ContractHandler.GetContractByCoupleId(couple.Id);
+            }
+            else
+            {
+                contract = await ContractHandler.GetContractByPatientId(Patient!.Id);
+            }
+        }
 
         if (contract != null)
         {
@@ -920,7 +935,9 @@
                 contract.Type,
                 contract.Price,
                 contract.CreatedAt,
-                contract.PatientId
+                contract.PatientId,
+                contract.CoupleId,
+                contract.Couple?.Name
             );
         }
 
@@ -959,20 +976,54 @@
 
     private async Task CreateNewContract()
     {
-        if (IsCouple || Patient == null)
-            return;
+        Contract contract;
 
-        var contract = new Contract
+        if (IsCouple)
         {
-            PatientId = Patient.Id,
-            PatientName = Patient.Name,
-            PatientCpf = Patient.Cpf,
-            PatientEmail = Patient.Email,
-            PatientPhone = Patient.Phone,
-            PatientState = Patient.StateOfResidency,
-            PatientBirthDate = Patient.BirthDate,
-            TermsAccepted = Patient.PolicySigned,
-        };
+            contract = new Contract
+            {
+                CoupleId = Couple!.Id,
+                PatientName = Couple.Name,
+                PatientCpf = Couple.PayerCpf,
+                PatientPhone = Couple.Patient1.Phone,
+                PatientState = Couple.Patient1.StateOfResidency,
+                TermsAccepted = Couple.PolicySigned,
+            };
+        }
+        else if (Patient != null)
+        {
+            var couple = await CoupleHandler.GetCoupleByPatientId(Patient.Id);
+            if (couple != null)
+            {
+                contract = new Contract
+                {
+                    CoupleId = couple.Id,
+                    PatientName = couple.Name,
+                    PatientCpf = couple.PayerCpf,
+                    PatientPhone = couple.Patient1.Phone,
+                    PatientState = couple.Patient1.StateOfResidency,
+                    TermsAccepted = couple.PolicySigned,
+                };
+            }
+            else
+            {
+                contract = new Contract
+                {
+                    PatientId = Patient.Id,
+                    PatientName = Patient.Name,
+                    PatientCpf = Patient.Cpf,
+                    PatientEmail = Patient.Email,
+                    PatientPhone = Patient.Phone,
+                    PatientState = Patient.StateOfResidency,
+                    PatientBirthDate = Patient.BirthDate,
+                    TermsAccepted = Patient.PolicySigned,
+                };
+            }
+        }
+        else
+        {
+            return;
+        }
 
         var parameters = new DialogParameters<ContractDialog>
         {

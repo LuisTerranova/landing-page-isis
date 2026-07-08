@@ -23,6 +23,8 @@ public class Couple
 
     public Patient Patient1 { get; set; } = null!;
     public Patient Patient2 { get; set; } = null!;
+
+    public Contract? Contract { get; set; }
     public ICollection<Appointment>? Appointments { get; set; }
     public ICollection<AppointmentPackage>? Packages { get; set; }
 }

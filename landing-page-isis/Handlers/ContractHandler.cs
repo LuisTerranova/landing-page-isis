@@ -27,7 +27,10 @@ public partial class ContractHandler(
         CancellationToken ct
     )
     {
-        var query = context.Contracts.AsNoTracking();
+        var query = context.Contracts
+            .Include(c => c.Couple)
+            .AsNoTracking();
+
         var totalItems = await query.CountAsync(ct);
 
         if (totalItems <= 0)
@@ -45,7 +48,9 @@ public partial class ContractHandler(
                 c.Type,
                 c.Price,
                 c.CreatedAt,
-                c.PatientId
+                c.PatientId,
+                c.CoupleId,
+                CoupleName = c.Couple != null ? c.Couple.Name : null
             })
             .ToListAsync(ct);
 
@@ -57,7 +62,9 @@ public partial class ContractHandler(
             c.Type,
             c.Price,
             c.CreatedAt,
-            c.PatientId
+            c.PatientId,
+            c.CoupleId,
+            c.CoupleName
         )).ToList();
 
         return new PaginatedResponse<ContractListItemDto>(items, totalItems, page, pageSize);
@@ -203,7 +210,9 @@ public partial class ContractHandler(
         CancellationToken ct
     )
     {
-        var queryable = context.Contracts.AsNoTracking();
+        var queryable = context.Contracts
+            .Include(c => c.Couple)
+            .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query))
             queryable = queryable.Where(c => c.PatientName.Contains(query));
@@ -225,7 +234,9 @@ public partial class ContractHandler(
                 c.Type,
                 c.Price,
                 c.CreatedAt,
-                c.PatientId
+                c.PatientId,
+                c.CoupleId,
+                CoupleName = c.Couple != null ? c.Couple.Name : null
             })
             .ToListAsync(ct);
 
@@ -237,7 +248,9 @@ public partial class ContractHandler(
             c.Type,
             c.Price,
             c.CreatedAt,
-            c.PatientId
+            c.PatientId,
+            c.CoupleId,
+            c.CoupleName
         )).ToList();
 
         return new PaginatedResponse<ContractListItemDto>(items, totalItems, page, pageSize);
@@ -251,6 +264,9 @@ public partial class ContractHandler(
 
         if (contract.PatientId.HasValue)
             return new HandlerResult(false, "Este contrato já está vinculado a um paciente.");
+
+        if (contract.CoupleId.HasValue)
+            return new HandlerResult(false, "Contrato de casal não pode ser convertido em paciente individual.");
 
         var phone = !string.IsNullOrEmpty(contract.PatientPhone)
             ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
@@ -302,6 +318,17 @@ public partial class ContractHandler(
         return await context.Contracts
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.PatientId == patientId);
+    }
+
+    public async Task<Contract?> GetContractByCoupleId(Guid coupleId)
+    {
+        return await context.Contracts
+            .Include(c => c.Couple!)
+            .ThenInclude(c => c.Patient1)
+            .Include(c => c.Couple!)
+            .ThenInclude(c => c.Patient2)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.CoupleId == coupleId);
     }
 
     private static string ComputeCpfHash(string strippedCpf)

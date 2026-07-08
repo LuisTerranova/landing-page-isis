@@ -223,7 +223,13 @@
                     _contract.Status = ContractStatus.Ativo;
                     _contract.AcceptedAt = DateTimeOffset.UtcNow;
 
-                    var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", _contract);
+                    var renderContract = _contract;
+                    if (_contract.CoupleId.HasValue)
+                    {
+                        renderContract = await ContractHandler.GetContractByCoupleId(_contract.CoupleId.Value);
+                    }
+
+                    var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", renderContract ?? _contract);
                     _contract.ContractDocumentHtml = html;
                     await ContractHandler.UpdateContract(_contract);
                 }

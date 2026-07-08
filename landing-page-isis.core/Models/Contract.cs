@@ -62,4 +62,8 @@ public class Contract
     public string? PatientCpfHash { get; set; }
 
     public Patient? Patient { get; set; }
+
+    public Guid? CoupleId { get; set; }
+
+    public Couple? Couple { get; set; }
 }

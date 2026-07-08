@@ -139,5 +139,18 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
         builder.HasIndex(c => c.PatientId)
             .IsUnique()
             .HasFilter("\"patient_id\" IS NOT NULL");
+
+        builder.Property(c => c.CoupleId)
+            .IsRequired(false)
+            .HasColumnName("couple_id");
+
+        builder.HasOne(c => c.Couple)
+            .WithOne(c => c.Contract)
+            .HasForeignKey<Contract>(c => c.CoupleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(c => c.CoupleId)
+            .IsUnique()
+            .HasFilter("\"couple_id\" IS NOT NULL");
     }
 }

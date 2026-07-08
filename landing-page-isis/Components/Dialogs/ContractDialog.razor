@@ -16,37 +16,77 @@
     </TitleContent>
     <DialogContent>
         <MudForm @bind-IsValid="@_formValido">
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
-                Dados do Paciente (somente leitura)
-            </MudText>
+            @if (Model.CoupleId.HasValue && Model.Couple != null)
+            {
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2 mb-n1" />
+                    Dados do Casal (somente leitura)
+                </MudText>
 
-            <MudGrid>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="Nome" Variant="Variant.Outlined"
-                                  Value="Model.PatientName" ReadOnly="true" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
-                                  Value="Model.PatientCpf.FormatCpf()" ReadOnly="true" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                  Value="Model.PatientEmail" ReadOnly="true" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="Telefone" Variant="Variant.Outlined"
-                                  Value="Model.PatientPhone.FormatPhone()" ReadOnly="true" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="Estado" Variant="Variant.Outlined"
-                                  Value="Model.PatientState" ReadOnly="true" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="Nascimento" Variant="Variant.Outlined"
-                                  Value="@(Model.PatientBirthDate?.ToString("dd/MM/yyyy") ?? "—")" ReadOnly="true" />
-                </MudItem>
-            </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField T="string" Label="Nome do Casal" Variant="Variant.Outlined"
+                                      Value="@Model.Couple.Name" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Parceiro 1" Variant="Variant.Outlined"
+                                      Value="@Model.Couple.Patient1.Name" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="CPF Parceiro 1" Variant="Variant.Outlined"
+                                      Value="@Model.Couple.Patient1.Cpf.FormatCpf()" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Parceiro 2" Variant="Variant.Outlined"
+                                      Value="@Model.Couple.Patient2.Name" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="CPF Parceiro 2" Variant="Variant.Outlined"
+                                      Value="@Model.Couple.Patient2.Cpf.FormatCpf()" ReadOnly="true" />
+                    </MudItem>
+                    @if (!string.IsNullOrEmpty(Model.Couple.PayerName))
+                    {
+                        <MudItem xs="12">
+                        <MudTextField T="string" Label="Pagador" Variant="Variant.Outlined"
+                                      Value="@($"{Model.Couple.PayerName} — CPF: {Model.Couple.PayerCpf?.FormatCpf()}")" ReadOnly="true" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
+                    Dados do Paciente (somente leitura)
+                </MudText>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Nome" Variant="Variant.Outlined"
+                                      Value="Model.PatientName" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
+                                      Value="Model.PatientCpf.FormatCpf()" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
+                                      Value="Model.PatientEmail" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Telefone" Variant="Variant.Outlined"
+                                      Value="Model.PatientPhone.FormatPhone()" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Estado" Variant="Variant.Outlined"
+                                      Value="Model.PatientState" ReadOnly="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Nascimento" Variant="Variant.Outlined"
+                                      Value="@(Model.PatientBirthDate?.ToString("dd/MM/yyyy") ?? "—")" ReadOnly="true" />
+                    </MudItem>
+                </MudGrid>
+            }
 
             <MudDivider DividerType="DividerType.Middle" Class="my-6" />
 
@@ -69,7 +109,16 @@
                         <MudSelectItem T="ContractStatus" Value="ContractStatus.Cancelado">Cancelado</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                @if (Model.PatientId.HasValue)
+                @if (Model.CoupleId.HasValue)
+                {
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Normal">
+                            <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2" />
+                            Contrato do casal <strong>@Model.PatientName</strong>
+                        </MudAlert>
+                    </MudItem>
+                }
+                else if (Model.PatientId.HasValue)
                 {
                     <MudItem xs="12">
                         <MudAlert Severity="Severity.Info">

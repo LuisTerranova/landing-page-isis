@@ -160,24 +160,67 @@
     <div class="content">
         <h2>PARTES</h2>
 
-        <div class="party-box">
-            <h3>CONTRATANTE</h3>
-            <p><strong>Nome:</strong> @Model.PatientName</p>
-            <p><strong>CPF:</strong> @Model.PatientCpf.FormatCpf()</p>
-            @if (!string.IsNullOrEmpty(Model.PatientEmail))
-            {
-                <p><strong>E-mail:</strong> @Model.PatientEmail</p>
-            }
-            <p><strong>Telefone:</strong> @Model.PatientPhone.FormatPhone()</p>
-            @if (!string.IsNullOrEmpty(Model.PatientState))
-            {
-                <p><strong>Estado:</strong> @Model.PatientState</p>
-            }
-            @if (Model.PatientBirthDate.HasValue)
-            {
-                <p><strong>Data de Nascimento:</strong> @Model.PatientBirthDate.Value.ToString("dd/MM/yyyy")</p>
-            }
-        </div>
+        @if (Model.Couple != null)
+        {
+            <div class="party-box">
+                <h3>CONTRATANTE — @Model.Couple.Name</h3>
+                <p><strong>Parceiro 1:</strong> @Model.Couple.Patient1.Name — CPF: @Model.Couple.Patient1.Cpf.FormatCpf()</p>
+                @if (!string.IsNullOrEmpty(Model.Couple.Patient1.Email))
+                {
+                    <p><strong>E-mail:</strong> @Model.Couple.Patient1.Email</p>
+                }
+                <p><strong>Telefone:</strong> @Model.Couple.Patient1.Phone.FormatPhone()</p>
+                @if (!string.IsNullOrEmpty(Model.Couple.Patient1.StateOfResidency))
+                {
+                    <p><strong>Estado:</strong> @Model.Couple.Patient1.StateOfResidency</p>
+                }
+                @if (Model.Couple.Patient1.BirthDate.HasValue)
+                {
+                    <p><strong>Data de Nascimento:</strong> @Model.Couple.Patient1.BirthDate.Value.ToString("dd/MM/yyyy")</p>
+                }
+                <div style="margin-top: 12px; border-top: 1px dashed #284B32; padding-top: 12px;">
+                    <p><strong>Parceiro 2:</strong> @Model.Couple.Patient2.Name — CPF: @Model.Couple.Patient2.Cpf.FormatCpf()</p>
+                    @if (!string.IsNullOrEmpty(Model.Couple.Patient2.Email))
+                    {
+                        <p><strong>E-mail:</strong> @Model.Couple.Patient2.Email</p>
+                    }
+                    <p><strong>Telefone:</strong> @Model.Couple.Patient2.Phone.FormatPhone()</p>
+                    @if (!string.IsNullOrEmpty(Model.Couple.Patient2.StateOfResidency))
+                    {
+                        <p><strong>Estado:</strong> @Model.Couple.Patient2.StateOfResidency</p>
+                    }
+                    @if (Model.Couple.Patient2.BirthDate.HasValue)
+                    {
+                        <p><strong>Data de Nascimento:</strong> @Model.Couple.Patient2.BirthDate.Value.ToString("dd/MM/yyyy")</p>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Couple.PayerName))
+                {
+                    <p style="margin-top: 12px;"><strong>Pagador:</strong> @Model.Couple.PayerName — CPF: @Model.Couple.PayerCpf.FormatCpf()</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="party-box">
+                <h3>CONTRATANTE</h3>
+                <p><strong>Nome:</strong> @Model.PatientName</p>
+                <p><strong>CPF:</strong> @Model.PatientCpf.FormatCpf()</p>
+                @if (!string.IsNullOrEmpty(Model.PatientEmail))
+                {
+                    <p><strong>E-mail:</strong> @Model.PatientEmail</p>
+                }
+                <p><strong>Telefone:</strong> @Model.PatientPhone.FormatPhone()</p>
+                @if (!string.IsNullOrEmpty(Model.PatientState))
+                {
+                    <p><strong>Estado:</strong> @Model.PatientState</p>
+                }
+                @if (Model.PatientBirthDate.HasValue)
+                {
+                    <p><strong>Data de Nascimento:</strong> @Model.PatientBirthDate.Value.ToString("dd/MM/yyyy")</p>
+                }
+            </div>
+        }
 
         <div class="party-box">
             <h3>CONTRATADA</h3>
@@ -325,8 +368,16 @@
             }
 
             <div class="signature-line"></div>
-            <p><strong>@Model.PatientName</strong></p>
-            <p>CONTRATANTE</p>
+            @if (Model.Couple != null)
+            {
+                <p><strong>@Model.Couple.Name</strong></p>
+                <p>CONTRATANTE (representado por @Model.Couple.PayerName)</p>
+            }
+            else
+            {
+                <p><strong>@Model.PatientName</strong></p>
+                <p>CONTRATANTE</p>
+            }
 
             <div class="signature-line" style="margin-top: 50px;"></div>
             <p><strong>Isis Vitória Alves da Silva Barbosa</strong></p>

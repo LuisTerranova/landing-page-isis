@@ -35,7 +35,15 @@
         </MudTd>
         <MudTd DataLabel="Nome">
             <div class="d-flex align-center gap-2">
-                <span>@context.PatientName</span>
+                @if (context.CoupleId.HasValue)
+                {
+                    <span>Casal: @context.CoupleName</span>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">Casal</MudChip>
+                }
+                else
+                {
+                    <span>@context.PatientName</span>
+                }
                 @if (context.PatientId.HasValue)
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Vinculado</MudChip>

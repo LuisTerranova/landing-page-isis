@@ -8,5 +8,7 @@ public record ContractListItemDto(
     ContractType? Type,
     decimal? Price,
     DateTimeOffset CreatedAt,
-    Guid? PatientId = null
+    Guid? PatientId = null,
+    Guid? CoupleId = null,
+    string? CoupleName = null
 );
