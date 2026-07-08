@@ -40,6 +40,11 @@
             <EditForm Model="@_contract" OnValidSubmit="HandleSubmitIndividual">
                 <DataAnnotationsValidator />
 
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
+                    Dados do Paciente
+                </MudText>
+
                 <MudGrid>
                     <MudItem xs="12">
                         <MudTextField T="string" Label="Nome Completo" Variant="Variant.Outlined"
@@ -67,10 +72,14 @@
                                       FullWidth="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Estado (UF)" Variant="Variant.Outlined"
-                                      @bind-Value="_contract.PatientState" For="@(() => _contract.PatientState)"
-                                      MaxLength="2"
-                                      FullWidth="true" />
+                        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
+                                   @bind-Value="_contract.PatientState"
+                                   FullWidth="true">
+                            @foreach (var uf in Ufs)
+                            {
+                                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
+                            }
+                        </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudDatePicker Label="Data de Nascimento"
@@ -116,20 +125,12 @@
         else
         {
             <MudForm @ref="_coupleForm" @bind-IsValid="_coupleFormValid">
-                <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2 mb-n1" />
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Primary" Class="mr-2 mb-n1" />
                     Dados do Casal
                 </MudText>
 
-                <MudGrid>
-                    <MudItem xs="12">
-                        <MudTextField T="string" Label="Nome do Casal" Variant="Variant.Outlined"
-                                      @bind-Value="_coupleName" Required="true"
-                                      MaxLength="150" Counter="150" Immediate="true" FullWidth="true" />
-                    </MudItem>
-                </MudGrid>
-
-                <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                <MudDivider DividerType="DividerType.Middle" Class="my-4" />
                 <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
                     <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
                     Parceiro 1
@@ -158,8 +159,13 @@
                                       MaxLength="11" Counter="11" FullWidth="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Estado (UF)" Variant="Variant.Outlined"
-                                      @bind-Value="_p1State" MaxLength="2" FullWidth="true" />
+                        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
+                                   @bind-Value="_p1State" FullWidth="true">
+                            @foreach (var uf in Ufs)
+                            {
+                                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
+                            }
+                        </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudDatePicker Label="Data de Nascimento"
@@ -199,8 +205,13 @@
                                       MaxLength="11" Counter="11" FullWidth="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Estado (UF)" Variant="Variant.Outlined"
-                                      @bind-Value="_p2State" MaxLength="2" FullWidth="true" />
+                        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
+                                   @bind-Value="_p2State" FullWidth="true">
+                            @foreach (var uf in Ufs)
+                            {
+                                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
+                            }
+                        </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudDatePicker Label="Data de Nascimento"
@@ -260,6 +271,13 @@
 </MudContainer>
 
 @code {
+    private static readonly string[] Ufs =
+    [
+        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+        "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+        "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+    ];
+
     private enum Mode { Individual, Casal }
     private Mode _mode;
 
@@ -407,7 +425,7 @@
             var contract = new Contract
             {
                 CoupleId = couple.Id,
-                PatientName = _coupleName,
+                PatientName = payerName,
                 PatientCpf = payerCpf,
                 PatientPhone = payerCpf == p1.Cpf ? p1.Phone : p2.Phone,
                 PatientEmail = payerCpf == p1.Cpf ? p1.Email : p2.Email,
@@ -419,7 +437,6 @@
             if (result.Success)
             {
                 Snackbar.Add("Seus dados foram enviados com sucesso! Em breve entraremos em contato.", Severity.Success);
-                _coupleName = string.Empty;
                 _p1Name = _p1Cpf = _p1Email = _p1Phone = _p1State = string.Empty;
                 _p2Name = _p2Cpf = _p2Email = _p2Phone = _p2State = string.Empty;
                 _p1BirthDate = _p2BirthDate = null;
