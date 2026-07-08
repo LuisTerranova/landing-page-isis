@@ -47,6 +47,8 @@ public class Contract
 
     public string? AcceptanceToken { get; set; }
 
+    public DateTimeOffset? TokenGeneratedAt { get; set; }
+
     public DateTimeOffset? AcceptedAt { get; set; }
 
     public string? ContractDocumentHtml { get; set; }
@@ -56,6 +58,8 @@ public class Contract
     public AppointmentPackage? Package { get; set; }
 
     public Guid? PatientId { get; set; }
+
+    public string? PatientCpfHash { get; set; }
 
     public Patient? Patient { get; set; }
 }

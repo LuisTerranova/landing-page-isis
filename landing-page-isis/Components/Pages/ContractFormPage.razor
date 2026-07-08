@@ -1,7 +1,9 @@
 @page "/formulario"
+@using System.Threading.RateLimiting
 @using landing_page_isis.core.Helpers
 @using landing_page_isis.core.Models
 @rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
 @inject IContractHandler ContractHandler
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService

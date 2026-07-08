@@ -74,5 +74,14 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
             );
 
         builder.HasMany(p => p.Appointments).WithOne(p => p.Patient);
+
+        builder.Property(p => p.CpfHash)
+            .IsRequired(false)
+            .HasMaxLength(64)
+            .HasColumnName("cpf_hash");
+
+        builder.HasIndex(p => p.CpfHash)
+            .IsUnique()
+            .HasFilter("\"cpf_hash\" IS NOT NULL");
     }
 }

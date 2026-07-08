@@ -40,4 +40,6 @@ public class Patient
     public IEnumerable<Appointment>? Appointments { get; set; }
 
     public Contract? Contract { get; set; }
+
+    public string? CpfHash { get; set; }
 }

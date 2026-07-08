@@ -155,7 +155,7 @@
 <div class="container">
     <div class="header">
         <h1>Contrato de Prestação de Serviços Psicológicos</h1>
-        <div class="subtitle">Documento gerado em @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-4)).ToString("dd/MM/yyyy 'às' HH:mm") (Horário de Porto Velho)</div>
+        <div class="subtitle">Documento gerado em @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm") (Horário de Brasília)</div>
     </div>
     <div class="content">
         <h2>PARTES</h2>
@@ -313,7 +313,7 @@
         </div>
 
         <div class="signature-section">
-            <p>Porto Velho/RO, @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-4)).ToString("dd 'de' MMMM 'de' yyyy")</p>
+            <p>Porto Velho/RO, @DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(-3)).ToString("dd 'de' MMMM 'de' yyyy")</p>
 
             @if (Model.AcceptedAt.HasValue)
             {

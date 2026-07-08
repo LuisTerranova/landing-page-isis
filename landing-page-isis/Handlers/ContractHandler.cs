@@ -1,23 +1,25 @@
+using System.Security.Cryptography;
+using System.Text;
 using landing_page_isis.core;
 using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Infrastructure.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace landing_page_isis.Handlers;
 
 public partial class ContractHandler(
-    AppDbContext context,
-    IHttpContextAccessor httpContextAccessor,
-    IMemoryCache cache
+    AppDbContext context
 ) : IContractHandler
 {
-    private const int ContractRateLimit = 2;
-    private static readonly TimeSpan ContractRateWindow = TimeSpan.FromMinutes(5);
+    private static readonly string[] ValidUfs =
+    [
+        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+        "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+        "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+    ];
 
     public async Task<PaginatedResponse<ContractListItemDto>> GetContracts(
         int page,
@@ -77,14 +79,6 @@ public partial class ContractHandler(
         if (contract == null)
             return new HandlerResult(false, "Dados inválidos.");
 
-        var clientIp = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var cacheKey = $"contract-rate:{clientIp}";
-
-        if (cache.TryGetValue(cacheKey, out int count) && count >= ContractRateLimit)
-            return new HandlerResult(false, "Muitas solicitações. Tente novamente em alguns minutos.");
-
-        cache.Set(cacheKey, count + 1, ContractRateWindow);
-
         if (string.IsNullOrWhiteSpace(contract.PatientName))
             return new HandlerResult(false, "Nome é obrigatório.");
 
@@ -108,24 +102,38 @@ public partial class ContractHandler(
                 return new HandlerResult(false, "CPF inválido.");
         }
 
+        if (!string.IsNullOrEmpty(contract.PatientState)
+            && !ValidUfs.Contains(contract.PatientState.ToUpperInvariant()))
+        {
+            return new HandlerResult(false, "Estado (UF) inválido.");
+        }
+
+        if (contract.PatientBirthDate.HasValue
+            && contract.PatientBirthDate.Value > DateOnly.FromDateTime(DateTime.Today))
+        {
+            return new HandlerResult(false, "Data de nascimento inválida.");
+        }
+
         if (!contract.TermsAccepted)
             return new HandlerResult(false, "É necessário aceitar os termos.");
 
         if (!string.IsNullOrEmpty(contract.PatientCpf))
         {
-            var existingInContracts = await context.Contracts
-                .Where(c => c.PatientCpf != null)
-                .ToListAsync();
+            var cpfHash = ComputeCpfHash(contract.PatientCpf);
 
-            if (existingInContracts.Any(c => c.PatientCpf == contract.PatientCpf))
+            var existingInContracts = await context.Contracts
+                .AnyAsync(c => c.PatientCpfHash == cpfHash);
+
+            if (existingInContracts)
                 return new HandlerResult(false, "Já existe um cadastro com este CPF.");
 
             var existingInPatients = await context.Patients
-                .Where(p => p.Cpf != null)
-                .ToListAsync();
+                .AnyAsync(p => p.CpfHash == cpfHash);
 
-            if (existingInPatients.Any(p => CpfValidator.Strip(p.Cpf) == contract.PatientCpf))
+            if (existingInPatients)
                 return new HandlerResult(false, "Já existe um cadastro com este CPF.");
+
+            contract.PatientCpfHash = cpfHash;
         }
 
         contract.CreatedAt = DateTimeOffset.UtcNow;
@@ -145,7 +153,8 @@ public partial class ContractHandler(
         if (contract.Status != ContractStatus.AguardandoAceitacao)
             return new HandlerResult(false, "Contrato não está aguardando aceitação.");
 
-        if (contract.CreatedAt.AddDays(2) < DateTimeOffset.UtcNow)
+        var expirationDate = (contract.TokenGeneratedAt ?? contract.CreatedAt).AddDays(2);
+        if (expirationDate < DateTimeOffset.UtcNow)
             return new HandlerResult(false, "Link expirado. Entre em contato pelo WhatsApp (69) 99223-4931.");
 
         contract.Status = ContractStatus.Ativo;
@@ -161,11 +170,15 @@ public partial class ContractHandler(
         if (existing == null)
             return new HandlerResult(false, "Contrato não encontrado.");
 
+        if (existing.Status is ContractStatus.Ativo or ContractStatus.Cancelado)
+            return new HandlerResult(false, "Não é possível alterar um contrato já finalizado.");
+
         existing.Price = contract.Price;
         existing.AcceptanceToken = contract.AcceptanceToken;
         existing.ContractDocumentHtml = contract.ContractDocumentHtml;
         existing.Status = contract.Status;
         existing.PackageId = contract.PackageId;
+        existing.TokenGeneratedAt = contract.TokenGeneratedAt;
         existing.UpdatedAt = DateTimeOffset.UtcNow;
 
         await context.SaveChangesAsync();
@@ -247,6 +260,21 @@ public partial class ContractHandler(
             ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
             : contract.PatientCpf;
 
+        if (!string.IsNullOrEmpty(cpf))
+        {
+            var cpfHash = ComputeCpfHash(cpf);
+
+            var existingContract = await context.Contracts
+                .AnyAsync(c => c.PatientCpfHash == cpfHash && c.Id != contract.Id);
+            if (existingContract)
+                return new HandlerResult(false, "Já existe um contrato com este CPF.");
+
+            var existingPatient = await context.Patients
+                .AnyAsync(p => p.CpfHash == cpfHash);
+            if (existingPatient)
+                return new HandlerResult(false, "Já existe um paciente com este CPF.");
+        }
+
         var patient = new Patient
         {
             Name = contract.PatientName,
@@ -256,6 +284,7 @@ public partial class ContractHandler(
             StateOfResidency = contract.PatientState,
             BirthDate = contract.PatientBirthDate,
             PolicySigned = contract.TermsAccepted,
+            CpfHash = !string.IsNullOrEmpty(cpf) ? ComputeCpfHash(cpf) : null,
         };
 
         context.Patients.Add(patient);
@@ -273,6 +302,15 @@ public partial class ContractHandler(
         return await context.Contracts
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.PatientId == patientId);
+    }
+
+    private static string ComputeCpfHash(string strippedCpf)
+    {
+        var pepper = Environment.GetEnvironmentVariable("CPF_HASH_PEPPER")
+            ?? throw new InvalidOperationException("CPF_HASH_PEPPER environment variable is not set");
+        var data = Encoding.UTF8.GetBytes(strippedCpf + ":" + pepper);
+        var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(pepper), data);
+        return Convert.ToHexStringLower(hash);
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]

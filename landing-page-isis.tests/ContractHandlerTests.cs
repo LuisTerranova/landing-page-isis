@@ -2,10 +2,7 @@ using landing_page_isis.core;
 using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Moq;
 
 namespace landing_page_isis.tests;
 
@@ -20,18 +17,14 @@ public class ContractHandlerTests
         context.Database.EnsureCreated();
 
         Environment.SetEnvironmentVariable("ENCRYPTION_KEY", "test-encryption-key-32-bytes----");
+        Environment.SetEnvironmentVariable("CPF_HASH_PEPPER", "test-pepper-secret");
 
         return context;
     }
 
-    private ContractHandler CreateHandler(AppDbContext context)
+    private static ContractHandler CreateHandler(AppDbContext context)
     {
-        var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-        httpContextAccessorMock.Setup(x => x.HttpContext).Returns(default(HttpContext));
-
-        var cache = new MemoryCache(new MemoryCacheOptions());
-
-        return new ContractHandler(context, httpContextAccessorMock.Object, cache);
+        return new ContractHandler(context);
     }
 
     private static Contract CreateValidContract(string? cpf = null)
@@ -162,24 +155,47 @@ public class ContractHandlerTests
     }
 
     [Fact]
-    public async Task CreateContract_ShouldRespectRateLimit()
+    public async Task CreateContract_ShouldReturnFalse_WhenStateIsInvalid()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+        var contract = CreateValidContract();
+        contract.PatientState = "XX";
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Estado (UF) inválido.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldReturnFalse_WhenBirthDateIsFuture()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+        var contract = CreateValidContract();
+        contract.PatientBirthDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Data de nascimento inválida.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldReturnFalse_WhenCpfAlreadyExists()
     {
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
 
-        for (int i = 0; i < 2; i++)
-        {
-            var c = CreateValidContract(cpf: null);
-            c.PatientCpf = null;
-            Assert.True((await handler.CreateContract(c)).Success);
-        }
+        var first = CreateValidContract("529.982.247-25");
+        await handler.CreateContract(first);
 
-        var blocked = CreateValidContract(cpf: null);
-        blocked.PatientCpf = null;
-        var result = await handler.CreateContract(blocked);
+        var duplicate = CreateValidContract("529.982.247-25");
+        var result = await handler.CreateContract(duplicate);
 
         Assert.False(result.Success);
-        Assert.Contains("Muitas solicitações", result.Message);
+        Assert.Equal("Já existe um cadastro com este CPF.", result.Message);
     }
 
     [Fact]
@@ -372,6 +388,7 @@ public class ContractHandlerTests
             TermsAccepted = true,
             Status = ContractStatus.AguardandoAceitacao,
             AcceptanceToken = "accept-token",
+            TokenGeneratedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await context.SaveChangesAsync();
@@ -596,6 +613,132 @@ public class ContractHandlerTests
         Assert.NotNull(patient);
         Assert.Equal("", patient.Phone);
         Assert.Equal("", patient.Cpf);
+    }
+
+    [Fact]
+    public async Task UpdateContract_ShouldReturnFalse_WhenContractIsAtivo()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var id = Guid.NewGuid();
+        context.Contracts.Add(new Contract
+        {
+            Id = id,
+            PatientName = "Active Contract",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Status = ContractStatus.Ativo,
+            Price = 100,
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.UpdateContract(new Contract
+        {
+            Id = id,
+            PatientName = "Active Contract",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Price = 150,
+            Status = ContractStatus.Ativo,
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("Não é possível alterar um contrato já finalizado.", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateContract_ShouldReturnFalse_WhenContractIsCancelado()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var id = Guid.NewGuid();
+        context.Contracts.Add(new Contract
+        {
+            Id = id,
+            PatientName = "Cancelled",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Status = ContractStatus.Cancelado,
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.UpdateContract(new Contract
+        {
+            Id = id,
+            PatientName = "Cancelled",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Status = ContractStatus.Cancelado,
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("Não é possível alterar um contrato já finalizado.", result.Message);
+    }
+
+    [Fact]
+    public async Task AcceptContract_ShouldReturnFalse_WhenTokenGeneratedLinkExpired()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        context.Contracts.Add(new Contract
+        {
+            Id = Guid.NewGuid(),
+            PatientName = "Expired Token",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Status = ContractStatus.AguardandoAceitacao,
+            AcceptanceToken = "expired-generated",
+            TokenGeneratedAt = DateTimeOffset.UtcNow.AddDays(-3),
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.AcceptContract("expired-generated");
+
+        Assert.False(result.Success);
+        Assert.Contains("expirado", result.Message);
+    }
+
+    [Fact]
+    public async Task ConvertToPatient_ShouldReturnFalse_WhenCpfAlreadyExistsInPatient()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var pepper = Environment.GetEnvironmentVariable("CPF_HASH_PEPPER")!;
+        var cpfData = System.Text.Encoding.UTF8.GetBytes("52998224725:" + pepper);
+        var cpfHash = System.Security.Cryptography.HMACSHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(pepper), cpfData);
+        var cpfHashHex = Convert.ToHexStringLower(cpfHash);
+
+        context.Patients.Add(new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Existing Patient",
+            Phone = "11999999999",
+            Cpf = "529.982.247-25",
+            CpfHash = cpfHashHex,
+        });
+        await context.SaveChangesAsync();
+
+        var contractId = Guid.NewGuid();
+        context.Contracts.Add(new Contract
+        {
+            Id = contractId,
+            PatientName = "Dup Cpf",
+            PatientCpf = "529.982.247-25",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.ConvertToPatient(contractId);
+
+        Assert.False(result.Success);
+        Assert.Equal("Já existe um paciente com este CPF.", result.Message);
     }
 }
 

@@ -2,6 +2,7 @@
 @using landing_page_isis.core
 @using landing_page_isis.core.Models
 @using RazorLight
+@attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
 @rendermode InteractiveServer
 @inject IContractHandler ContractHandler
 @inject ISnackbar Snackbar
@@ -101,6 +102,7 @@
         <MudPaper Elevation="4" Class="pa-0" Style="border-radius: 24px; overflow: hidden;">
             <div style="width: 100%; height: 60vh;">
                 <iframe srcdoc="@_contract.ContractDocumentHtml"
+                        sandbox="allow-same-origin"
                         style="width: 100%; height: 100%; border: none;">
                 </iframe>
             </div>
@@ -145,7 +147,7 @@
         _contract = await ContractHandler.GetContractByToken(Token);
 
         if (_contract is { Status: ContractStatus.AguardandoAceitacao }
-            && _contract.CreatedAt.AddDays(2) < DateTimeOffset.UtcNow)
+            && (_contract.TokenGeneratedAt ?? _contract.CreatedAt).AddDays(2) < DateTimeOffset.UtcNow)
         {
             _expired = true;
         }
@@ -216,13 +218,14 @@
             var result = await ContractHandler.AcceptContract(Token);
             if (result.Success)
             {
-                var contract = await ContractHandler.GetContractByToken(Token);
-                if (contract != null)
+                if (_contract != null)
                 {
-                    var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", contract);
-                    contract.ContractDocumentHtml = html;
-                    await ContractHandler.UpdateContract(contract);
-                    _contract = contract;
+                    _contract.Status = ContractStatus.Ativo;
+                    _contract.AcceptedAt = DateTimeOffset.UtcNow;
+
+                    var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", _contract);
+                    _contract.ContractDocumentHtml = html;
+                    await ContractHandler.UpdateContract(_contract);
                 }
 
                 StartRedirectTimer();

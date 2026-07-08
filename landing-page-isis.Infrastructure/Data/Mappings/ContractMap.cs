@@ -92,6 +92,14 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .HasMaxLength(100)
             .HasColumnName("acceptance_token");
 
+        builder.HasIndex(c => c.AcceptanceToken)
+            .IsUnique()
+            .HasFilter("\"acceptance_token\" IS NOT NULL");
+
+        builder.Property(c => c.TokenGeneratedAt)
+            .IsRequired(false)
+            .HasColumnName("token_generated_at");
+
         builder.Property(c => c.AcceptedAt)
             .IsRequired(false)
             .HasColumnName("accepted_at");
@@ -113,6 +121,15 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
         builder.Property(c => c.PatientId)
             .IsRequired(false)
             .HasColumnName("patient_id");
+
+        builder.Property(c => c.PatientCpfHash)
+            .IsRequired(false)
+            .HasMaxLength(64)
+            .HasColumnName("patient_cpf_hash");
+
+        builder.HasIndex(c => c.PatientCpfHash)
+            .IsUnique()
+            .HasFilter("\"patient_cpf_hash\" IS NOT NULL");
 
         builder.HasOne(c => c.Patient)
             .WithOne(p => p.Contract)

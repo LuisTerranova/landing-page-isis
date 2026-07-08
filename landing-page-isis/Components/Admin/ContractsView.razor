@@ -49,7 +49,7 @@
         </MudTd>
         <MudTd DataLabel="Tipo">@(context.Type?.ToString() ?? "—")</MudTd>
         <MudTd DataLabel="Valor">@(context.Price.HasValue ? $"R$ {context.Price.Value:F2}" : "—")</MudTd>
-        <MudTd DataLabel="Criado em">@context.CreatedAt.ToOffset(TimeSpan.FromHours(-4)).ToString("dd/MM/yyyy")</MudTd>
+        <MudTd DataLabel="Criado em">@context.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy")</MudTd>
     </RowColumns>
 
     <CustomActions>

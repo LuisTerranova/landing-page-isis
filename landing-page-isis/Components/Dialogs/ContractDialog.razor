@@ -134,6 +134,7 @@
         try
         {
             Model.AcceptanceToken = Guid.NewGuid().ToString();
+            Model.TokenGeneratedAt = DateTimeOffset.UtcNow;
             Model.Status = ContractStatus.AguardandoAceitacao;
 
             var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", Model);
