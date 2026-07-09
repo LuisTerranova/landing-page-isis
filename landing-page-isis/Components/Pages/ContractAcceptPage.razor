@@ -1,4 +1,6 @@
 @page "/contrato/{Token}"
+@using landing_page_isis.Components.Layout
+@layout ContractAcceptLayout
 @using landing_page_isis.core
 @using landing_page_isis.core.Models
 @using RazorLight
@@ -6,16 +8,20 @@
 @rendermode InteractiveServer
 @inject IContractHandler ContractHandler
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject RazorLightEngine RazorLight
 @inject NavigationManager Navigation
+@inject IJSRuntime Js
 @implements IDisposable
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-16" Style="min-height: 75vh;">
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8" Style="min-height: 75vh;">
     @if (_loading)
     {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true"
-                             Size="Size.Large" Class="d-flex justify-center" />
-        <MudText Typo="Typo.body1" Class="mt-4 text-center">Carregando contrato...</MudText>
+        <div class="d-flex flex-column align-center justify-center" style="min-height: 50vh;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true"
+                                 Size="Size.Large" Class="mb-4" />
+            <MudText Typo="Typo.body1">Carregando contrato...</MudText>
+        </div>
     }
     else if (_contract == null)
     {
@@ -36,7 +42,7 @@
             @if (_redirectSeconds > 0)
             {
                 <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-4">
-                    Redirecionando para a página inicial em @_redirectSeconds segundos...
+                    Redirecionando em @_redirectSeconds segundos...
                 </MudText>
             }
         </MudPaper>
@@ -92,27 +98,44 @@
     }
     else if (_contract.Status == ContractStatus.AguardandoAceitacao)
     {
-        <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
+        <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-1 text-center">
             Revisão do Contrato
         </MudText>
-        <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-6 text-center">
-            Por favor, leia atentamente o contrato abaixo e clique em "Aceitar Contrato" para confirmar.
+        <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-4 text-center">
+            Por favor, leia o contrato abaixo até o final para habilitar a aceitação.
         </MudText>
 
-        <MudPaper Elevation="4" Class="pa-0" Style="border-radius: 24px; overflow: hidden;">
-            <div style="width: 100%; height: 60vh;">
-                <iframe srcdoc="@_contract.ContractDocumentHtml"
-                        sandbox="allow-same-origin"
-                        style="width: 100%; height: 100%; border: none;">
-                </iframe>
+        <MudPaper Elevation="4" Style="border-radius: 24px; overflow: hidden;">
+            <div @ref="_contractDiv"
+                 id="contract-content"
+                 style="height: 55vh; overflow-y: auto; padding: 24px; background: white;">
+                @((MarkupString)(_contract.ContractDocumentHtml ?? ""))
             </div>
         </MudPaper>
 
-        <div class="d-flex justify-center mt-6">
+        <div class="d-flex flex-column align-center mt-4" style="gap: 12px;">
+            <MudAlert Severity="@(_hasScrolledToBottom ? Severity.Success : Severity.Warning)"
+                      Class="mb-2" Style="max-width: 500px;">
+                @if (_hasScrolledToBottom)
+                {
+                    <MudText Typo="Typo.body2">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="mr-1" Size="Size.Small" />
+                        Você já leu o contrato completo.
+                    </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowDownward" Class="mr-1" Size="Size.Small" />
+                        Role até o final do contrato para habilitar a aceitação.
+                    </MudText>
+                }
+            </MudAlert>
+
             <MudButton Variant="Variant.Filled"
                        Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px; padding: 0 48px;"
-                       OnClick="AcceptContract"
-                       Disabled="@(_accepting)">
+                       OnClick="ShowAcceptConfirmation"
+                       Disabled="@(!_hasScrolledToBottom || _accepting)">
                 @if (_accepting)
                 {
                     <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
@@ -134,6 +157,7 @@
     private bool _loading = true;
     private bool _expired;
     private bool _accepting;
+    private bool _hasScrolledToBottom;
 
     private bool _cpfVerified;
     private string _cpfInput = string.Empty;
@@ -141,6 +165,8 @@
 
     private int _redirectSeconds;
     private CancellationTokenSource? _redirectCts;
+
+    private ElementReference _contractDiv;
 
     protected override async Task OnInitializedAsync()
     {
@@ -158,6 +184,22 @@
         }
 
         _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _contract is { Status: ContractStatus.AguardandoAceitacao } && _cpfVerified)
+        {
+            await Js.InvokeVoidAsync("monitorContractScroll", _contractDiv, DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public Task OnScrolledToBottom()
+    {
+        _hasScrolledToBottom = true;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 
     private void StartRedirectTimer()
@@ -210,29 +252,51 @@
         _cpfVerified = true;
     }
 
+    private async Task ShowAcceptConfirmation()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            BackdropClick = false,
+            CloseButton = true,
+        };
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Confirmar Aceitação",
+            "Tem certeza que deseja aceitar este contrato? Esta ação é irreversível.",
+            yesText: "Sim, aceitar contrato",
+            cancelText: "Cancelar",
+            options: options
+        );
+
+        if (confirmed == true)
+        {
+            await AcceptContract();
+        }
+    }
+
     private async Task AcceptContract()
     {
         _accepting = true;
         try
         {
-            var result = await ContractHandler.AcceptContract(Token);
+            if (_contract == null)
+                return;
+
+            var renderContract = _contract;
+            if (_contract.CoupleId.HasValue)
+            {
+                renderContract = await ContractHandler.GetContractByCoupleId(_contract.CoupleId.Value);
+            }
+
+            var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", renderContract ?? _contract);
+
+            var result = await ContractHandler.AcceptContract(Token, html);
             if (result.Success)
             {
-                if (_contract != null)
-                {
-                    _contract.Status = ContractStatus.Ativo;
-                    _contract.AcceptedAt = DateTimeOffset.UtcNow;
-
-                    var renderContract = _contract;
-                    if (_contract.CoupleId.HasValue)
-                    {
-                        renderContract = await ContractHandler.GetContractByCoupleId(_contract.CoupleId.Value);
-                    }
-
-                    var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", renderContract ?? _contract);
-                    _contract.ContractDocumentHtml = html;
-                    await ContractHandler.UpdateContract(_contract);
-                }
+                _contract.Status = ContractStatus.Ativo;
+                _contract.AcceptedAt = DateTimeOffset.UtcNow;
+                _contract.ContractDocumentHtml = html;
 
                 StartRedirectTimer();
                 StateHasChanged();

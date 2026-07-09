@@ -12,6 +12,9 @@ using PackOpenXml = DocumentFormat.OpenXml.Packaging;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles exporting patient clinical record histories into PDF (via QuestPDF) and DOCX (via OpenXML) file formats.
+/// </summary>
 public class AppointmentRecordExportHandler(AppDbContext context) : IAppointmentRecordExportHandler
 {
     private static readonly string SystemGreen = "#2E7D32";
@@ -26,6 +29,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
         if (patient is null)
             throw new KeyNotFoundException("Paciente não encontrado.");
 
+        // Retrieve patient metadata and their complete clinical history, sorted chronologically from newest to oldest
         var records = await context
             .AppointmentRecords.Include(ar => ar.Appointment)
             .AsNoTracking()
@@ -43,6 +47,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
 
     private byte[] GeneratePdf(Patient patient, List<AppointmentRecord> records)
     {
+        // Build A4 PDF documents using QuestPDF's fluent API page layout engine
         return Document
             .Create(container =>
             {
@@ -223,6 +228,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
 
     private byte[] GenerateDocx(Patient patient, List<AppointmentRecord> records)
     {
+        // Programmatically construct Word documents (DOCX) using the OpenXML standard.
         using var ms = new MemoryStream();
         using (
             var doc = PackOpenXml.WordprocessingDocument.Create(
@@ -409,6 +415,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
         string? shade = null
     )
     {
+        // OpenXML requires separating ParagraphProperties (spacing, shading) and wrapping textual runs in RunProperties (font sizes, weights)
         var paraProps = new OpenXml.ParagraphProperties();
 
         if (spacingBefore > 0)
@@ -499,6 +506,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
 
     private static void AddDocxDivider(OpenXml.Body body, string color)
     {
+        // Render horizontal dividers by applying bottom borders directly to empty paragraph structures
         body.AppendChild(
             new OpenXml.Paragraph(
                 new OpenXml.ParagraphProperties(

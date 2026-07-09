@@ -5,6 +5,7 @@ using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Extensions;
+using landing_page_isis.Infrastructure.Data;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -23,6 +24,9 @@ public partial class AppointmentsView : ComponentBase
 
     [Inject]
     private IAppointmentRecordHandler RecordHandler { get; set; } = null!;
+
+    [Inject]
+    private AppDbContext DbContext { get; set; } = null!;
 
     private GenericTable<AppointmentListItemDto> _appointmentsTable = null!;
     private string _searchQuery = string.Empty;
@@ -216,7 +220,8 @@ public partial class AppointmentsView : ComponentBase
 
         if (result is { Canceled: false, Data: AppointmentRecord record })
         {
-            // Update the appointment status
+            await using var transaction = await DbContext.Database.BeginTransactionAsync();
+
             appointment.AppointmentStatus = AppointmentStatusEnum.Realizada;
             var updateStatus = await AppointmentHandler.UpdateAppointment(
                 appointment,
@@ -225,15 +230,16 @@ public partial class AppointmentsView : ComponentBase
 
             if (updateStatus.Success)
             {
-                // Create the record
                 var createRecord = await RecordHandler.CreateAppointmentRecord(record);
                 if (createRecord.Success)
                 {
+                    await transaction.CommitAsync();
                     Snackbar.Add("Consulta finalizada e prontuário salvo!", Severity.Success);
                     await _appointmentsTable.ReloadAsync();
                 }
                 else
                 {
+                    await transaction.RollbackAsync();
                     Snackbar.Add(
                         $"Status atualizado, mas houve erro no prontuário: {createRecord.Message}",
                         Severity.Warning
@@ -242,6 +248,7 @@ public partial class AppointmentsView : ComponentBase
             }
             else
             {
+                await transaction.RollbackAsync();
                 Snackbar.Add($"Erro ao finalizar consulta: {updateStatus.Message}", Severity.Error);
             }
         }

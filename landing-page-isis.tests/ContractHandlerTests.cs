@@ -3,6 +3,7 @@ using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace landing_page_isis.tests;
 
@@ -12,6 +13,7 @@ public class ContractHandlerTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
@@ -411,7 +413,7 @@ public class ContractHandlerTests
         var result = await handler.AcceptContract("invalid-token");
 
         Assert.False(result.Success);
-        Assert.Equal("Link inválido.", result.Message);
+        Assert.Equal("Link inválido ou expirado.", result.Message);
     }
 
     [Fact]
@@ -475,6 +477,7 @@ public class ContractHandlerTests
             PatientName = "Delete Me",
             PatientPhone = "11999999999",
             TermsAccepted = true,
+            Status = ContractStatus.Cancelado,
         });
         await context.SaveChangesAsync();
 

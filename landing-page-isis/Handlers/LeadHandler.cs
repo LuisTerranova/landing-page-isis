@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles patient leads lifecycle operations, including onboarding validation, approval/promotion to Patient entity, periodic purging, and WhatsApp link generation.
+/// </summary>
 public partial class LeadHandler(
     AppDbContext context
 ) : ILeadHandler
@@ -64,6 +67,9 @@ public partial class LeadHandler(
 
     public async Task<HandlerResult> ApproveLead(Guid id)
     {
+        // Use a database transaction to atomically transition the lead status and create the active Patient record
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
         var rowsAffected = await context
             .Leads.Where(l => l.Id == id && l.LeadStatus == LeadStatusEnum.Novo)
             .ExecuteUpdateAsync(setters =>
@@ -84,6 +90,8 @@ public partial class LeadHandler(
             );
             await context.SaveChangesAsync();
         }
+
+        await transaction.CommitAsync();
 
         return rowsAffected == 0
             ? new HandlerResult(false, "Lead não encontrado.")
@@ -107,7 +115,7 @@ public partial class LeadHandler(
         var markAsExpiredDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-15));
         var deleteDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-3));
 
-        // Mark 15 days old leads as expired
+        // Leads marked as New automatically transition to Expired after 15 days of inactivity
         var leadsExpirados = await context
             .Leads.Where(l => l.LeadStatus == LeadStatusEnum.Novo && l.Created <= markAsExpiredDate)
             .ExecuteUpdateAsync(
@@ -115,7 +123,7 @@ public partial class LeadHandler(
                 ct
             );
 
-        // Delete leads that are expired for more than 3 months
+        // Permanently delete expired leads from the database after 3 months to protect client data privacy
         var leadsDeletados = await context
             .Leads.Where(l => l.LeadStatus == LeadStatusEnum.Expirado && l.Created <= deleteDate)
             .ExecuteDeleteAsync(ct);
@@ -145,6 +153,7 @@ public partial class LeadHandler(
         );
         var hour = brazilTime.Hour;
 
+        // Dynamic greeting according to the time of day in Brazil
         var greeting = hour switch
         {
             >= 5 and < 12 => "Bom dia",
@@ -158,6 +167,7 @@ public partial class LeadHandler(
             $"{greeting}, {firstName}! Tudo bem? Me chamo Isis Vitória. Vi que você deixou seu contato no site e fico feliz pelo seu interesse. Como posso te auxiliar nesse primeiro momento?";
         var encodedText = Uri.EscapeDataString(text);
 
+        // Build WhatsApp click-to-chat API redirection link
         return $"https://wa.me/{cleanPhone}?text={encodedText}";
     }
 

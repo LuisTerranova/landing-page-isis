@@ -1,0 +1,19 @@
+@using landing_page_isis.Components.Navigation
+@inherits LayoutComponentBase
+@inject IsisTheme CustomTheme
+
+<MudThemeProvider Theme="CustomTheme"/>
+<MudPopoverProvider @rendermode="InteractiveServer" />
+<MudDialogProvider @rendermode="InteractiveServer" BackdropClick="false" CloseButton="true" CloseOnEscapeKey="false" />
+<MudSnackbarProvider @rendermode="InteractiveServer" />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Style="background-color: #284B32; color: #F7EAD5;">
+        <MudText Typo="Typo.subtitle1" Style="font-weight: 700; letter-spacing: 1px;">
+            Isis Vitória — Psicóloga Clínica
+        </MudText>
+    </MudAppBar>
+    <MudMainContent Style="padding-top: 64px;">
+        @Body
+    </MudMainContent>
+</MudLayout>

@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles registration and lookup of couples for therapy, ensuring patients are uniquely mapped and not duplicated across other couple units.
+/// </summary>
 public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
 {
     public async Task<PaginatedResponse<CoupleListItemDto>> GetCouples(
@@ -62,6 +65,7 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
         if (couple.Patient1Id == couple.Patient2Id)
             return new HandlerResult(false, "Os dois pacientes devem ser diferentes.");
 
+        // Enforce that a patient cannot belong to more than one couple concurrently
         var alreadyInCouple = await context.Couples.AnyAsync(c =>
             c.Patient1Id == couple.Patient1Id
             || c.Patient2Id == couple.Patient1Id

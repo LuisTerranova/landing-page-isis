@@ -14,7 +14,7 @@ public interface IContractHandler
     Task<Contract?> GetContractByToken(string token);
     Task<HandlerResult> CreateContract(Contract contract);
     Task<HandlerResult> UpdateContract(Contract contract);
-    Task<HandlerResult> AcceptContract(string token);
+    Task<HandlerResult> AcceptContract(string token, string? documentHtml = null);
     Task<HandlerResult> DeleteContract(Guid id);
     Task<PaginatedResponse<ContractListItemDto>> QueryContracts(
         string query,

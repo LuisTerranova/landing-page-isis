@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles the creation, tracking, status transitions, and queries of prepaid session packages for patients and couples.
+/// </summary>
 public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPackageHandler
 {
     public async Task<PaginatedResponse<AppointmentPackageListItemDto>> GetPackagesByPatientId(
@@ -115,6 +118,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         if (package.Price <= 0)
             return new HandlerResult(false, "O preço deve ser maior que zero.");
 
+        // Initialize prepaid credits: remaining sessions equal the total purchased count upon package activation
         package.RemainingAppointments = package.TotalAppointments;
         package.CreatedAt = DateTimeOffset.UtcNow;
 
@@ -129,6 +133,7 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         if (existing == null)
             return new HandlerResult(false, "Pacote não encontrado.");
 
+        // Manual mapping is preserved here to prevent SetValues from overwriting immutable fields (like PatientId or CoupleId) with default/null values
         existing.TotalAppointments = package.TotalAppointments;
         existing.RemainingAppointments = package.RemainingAppointments;
         existing.PaymentMethod = package.PaymentMethod;

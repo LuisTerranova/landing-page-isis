@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles clinical session records, including history pagination, date-based filtering, and audit-safe rectifications.
+/// </summary>
 public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecordHandler
 {
     public async Task<AppointmentRecord?> GetAppointmentRecordById(Guid id)
@@ -39,6 +42,7 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
 
         if (filterMonthYear.HasValue)
         {
+            // Convert target month boundaries to UTC range to align with PostgreSQL timestamp configurations
             var localStart = new DateTime(
                 filterMonthYear.Value.Year,
                 filterMonthYear.Value.Month,
@@ -108,11 +112,12 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (existing == null)
             return new HandlerResult(false, "Nota não encontrada.");
 
+        // Psychological records must preserve historical integrity. 
+        // We append rectifications rather than overwriting existing text to comply with medical record auditing rules.
         existing.Note +=
             $"\n\nRetificado em {DateTimeOffset.UtcNow.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
         existing.UpdatedAt = DateTimeOffset.UtcNow;
 
-        context.Entry(existing).CurrentValues.SetValues(existing);
         await context.SaveChangesAsync();
         return new HandlerResult(true, "Retificação adicionada com sucesso");
     }

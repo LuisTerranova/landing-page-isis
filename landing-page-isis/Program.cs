@@ -23,17 +23,13 @@ app.MapGet(
         try
         {
             await db.Database.CanConnectAsync();
-            return Results.Ok(
-                new
-                {
-                    status = "Healthy",
-                    timestamp = DateTime.UtcNow,
-                }
-            );
+            return Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow });
         }
         catch
         {
-            return Results.StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status503ServiceUnavailable);
+            return Results.StatusCode(
+                Microsoft.AspNetCore.Http.StatusCodes.Status503ServiceUnavailable
+            );
         }
     }
 );

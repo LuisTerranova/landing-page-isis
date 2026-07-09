@@ -3,6 +3,7 @@
 @using landing_page_isis.core.Helpers
 @using landing_page_isis.core.Interfaces
 @using landing_page_isis.core.Models
+@using landing_page_isis.Infrastructure.Data
 @rendermode InteractiveServer
 @attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
 @inject IContractHandler ContractHandler
@@ -10,6 +11,7 @@
 @inject ICoupleHandler CoupleHandler
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject AppDbContext DbContext
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="py-16">
     <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
@@ -235,6 +237,12 @@
                             <MudSelectItem T="string" Value="@("partner2")">Parceiro 2</MudSelectItem>
                         </MudSelect>
                     </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="CPF do Pagador" Variant="Variant.Outlined"
+                                      Value="@PayerCpfDisplay" ReadOnly="true"
+                                      Style="@($"background-color: #f5f5f5; cursor: not-allowed;")"
+                                      FullWidth="true" />
+                    </MudItem>
                     <MudItem xs="12">
                         <div class="d-flex align-center">
                             <MudCheckBox @bind-Value="_termsAccepted" />
@@ -304,6 +312,20 @@
     private DateTime? _p2BirthDate;
     private string _payerChoice = "partner1";
 
+    private string PayerCpfDisplay
+    {
+        get
+        {
+            var raw = _payerChoice == "partner1" ? _p1Cpf : _p2Cpf;
+            if (string.IsNullOrEmpty(raw))
+                return string.Empty;
+            var digits = new string(raw.Where(char.IsDigit).ToArray());
+            if (digits.Length != 11)
+                return raw;
+            return Convert.ToUInt64(digits).ToString(@"000\.000\.000\-00");
+        }
+    }
+
     private async Task ShowConsentDialog()
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
@@ -366,6 +388,7 @@
         }
 
         _processing = true;
+        await using var transaction = await DbContext.Database.BeginTransactionAsync();
         try
         {
             var p1 = new Patient
@@ -391,6 +414,7 @@
             var p1Result = await PatientHandler.CreatePatient(p1);
             if (!p1Result.Success)
             {
+                await transaction.RollbackAsync();
                 Snackbar.Add($"Erro no Parceiro 1: {p1Result.Message}", Severity.Error);
                 return;
             }
@@ -398,6 +422,7 @@
             var p2Result = await PatientHandler.CreatePatient(p2);
             if (!p2Result.Success)
             {
+                await transaction.RollbackAsync();
                 Snackbar.Add($"Erro no Parceiro 2: {p2Result.Message}", Severity.Error);
                 return;
             }
@@ -405,9 +430,13 @@
             var payerName = _payerChoice == "partner1" ? p1.Name : p2.Name;
             var payerCpf = _payerChoice == "partner1" ? p1.Cpf : p2.Cpf;
 
+            var coupleName = string.IsNullOrWhiteSpace(_coupleName)
+                ? $"{_p1Name} & {_p2Name}"
+                : _coupleName;
+
             var couple = new Couple
             {
-                Name = _coupleName,
+                Name = coupleName,
                 Patient1Id = p1.Id,
                 Patient2Id = p2.Id,
                 PayerName = payerName,
@@ -418,24 +447,27 @@
             var coupleResult = await CoupleHandler.CreateCouple(couple);
             if (!coupleResult.Success)
             {
+                await transaction.RollbackAsync();
                 Snackbar.Add($"Erro ao criar casal: {coupleResult.Message}", Severity.Error);
                 return;
             }
 
+            var isP1Payer = _payerChoice == "partner1";
             var contract = new Contract
             {
                 CoupleId = couple.Id,
                 PatientName = payerName,
                 PatientCpf = payerCpf,
-                PatientPhone = payerCpf == p1.Cpf ? p1.Phone : p2.Phone,
-                PatientEmail = payerCpf == p1.Cpf ? p1.Email : p2.Email,
-                PatientState = payerCpf == p1.Cpf ? p1.StateOfResidency : p2.StateOfResidency,
+                PatientPhone = isP1Payer ? p1.Phone : p2.Phone,
+                PatientEmail = isP1Payer ? p1.Email : p2.Email,
+                PatientState = isP1Payer ? p1.StateOfResidency : p2.StateOfResidency,
                 TermsAccepted = true,
             };
 
             var result = await ContractHandler.CreateContract(contract);
             if (result.Success)
             {
+                await transaction.CommitAsync();
                 Snackbar.Add("Seus dados foram enviados com sucesso! Em breve entraremos em contato.", Severity.Success);
                 _p1Name = _p1Cpf = _p1Email = _p1Phone = _p1State = string.Empty;
                 _p2Name = _p2Cpf = _p2Email = _p2Phone = _p2State = string.Empty;
@@ -445,11 +477,13 @@
             }
             else
             {
+                await transaction.RollbackAsync();
                 Snackbar.Add($"Erro ao enviar: {result.Message}", Severity.Error);
             }
         }
         catch (Exception)
         {
+            await transaction.RollbackAsync();
             Snackbar.Add("Ocorreu um erro inesperado ao enviar seus dados.", Severity.Error);
         }
         finally

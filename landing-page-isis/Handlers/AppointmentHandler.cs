@@ -2,11 +2,15 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles the scheduling, package deductions, session cancellations, and credit refunds for therapy appointments.
+/// </summary>
 public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 {
     public async Task<PaginatedResponse<AppointmentListItemDto>> GetAllAppointments(
@@ -76,29 +80,20 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
 
     public async Task<Appointment?> GetAppointmentById(Guid id)
     {
-        return await context
-            .Appointments.Include(a => a.Patient)
-            .Include(a => a.Couple)
-            .FirstOrDefaultAsync(a => a.Id == id);
+        // Exclude patient/couple inclusions to optimize lightweight detail requests where relations aren't required
+        return await context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<HandlerResult> CreateAppointment(Appointment appointment)
     {
-        if (appointment == null)
-            return new HandlerResult(false, "Dados inválidos.");
+        var validation = appointment.Validate();
+        if (!validation.Success)
+            return validation;
 
-        if (appointment.Price < 0)
-            return new HandlerResult(false, "O preço não pode ser negativo.");
-
-        if (
-            (!appointment.PatientId.HasValue || appointment.PatientId.Value == Guid.Empty)
-            && appointment.CoupleId == null
-        )
-            return new HandlerResult(false, "Selecione um paciente ou casal válido.");
-
-        // Normalize to UTC for PostgreSQL compatibility
+        // Force UTC conversion before database storage to satisfy PostgreSQL timestamp constraints
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
+        // Enforce time slot uniqueness to prevent booking conflicts
         var isOccupied = await context
             .Appointments.AsNoTracking()
             .AnyAsync(a => a.AppointmentDate == appointment.AppointmentDate);
@@ -106,7 +101,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (isOccupied)
             return new HandlerResult(false, "Este horário já possui um agendamento.");
 
-        // Find active package — check for patient or couple
+        // Automatically deduct a session credit if the client has an active prepaid package
         AppointmentPackage? activePackage = null;
 
         if (appointment.PatientId.HasValue && appointment.PatientId.Value != Guid.Empty)
@@ -139,7 +134,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
                 activePackage.Status = PackageStatus.Esgotado;
 
             appointment.PackageId = activePackage.Id;
-            appointment.Price = 0;
+            appointment.Price = 0; // Session is free since it is covered by the prepaid package
         }
 
         context.Appointments.Add(appointment);
@@ -157,15 +152,11 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (existing == null)
             return new HandlerResult(false, "Consulta não encontrada.");
 
-        if (appointment.Price < 0)
-            return new HandlerResult(false, "O preço não pode ser negativo.");
+        var validation = appointment.Validate();
+        if (!validation.Success)
+            return validation;
 
-        if (
-            (!appointment.PatientId.HasValue || appointment.PatientId.Value == Guid.Empty)
-            && appointment.CoupleId == null
-        )
-            return new HandlerResult(false, "Selecione um paciente ou casal válido.");
-
+        // Refund a package session if the appointment is being cancelled
         if (
             appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada
             && existing.AppointmentStatus != AppointmentStatusEnum.Cancelada
@@ -175,9 +166,10 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             await RefundPackageCredit(existing.PackageId.Value);
         }
 
-        // Normalize to UTC for PostgreSQL compatibility
+        // Force UTC conversion before database storage to satisfy PostgreSQL timestamp constraints
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
+        // Enforce slot uniqueness (excluding the current record itself)
         var isOccupied = await context
             .Appointments.AsNoTracking()
             .AnyAsync(a =>
@@ -187,6 +179,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (isOccupied)
             return new HandlerResult(false, "Horario indisponivel");
 
+        // SetValues is safe here because Appointment has fully mutable property mapping
         context.Entry(existing).CurrentValues.SetValues(appointment);
         await context.SaveChangesAsync();
         return new HandlerResult(true);
@@ -198,6 +191,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (app == null)
             return new HandlerResult(false, "Consulta não encontrada.");
 
+        // Refund the package credit if this deleted session was paid for via a package
         if (app.PackageId.HasValue)
             await RefundPackageCredit(app.PackageId.Value);
 
@@ -299,6 +293,8 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     public async Task<int> CountPendingRecordsAsync()
     {
         var now = DateTimeOffset.UtcNow;
+        
+        // Count scheduled appointments in the past that do not have clinical note records written yet
         return await context
             .Appointments.AsNoTracking()
             .CountAsync(a =>
@@ -322,6 +318,9 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         );
     }
 
+    /// <summary>
+    /// Restores a prepaid session credit to a package and returns its state back to Active if it was marked as Exhausted.
+    /// </summary>
     private async Task RefundPackageCredit(Guid packageId)
     {
         var package = await context.AppointmentPackages.FindAsync(packageId);

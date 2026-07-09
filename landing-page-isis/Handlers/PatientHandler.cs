@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Handlers;
 
+/// <summary>
+/// Handles CRUD operations, pagination queries, and metadata mapping for individual Patient profiles.
+/// </summary>
 public partial class PatientHandler(AppDbContext context) : IPatientHandler
 {
     public async Task<PaginatedResponse<PatientListItemDto>> GetPatients(
@@ -63,6 +66,7 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
             patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
             if (!CpfValidator.IsValid(patient.Cpf))
                 return new HandlerResult(false, "CPF inválido.");
+            patient.CpfHash = CpfHelper.ComputeHash(patient.Cpf);
         }
 
         context.Patients.Add(patient);
@@ -110,6 +114,8 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
     )
     {
         var distinctIds = ids.Distinct().ToList();
+        
+        // Bulk fetch patient emails in a single query to prevent N+1 performance issues in background workers
         return await context
             .Patients.Where(p => distinctIds.Contains(p.Id))
             .Select(p => new { p.Id, p.Email })

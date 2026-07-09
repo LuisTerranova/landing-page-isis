@@ -1,10 +1,6 @@
 using landing_page_isis.core.ApplicationUser;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace landing_page_isis.Data;
 
@@ -20,9 +16,7 @@ public static class DatabaseSeed
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
 
         if (context.Users.Any())
-        {
             return;
-        }
 
         string? email = null;
         string? password = null;

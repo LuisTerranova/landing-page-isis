@@ -1,5 +1,4 @@
 using landing_page_isis.core;
-using landing_page_isis.core;
 using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
@@ -490,28 +489,28 @@ public class AppointmentHandlerTests
                 Id = Guid.NewGuid(),
                 AppointmentDate = DateTime.UtcNow.AddHours(-2),
                 AppointmentStatus = AppointmentStatusEnum.Marcada,
-                PatientId = pId
+                PatientId = pId,
             },
             new Appointment
             {
                 Id = Guid.NewGuid(),
                 AppointmentDate = DateTime.UtcNow.AddHours(-1),
                 AppointmentStatus = AppointmentStatusEnum.Marcada,
-                PatientId = pId
+                PatientId = pId,
             },
             new Appointment
             {
                 Id = Guid.NewGuid(),
                 AppointmentDate = DateTime.UtcNow.AddHours(-3),
                 AppointmentStatus = AppointmentStatusEnum.Realizada, // completed, not counted
-                PatientId = pId
+                PatientId = pId,
             },
             new Appointment
             {
                 Id = Guid.NewGuid(),
                 AppointmentDate = DateTime.UtcNow.AddHours(2), // future, not counted
                 AppointmentStatus = AppointmentStatusEnum.Marcada,
-                PatientId = pId
+                PatientId = pId,
             }
         );
         await context.SaveChangesAsync();
@@ -530,20 +529,22 @@ public class AppointmentHandlerTests
         var appId = Guid.NewGuid();
         var pId = Guid.NewGuid();
         context.Patients.Add(new Patient { Id = pId, Name = "Test Patient" });
-        context.Appointments.Add(new Appointment
-        {
-            Id = appId,
-            AppointmentDate = DateTime.UtcNow,
-            PatientId = pId
-        });
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appId,
+                AppointmentDate = DateTime.UtcNow,
+                PatientId = pId,
+            }
+        );
         await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
 
         var result = await handler.GetAppointmentById(appId);
 
         Assert.NotNull(result);
         Assert.Equal(appId, result.Id);
-        Assert.NotNull(result.Patient);
-        Assert.Equal("Test Patient", result.Patient.Name);
+        Assert.Null(result.Patient);
     }
 
     [Fact]
@@ -555,12 +556,14 @@ public class AppointmentHandlerTests
         var appId = Guid.NewGuid();
         var pId = Guid.NewGuid();
         context.Patients.Add(new Patient { Id = pId, Name = "Test Patient" });
-        context.Appointments.Add(new Appointment
-        {
-            Id = appId,
-            AppointmentDate = DateTime.UtcNow,
-            PatientId = pId
-        });
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appId,
+                AppointmentDate = DateTime.UtcNow,
+                PatientId = pId,
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.GetAppointmentWithPatient(appId, pId);
@@ -578,17 +581,48 @@ public class AppointmentHandlerTests
         var handler = new AppointmentHandler(context);
 
         var coupleId = Guid.NewGuid();
-        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999" };
-        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999" };
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 1",
+            Phone = "11999999999",
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 2",
+            Phone = "11999999999",
+        };
         context.Patients.AddRange(p1, p2);
 
-        var couple = new Couple { Id = coupleId, Name = "Couple", Patient1 = p1, Patient2 = p2 };
+        var couple = new Couple
+        {
+            Id = coupleId,
+            Name = "Couple",
+            Patient1 = p1,
+            Patient2 = p2,
+        };
         context.Couples.Add(couple);
 
         context.Appointments.AddRange(
-            new Appointment { Id = Guid.NewGuid(), AppointmentDate = DateTime.UtcNow.AddDays(-1), CoupleId = coupleId },
-            new Appointment { Id = Guid.NewGuid(), AppointmentDate = DateTime.UtcNow, CoupleId = coupleId },
-            new Appointment { Id = Guid.NewGuid(), AppointmentDate = DateTime.UtcNow, CoupleId = Guid.NewGuid() } // other couple
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow.AddDays(-1),
+                CoupleId = coupleId,
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow,
+                CoupleId = coupleId,
+            },
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = DateTime.UtcNow,
+                CoupleId = Guid.NewGuid(),
+            } // other couple
         );
         await context.SaveChangesAsync();
 
@@ -612,7 +646,7 @@ public class AppointmentHandlerTests
             PatientId = patientId,
             TotalAppointments = 10,
             RemainingAppointments = 5,
-            Status = PackageStatus.Esgotado
+            Status = PackageStatus.Esgotado,
         };
         context.AppointmentPackages.Add(package);
 
@@ -623,7 +657,7 @@ public class AppointmentHandlerTests
             AppointmentDate = DateTime.UtcNow,
             PatientId = patientId,
             PackageId = package.Id,
-            AppointmentStatus = AppointmentStatusEnum.Marcada
+            AppointmentStatus = AppointmentStatusEnum.Marcada,
         };
         context.Appointments.Add(app);
         await context.SaveChangesAsync();
@@ -635,7 +669,7 @@ public class AppointmentHandlerTests
             AppointmentDate = app.AppointmentDate,
             PatientId = patientId,
             PackageId = package.Id,
-            AppointmentStatus = AppointmentStatusEnum.Cancelada
+            AppointmentStatus = AppointmentStatusEnum.Cancelada,
         };
 
         var result = await handler.UpdateAppointment(updatedApp, appId);
@@ -662,7 +696,7 @@ public class AppointmentHandlerTests
             PatientId = patientId,
             TotalAppointments = 10,
             RemainingAppointments = 9,
-            Status = PackageStatus.Ativo
+            Status = PackageStatus.Ativo,
         };
         context.AppointmentPackages.Add(package);
 
@@ -673,7 +707,7 @@ public class AppointmentHandlerTests
             AppointmentDate = DateTime.UtcNow,
             PatientId = patientId,
             PackageId = package.Id,
-            AppointmentStatus = AppointmentStatusEnum.Marcada
+            AppointmentStatus = AppointmentStatusEnum.Marcada,
         };
         context.Appointments.Add(app);
         await context.SaveChangesAsync();
@@ -686,4 +720,3 @@ public class AppointmentHandlerTests
         Assert.Equal(10, dbPackage.RemainingAppointments);
     }
 }
-
