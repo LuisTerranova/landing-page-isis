@@ -128,12 +128,6 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
 
             col.Item().PaddingVertical(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
-            col.Item()
-                .PaddingVertical(4)
-                .Width(80)
-                .AlignCenter()
-                .Image(AssetService.GetSeparatorBytes());
-
             if (records.Count == 0)
             {
                 col.Item()
@@ -219,26 +213,17 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
 
     private void ComposePdfFooter(IContainer container)
     {
-        container.Column(col =>
-        {
-            col.Item()
-                .Width(60)
-                .AlignCenter()
-                .Image(AssetService.GetSeparatorBytes());
-
-            col.Item()
-                .PaddingTop(4)
-                .AlignCenter()
-                .Text(t =>
-                {
-                    t.Span("Gerado pelo Sistema Ísis — Dados confidenciais\n")
-                        .FontSize(8)
-                        .FontColor(Colors.Grey.Medium);
-                    t.Span($"Em {DateTimeOffset.UtcNow.ToPortoVelhoTime():dd/MM/yyyy 'às' HH:mm}")
-                        .FontSize(8)
-                        .FontColor(Colors.Grey.Medium);
-                });
-        });
+        container
+            .AlignCenter()
+            .Text(t =>
+            {
+                t.Span("Gerado pelo Sistema Ísis — Dados confidenciais\n")
+                    .FontSize(8)
+                    .FontColor(Colors.Grey.Medium);
+                t.Span($"Em {DateTimeOffset.UtcNow.ToPortoVelhoTime():dd/MM/yyyy 'às' HH:mm}")
+                    .FontSize(8)
+                    .FontColor(Colors.Grey.Medium);
+            });
     }
 
     private byte[] GenerateDocx(Patient patient, List<AppointmentRecord> records)
@@ -257,9 +242,6 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
             var body = mainPart.Document.AppendChild(new OpenXml.Body());
 
             SetDocxStyles(body);
-
-            AddDocxImage(body, mainPart);
-            AddDocxSpacer(body);
 
             // Title
             AddDocxPara(
@@ -548,63 +530,4 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
         body.AppendChild(new OpenXml.Paragraph(new OpenXml.Run()));
     }
 
-    private static void AddDocxImage(OpenXml.Body body, PackOpenXml.MainDocumentPart mainPart)
-    {
-        var imageBytes = AssetService.GetSeparatorBytes();
-        var imagePart = mainPart.AddNewPart<PackOpenXml.ImagePart>();
-        imagePart.ContentType = "image/png";
-        using (var stream = new MemoryStream(imageBytes))
-        {
-            imagePart.FeedData(stream);
-        }
-
-        var relId = mainPart.GetIdOfPart(imagePart);
-
-        var emuPerPixel = 914400L / 96L;
-        var widthPx = 120L;
-        var heightPx = (long)(120L * 563.0 / 428.0);
-        var widthEmu = widthPx * emuPerPixel;
-        var heightEmu = heightPx * emuPerPixel;
-
-        var element =
-            new DocumentFormat.OpenXml.Wordprocessing.Drawing(
-                new DocumentFormat.OpenXml.Drawing.Wordprocessing.Inline(
-                    new DocumentFormat.OpenXml.Drawing.Wordprocessing.Extent { Cx = widthEmu, Cy = heightEmu },
-                    new DocumentFormat.OpenXml.Drawing.Wordprocessing.EffectExtent { LeftEdge = 0L, TopEdge = 0L, RightEdge = 0L, BottomEdge = 0L },
-                    new DocumentFormat.OpenXml.Drawing.Wordprocessing.DocProperties { Id = 1U, Name = "Separator" },
-                    new DocumentFormat.OpenXml.Drawing.Graphic(
-                        new DocumentFormat.OpenXml.Drawing.GraphicData(
-                            new DocumentFormat.OpenXml.Drawing.Pictures.Picture(
-                                new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureProperties(
-                                    new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualDrawingProperties { Id = 0U, Name = "Separator" },
-                                    new DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureDrawingProperties()
-                                ),
-                                new DocumentFormat.OpenXml.Drawing.Pictures.BlipFill(
-                                    new DocumentFormat.OpenXml.Drawing.Blip { Embed = relId },
-                                    new DocumentFormat.OpenXml.Drawing.Stretch(new DocumentFormat.OpenXml.Drawing.FillRectangle())
-                                ),
-                                new DocumentFormat.OpenXml.Drawing.Pictures.ShapeProperties(
-                                    new DocumentFormat.OpenXml.Drawing.Transform2D(
-                                        new DocumentFormat.OpenXml.Drawing.Offset { X = 0L, Y = 0L },
-                                        new DocumentFormat.OpenXml.Drawing.Extents { Cx = widthEmu, Cy = heightEmu }
-                                    ),
-                                    new DocumentFormat.OpenXml.Drawing.PresetGeometry { Preset = DocumentFormat.OpenXml.Drawing.ShapeTypeValues.Rectangle }
-                                )
-                            )
-                        )
-                        { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" }
-                    )
-                )
-                { DistanceFromTop = 0U, DistanceFromBottom = 0U, DistanceFromLeft = 0U, DistanceFromRight = 0U }
-            );
-
-        var para = new OpenXml.Paragraph(
-            new OpenXml.ParagraphProperties(
-                new OpenXml.Justification { Val = OpenXml.JustificationValues.Center }
-            ),
-            new OpenXml.Run(element)
-        );
-
-        body.AppendChild(para);
-    }
 }

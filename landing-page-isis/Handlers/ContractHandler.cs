@@ -3,6 +3,7 @@ using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,7 @@ namespace landing_page_isis.Handlers;
 /// <summary>
 /// Handles patient/couple service contracts, signature link generation and validation, CPF cryptographic checks, and contract-to-patient conversion.
 /// </summary>
-public partial class ContractHandler(AppDbContext context) : IContractHandler
+public partial class ContractHandler(AppDbContext context, IHttpContextAccessor httpContextAccessor) : IContractHandler
 {
     private static readonly string[] ValidUfs =
     [
@@ -66,7 +67,6 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
                 c.Id,
                 c.PatientName,
                 c.Status,
-                c.Type,
                 c.Price,
                 c.CreatedAt,
                 c.PatientId,
@@ -82,7 +82,6 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
                 c.CreatedAt.ToString("yyMMdd") + "-" + c.Id.ToString().Substring(0, 4).ToUpper(),
                 c.PatientName,
                 c.Status,
-                c.Type,
                 c.Price,
                 c.CreatedAt,
                 c.PatientId,
@@ -110,6 +109,10 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
     {
         if (contract == null)
             return new HandlerResult(false, "Dados inválidos.");
+
+        var ip = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (!await RateLimiterHelper.CheckAsync($"contract:{ip}", 5, TimeSpan.FromMinutes(1)))
+            return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
 
         if (string.IsNullOrWhiteSpace(contract.PatientName))
             return new HandlerResult(false, "Nome é obrigatório.");
@@ -169,11 +172,14 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
             if (existingInContracts)
                 return new HandlerResult(false, "Já existe um cadastro com este CPF.");
 
-            // Verify CPF uniqueness in already registered patients
-            var existingInPatients = await context.Patients.AnyAsync(p => p.CpfHash == cpfHash);
+            // For couple contracts the payer is one of the partners — skip patient dedup
+            if (string.IsNullOrEmpty(contract.Patient2Name))
+            {
+                var existingInPatients = await context.Patients.AnyAsync(p => p.CpfHash == cpfHash);
 
-            if (existingInPatients)
-                return new HandlerResult(false, "Já existe um cadastro com este CPF.");
+                if (existingInPatients)
+                    return new HandlerResult(false, "Já existe um cadastro com este CPF.");
+            }
 
             contract.PatientCpfHash = cpfHash;
         }
@@ -186,6 +192,10 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
 
     public async Task<HandlerResult> AcceptContract(string token, string? documentHtml = null)
     {
+        var ip = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (!await RateLimiterHelper.CheckAsync($"accept:{ip}", 5, TimeSpan.FromMinutes(5)))
+            return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
+
         var contract = await context.Contracts.FirstOrDefaultAsync(c => c.AcceptanceToken == token);
 
         if (contract == null)
@@ -202,6 +212,8 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
                 "Link inválido ou expirado. Entre em contato pelo WhatsApp (69) 99223-4931."
             );
 
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
         contract.Status = ContractStatus.Ativo;
         contract.AcceptedAt = DateTimeOffset.UtcNow;
         contract.UpdatedAt = DateTimeOffset.UtcNow;
@@ -210,7 +222,107 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
             contract.ContractDocumentHtml = documentHtml;
 
         await context.SaveChangesAsync();
+
+        await CreateEntitiesFromContract(contract);
+
+        await transaction.CommitAsync();
         return new HandlerResult(true);
+    }
+
+    private async Task CreateEntitiesFromContract(Contract contract)
+    {
+        if (contract.PatientId.HasValue || contract.CoupleId.HasValue)
+            return;
+
+        if (string.IsNullOrWhiteSpace(contract.Patient2Name))
+        {
+            var cpf = !string.IsNullOrEmpty(contract.PatientCpf)
+                ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
+                : contract.PatientCpf;
+
+            var patient = new Patient
+            {
+                Name = contract.PatientName,
+                Cpf = cpf,
+                Email = contract.PatientEmail,
+                Phone = !string.IsNullOrEmpty(contract.PatientPhone)
+                    ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
+                    : contract.PatientPhone,
+                StateOfResidency = contract.PatientState,
+                BirthDate = contract.PatientBirthDate,
+                PolicySigned = true,
+                CpfHash = !string.IsNullOrEmpty(cpf) ? CpfHelper.ComputeHash(cpf) : null,
+            };
+
+            context.Patients.Add(patient);
+            await context.SaveChangesAsync();
+
+            contract.PatientId = patient.Id;
+            contract.UpdatedAt = DateTimeOffset.UtcNow;
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            var p1Cpf = !string.IsNullOrEmpty(contract.PatientCpf)
+                ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
+                : contract.PatientCpf;
+
+            var p1 = new Patient
+            {
+                Name = contract.PatientName,
+                Cpf = p1Cpf,
+                Email = contract.PatientEmail,
+                Phone = !string.IsNullOrEmpty(contract.PatientPhone)
+                    ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
+                    : contract.PatientPhone,
+                StateOfResidency = contract.PatientState,
+                BirthDate = contract.PatientBirthDate,
+                PolicySigned = true,
+                CpfHash = !string.IsNullOrEmpty(p1Cpf) ? CpfHelper.ComputeHash(p1Cpf) : null,
+            };
+
+            var p2Cpf = !string.IsNullOrEmpty(contract.Patient2Cpf)
+                ? OnlyNumbersRegex().Replace(contract.Patient2Cpf, "")
+                : contract.Patient2Cpf;
+
+            var p2 = new Patient
+            {
+                Name = contract.Patient2Name,
+                Cpf = p2Cpf,
+                Email = contract.Patient2Email,
+                Phone = !string.IsNullOrEmpty(contract.Patient2Phone)
+                    ? OnlyNumbersRegex().Replace(contract.Patient2Phone, "")
+                    : contract.Patient2Phone,
+                StateOfResidency = contract.Patient2State,
+                BirthDate = contract.Patient2BirthDate,
+                PolicySigned = true,
+                CpfHash = !string.IsNullOrEmpty(p2Cpf) ? CpfHelper.ComputeHash(p2Cpf) : null,
+            };
+
+            context.Patients.AddRange(p1, p2);
+            await context.SaveChangesAsync();
+
+            var coupleName = !string.IsNullOrWhiteSpace(contract.CoupleName)
+                ? contract.CoupleName
+                : $"{p1.Name} & {p2.Name}";
+
+            var couple = new Couple
+            {
+                Name = coupleName,
+                Patient1Id = p1.Id,
+                Patient2Id = p2.Id,
+                PayerName = contract.PatientName,
+                PayerCpf = p1Cpf,
+                PolicySigned = true,
+            };
+
+            context.Couples.Add(couple);
+            await context.SaveChangesAsync();
+
+            contract.CoupleId = couple.Id;
+            contract.UpdatedAt = DateTimeOffset.UtcNow;
+            await context.SaveChangesAsync();
+        }
     }
 
     public async Task<HandlerResult> UpdateContract(Contract contract)
@@ -219,8 +331,21 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
         if (existing == null)
             return new HandlerResult(false, "Contrato não encontrado.");
 
-        if (existing.Status is ContractStatus.Ativo or ContractStatus.Cancelado)
-            return new HandlerResult(false, "Não é possível alterar um contrato já finalizado.");
+        // Canceled contracts are immutable
+        if (existing.Status == ContractStatus.Cancelado)
+            return new HandlerResult(false, "Não é possível alterar um contrato cancelado.");
+
+        // Active contracts can only be canceled (no other edits allowed)
+        if (existing.Status == ContractStatus.Ativo)
+        {
+            if (contract.Status != ContractStatus.Cancelado)
+                return new HandlerResult(false, "Contrato ativo só pode ser alterado para Cancelado.");
+
+            existing.Status = ContractStatus.Cancelado;
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            await context.SaveChangesAsync();
+            return new HandlerResult(true);
+        }
 
         // Force transition to Active status to happen only through AcceptContract (initiated by the patient)
         if (contract.Status == ContractStatus.Ativo)
@@ -280,7 +405,6 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
                 c.Id,
                 c.PatientName,
                 c.Status,
-                c.Type,
                 c.Price,
                 c.CreatedAt,
                 c.PatientId,
@@ -295,7 +419,6 @@ public partial class ContractHandler(AppDbContext context) : IContractHandler
                 c.CreatedAt.ToString("yyMMdd") + "-" + c.Id.ToString().Substring(0, 4).ToUpper(),
                 c.PatientName,
                 c.Status,
-                c.Type,
                 c.Price,
                 c.CreatedAt,
                 c.PatientId,

@@ -19,12 +19,14 @@ public class LeadHandlerTests
             .Options;
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
+        landing_page_isis.Extensions.RateLimiterHelper.Reset();
         return context;
     }
 
     private LeadHandler CreateHandler(AppDbContext context)
     {
-        return new LeadHandler(context);
+        var httpAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor();
+        return new LeadHandler(context, httpAccessor);
     }
 
     [Fact]

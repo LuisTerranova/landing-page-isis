@@ -7,15 +7,24 @@ public static class AssetService
 
     private static string ResolvePath()
     {
-        var candidates = new[]
+        var candidates = new List<string>();
+
+        var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (current != null)
         {
-            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "isis-content-separator.png"),
-            Path.Combine(AppContext.BaseDirectory, "wwwroot", "isis-content-separator.png"),
-        };
+            candidates.Add(Path.Combine(current.FullName, "wwwroot", "isis-content-separator.png"));
+
+            foreach (var sub in current.EnumerateDirectories())
+            {
+                candidates.Add(Path.Combine(sub.FullName, "wwwroot", "isis-content-separator.png"));
+            }
+
+            current = current.Parent;
+        }
 
         return candidates.FirstOrDefault(File.Exists)
             ?? throw new FileNotFoundException(
-                "isis-content-separator.png not found. Checked: " + string.Join(", ", candidates)
+                "isis-content-separator.png not found."
             );
     }
 

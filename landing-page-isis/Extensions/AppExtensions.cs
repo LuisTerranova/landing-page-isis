@@ -47,8 +47,7 @@ public static class AppExtensions
         app.UseStaticFiles();
         app.UseRouting();
 
-        // Enforce rate limiting configurations (defined in BuilderExtensions)
-        app.UseRateLimiter();
+
 
         // Setup Blazor Authentication, Authorization, and Anti-forgery protections
         app.UseAuthentication();

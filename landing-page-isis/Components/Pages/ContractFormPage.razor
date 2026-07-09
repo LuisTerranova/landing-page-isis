@@ -3,16 +3,12 @@
 @using landing_page_isis.core.Helpers
 @using landing_page_isis.core.Interfaces
 @using landing_page_isis.core.Models
-@using landing_page_isis.Infrastructure.Data
+
 @rendermode InteractiveServer
-@* Apply the 'contract-policy' rate limiter to prevent script-based form submission flooding *@
-@attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
+
 @inject IContractHandler ContractHandler
-@inject IPatientHandler PatientHandler
-@inject ICoupleHandler CoupleHandler
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject AppDbContext DbContext
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="py-16">
     <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
@@ -241,7 +237,6 @@
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="CPF do Pagador" Variant="Variant.Outlined"
                                       Value="@PayerCpfDisplay" ReadOnly="true"
-                                      Style="@($"background-color: #f5f5f5; cursor: not-allowed;")"
                                       FullWidth="true" />
                     </MudItem>
                     <MudItem xs="12">
@@ -298,7 +293,6 @@
     private MudForm _coupleForm = null!;
     private bool _coupleFormValid;
 
-    private string _coupleName = string.Empty;
     private string _p1Name = string.Empty;
     private string _p1Cpf = string.Empty;
     private string _p1Email = string.Empty;
@@ -390,88 +384,36 @@
         }
 
         _processing = true;
-        
-        // Wrap the complete multi-entity registration inside an atomic database transaction to prevent partial couples creation on failure
-        await using var transaction = await DbContext.Database.BeginTransactionAsync();
         try
         {
-            var p1 = new Patient
-            {
-                Name = _p1Name,
-                Cpf = _p1Cpf,
-                Email = _p1Email,
-                Phone = _p1Phone,
-                StateOfResidency = _p1State,
-                BirthDate = _p1BirthDate.HasValue ? DateOnly.FromDateTime(_p1BirthDate.Value) : null,
-            };
-
-            var p2 = new Patient
-            {
-                Name = _p2Name,
-                Cpf = _p2Cpf,
-                Email = _p2Email,
-                Phone = _p2Phone,
-                StateOfResidency = _p2State,
-                BirthDate = _p2BirthDate.HasValue ? DateOnly.FromDateTime(_p2BirthDate.Value) : null,
-            };
-
-            var p1Result = await PatientHandler.CreatePatient(p1);
-            if (!p1Result.Success)
-            {
-                await transaction.RollbackAsync();
-                Snackbar.Add($"Erro no Parceiro 1: {p1Result.Message}", Severity.Error);
-                return;
-            }
-
-            var p2Result = await PatientHandler.CreatePatient(p2);
-            if (!p2Result.Success)
-            {
-                await transaction.RollbackAsync();
-                Snackbar.Add($"Erro no Parceiro 2: {p2Result.Message}", Severity.Error);
-                return;
-            }
-
-            var payerName = _payerChoice == "partner1" ? p1.Name : p2.Name;
-            var payerCpf = _payerChoice == "partner1" ? p1.Cpf : p2.Cpf;
-
-            var coupleName = string.IsNullOrWhiteSpace(_coupleName)
-                ? $"{_p1Name} & {_p2Name}"
-                : _coupleName;
-
-            var couple = new Couple
-            {
-                Name = coupleName,
-                Patient1Id = p1.Id,
-                Patient2Id = p2.Id,
-                PayerName = payerName,
-                PayerCpf = payerCpf,
-                PolicySigned = true,
-            };
-
-            var coupleResult = await CoupleHandler.CreateCouple(couple);
-            if (!coupleResult.Success)
-            {
-                await transaction.RollbackAsync();
-                Snackbar.Add($"Erro ao criar casal: {coupleResult.Message}", Severity.Error);
-                return;
-            }
-
             var isP1Payer = _payerChoice == "partner1";
+            var payerName = isP1Payer ? _p1Name : _p2Name;
+            var payerCpf = isP1Payer ? _p1Cpf : _p2Cpf;
+
             var contract = new Contract
             {
-                CoupleId = couple.Id,
                 PatientName = payerName,
                 PatientCpf = payerCpf,
-                PatientPhone = isP1Payer ? p1.Phone : p2.Phone,
-                PatientEmail = isP1Payer ? p1.Email : p2.Email,
-                PatientState = isP1Payer ? p1.StateOfResidency : p2.StateOfResidency,
+                PatientPhone = isP1Payer ? _p1Phone : _p2Phone,
+                PatientEmail = isP1Payer ? _p1Email : _p2Email,
+                PatientState = isP1Payer ? _p1State : _p2State,
+                PatientBirthDate = isP1Payer
+                    ? (_p1BirthDate.HasValue ? DateOnly.FromDateTime(_p1BirthDate.Value) : null)
+                    : (_p2BirthDate.HasValue ? DateOnly.FromDateTime(_p2BirthDate.Value) : null),
+                Patient2Name = isP1Payer ? _p2Name : _p1Name,
+                Patient2Cpf = isP1Payer ? _p2Cpf : _p1Cpf,
+                Patient2Phone = isP1Payer ? _p2Phone : _p1Phone,
+                Patient2Email = isP1Payer ? _p2Email : _p1Email,
+                Patient2State = isP1Payer ? _p2State : _p1State,
+                Patient2BirthDate = isP1Payer
+                    ? (_p2BirthDate.HasValue ? DateOnly.FromDateTime(_p2BirthDate.Value) : null)
+                    : (_p1BirthDate.HasValue ? DateOnly.FromDateTime(_p1BirthDate.Value) : null),
                 TermsAccepted = true,
             };
 
             var result = await ContractHandler.CreateContract(contract);
             if (result.Success)
             {
-                await transaction.CommitAsync();
                 Snackbar.Add("Seus dados foram enviados com sucesso! Em breve entraremos em contato.", Severity.Success);
                 _p1Name = _p1Cpf = _p1Email = _p1Phone = _p1State = string.Empty;
                 _p2Name = _p2Cpf = _p2Email = _p2Phone = _p2State = string.Empty;
@@ -481,13 +423,11 @@
             }
             else
             {
-                await transaction.RollbackAsync();
                 Snackbar.Add($"Erro ao enviar: {result.Message}", Severity.Error);
             }
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
             Snackbar.Add("Ocorreu um erro inesperado ao enviar seus dados.", Severity.Error);
         }
         finally

@@ -59,44 +59,7 @@ public static class BuilderExtensions
 
         builder.Services.AddAuthorization();
 
-        // Fixed-window rate limiting policies to prevent endpoint abuse
-        builder.Services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status429TooManyRequests;
-            
-            // Limit authentication attempts: 5 requests per 5 minutes per IP
-            options.AddPolicy("auth-policy", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 5,
-                        Window = TimeSpan.FromMinutes(5),
-                        QueueLimit = 0
-                    }));
 
-            // Limit lead registration attempts: 3 requests per 1 minute per IP
-            options.AddPolicy("lead-policy", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 3,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0
-                    }));
-
-            // Limit contract endpoints access: 2 requests per 5 minutes per IP
-            options.AddPolicy("contract-policy", httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 2,
-                        Window = TimeSpan.FromMinutes(5),
-                        QueueLimit = 0
-                    }));
-        });
 
         // Forwarded Headers configuration to resolve scheme and client IPs correctly behind proxies (Cloudflare, Nginx)
         builder.Services.Configure<ForwardedHeadersOptions>(options =>

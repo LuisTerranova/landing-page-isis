@@ -44,8 +44,6 @@ public class Contract
 
     public int? InitialAppointments { get; set; }
 
-    public ContractType? Type { get; set; }
-
     public decimal? PackagePrice { get; set; }
 
     public string? AcceptanceToken { get; set; }
@@ -70,4 +68,25 @@ public class Contract
     public Guid? CoupleId { get; set; }
 
     public Couple? Couple { get; set; }
+
+    public string? CoupleName { get; set; }
+
+    [MaxLength(150)]
+    public string? Patient2Name { get; set; }
+
+    [MaxLength(14)]
+    public string? Patient2Cpf { get; set; }
+
+    [MaxLength(255)]
+    public string? Patient2Email { get; set; }
+
+    [MaxLength(11)]
+    public string Patient2Phone { get; set; } = string.Empty;
+
+    [MaxLength(2)]
+    public string? Patient2State { get; set; }
+
+    public DateOnly? Patient2BirthDate { get; set; }
+
+    public string? Patient2CpfHash { get; set; }
 }

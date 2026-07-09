@@ -5,7 +5,6 @@ public record ContractListItemDto(
     string FormId,
     string PatientName,
     ContractStatus Status,
-    ContractType? Type,
     decimal? Price,
     DateTimeOffset CreatedAt,
     Guid? PatientId = null,

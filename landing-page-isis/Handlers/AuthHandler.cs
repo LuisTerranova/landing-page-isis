@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
+using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,10 @@ public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContex
 
     public async Task<HandlerResult> Login(string username, string password)
     {
+        var ip = Context?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (!await RateLimiterHelper.CheckAsync($"auth:{ip}", 5, TimeSpan.FromMinutes(5)))
+            return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
+
         if (Context == null)
             return new HandlerResult(false, "Erro de conexão.");
 

@@ -2,6 +2,7 @@ using landing_page_isis.core;
 using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -20,13 +21,15 @@ public class ContractHandlerTests
 
         Environment.SetEnvironmentVariable("ENCRYPTION_KEY", "test-encryption-key-32-bytes----");
         Environment.SetEnvironmentVariable("CPF_HASH_PEPPER", "test-pepper-secret");
+        landing_page_isis.Extensions.RateLimiterHelper.Reset();
 
         return context;
     }
 
     private static ContractHandler CreateHandler(AppDbContext context)
     {
-        return new ContractHandler(context);
+        var httpAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor();
+        return new ContractHandler(context, httpAccessor);
     }
 
     private static Contract CreateValidContract(string? cpf = null)
@@ -647,7 +650,39 @@ public class ContractHandlerTests
         });
 
         Assert.False(result.Success);
-        Assert.Equal("Não é possível alterar um contrato já finalizado.", result.Message);
+        Assert.Equal("Contrato ativo só pode ser alterado para Cancelado.", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateContract_ShouldCancel_WhenChangingFromAtivo()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var id = Guid.NewGuid();
+        context.Contracts.Add(new Contract
+        {
+            Id = id,
+            PatientName = "To Cancel",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Status = ContractStatus.Ativo,
+        });
+        await context.SaveChangesAsync();
+
+        var result = await handler.UpdateContract(new Contract
+        {
+            Id = id,
+            PatientName = "To Cancel",
+            PatientPhone = "11999999999",
+            TermsAccepted = true,
+            Status = ContractStatus.Cancelado,
+        });
+
+        Assert.True(result.Success);
+        var saved = await context.Contracts.FindAsync(id);
+        Assert.NotNull(saved);
+        Assert.Equal(ContractStatus.Cancelado, saved.Status);
     }
 
     [Fact]
@@ -677,7 +712,7 @@ public class ContractHandlerTests
         });
 
         Assert.False(result.Success);
-        Assert.Equal("Não é possível alterar um contrato já finalizado.", result.Message);
+        Assert.Equal("Não é possível alterar um contrato cancelado.", result.Message);
     }
 
     [Fact]

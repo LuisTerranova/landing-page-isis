@@ -84,11 +84,6 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .IsRequired(false)
             .HasColumnName("initial_appointments");
 
-        builder.Property(c => c.Type)
-            .IsRequired(false)
-            .HasConversion<string>()
-            .HasColumnName("type");
-
         builder.Property(c => c.PackagePrice)
             .IsRequired(false)
             .HasColumnName("package_price");
@@ -160,5 +155,56 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
         builder.HasIndex(c => c.CoupleId)
             .IsUnique()
             .HasFilter("\"couple_id\" IS NOT NULL");
+
+        builder.Property(c => c.CoupleName)
+            .IsRequired(false)
+            .HasMaxLength(150)
+            .HasColumnName("couple_name");
+
+        builder.Property(c => c.Patient2Name)
+            .IsRequired(false)
+            .HasMaxLength(150)
+            .HasColumnName("patient2_name");
+
+        builder.Property(c => c.Patient2Cpf)
+            .IsRequired(false)
+            .HasMaxLength(255)
+            .HasColumnName("patient2_cpf")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
+
+        builder.Property(c => c.Patient2Email)
+            .IsRequired(false)
+            .HasMaxLength(255)
+            .HasColumnName("patient2_email")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
+
+        builder.Property(c => c.Patient2Phone)
+            .IsRequired(false)
+            .HasMaxLength(255)
+            .HasColumnName("patient2_phone")
+            .HasConversion(
+                v => AesEncryptionService.Encrypt(v ?? ""),
+                v => AesEncryptionService.Decrypt(v)
+            );
+
+        builder.Property(c => c.Patient2State)
+            .IsRequired(false)
+            .HasMaxLength(2)
+            .HasColumnName("patient2_state");
+
+        builder.Property(c => c.Patient2BirthDate)
+            .IsRequired(false)
+            .HasColumnName("patient2_birth_date");
+
+        builder.Property(c => c.Patient2CpfHash)
+            .IsRequired(false)
+            .HasMaxLength(64)
+            .HasColumnName("patient2_cpf_hash");
     }
 }

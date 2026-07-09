@@ -24,7 +24,6 @@
         <MudTh>ID</MudTh>
         <MudTh>Nome</MudTh>
         <MudTh>Status</MudTh>
-        <MudTh>Tipo</MudTh>
         <MudTh>Valor</MudTh>
         <MudTh>Criado em</MudTh>
     </HeaderColumns>
@@ -55,7 +54,6 @@
                 @context.Status
             </MudChip>
         </MudTd>
-        <MudTd DataLabel="Tipo">@(context.Type?.ToString() ?? "—")</MudTd>
         <MudTd DataLabel="Valor">@(context.Price.HasValue ? $"R$ {context.Price.Value:F2}" : "—")</MudTd>
         <MudTd DataLabel="Criado em">@context.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy")</MudTd>
     </RowColumns>
@@ -73,8 +71,5 @@
                 <MudIcon Icon="@Icons.Material.Filled.Link" Class="me-2" /> Copiar Link
             </MudMenuItem>
         }
-        <MudMenuItem OnClick="@(() => ConvertToPatient(context))">
-            <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" /> Transformar em Paciente
-        </MudMenuItem>
     </CustomActions>
 </GenericTable>

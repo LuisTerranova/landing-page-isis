@@ -2,6 +2,7 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,8 @@ namespace landing_page_isis.Handlers;
 /// Handles patient leads lifecycle operations, including onboarding validation, approval/promotion to Patient entity, periodic purging, and WhatsApp link generation.
 /// </summary>
 public partial class LeadHandler(
-    AppDbContext context
+    AppDbContext context,
+    IHttpContextAccessor httpContextAccessor
 ) : ILeadHandler
 {
 
@@ -55,6 +57,10 @@ public partial class LeadHandler(
     {
         if (lead == null)
             return new HandlerResult(false, "Dados não podem ser nulos.");
+
+        var ip = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (!await RateLimiterHelper.CheckAsync($"lead:{ip}", 3, TimeSpan.FromMinutes(1)))
+            return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
 
         if (!string.IsNullOrEmpty(lead.Phone))
             lead.Phone = OnlyNumbersRegex().Replace(lead.Phone, "");

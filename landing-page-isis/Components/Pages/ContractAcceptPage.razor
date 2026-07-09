@@ -4,8 +4,7 @@
 @using landing_page_isis.core
 @using landing_page_isis.core.Models
 @using RazorLight
-@* Enforce the 'contract-policy' rate limiter to mitigate token brute-forcing and denial-of-service attempts *@
-@attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
+
 @rendermode InteractiveServer
 @inject IContractHandler ContractHandler
 @inject ISnackbar Snackbar
@@ -169,38 +168,43 @@
     private CancellationTokenSource? _redirectCts;
  
     private ElementReference _contractDiv;
- 
+    private bool _scrollMonitorAttached;
+    private DotNetObjectReference<ContractAcceptPage>? _dotNetRef;
+
     protected override async Task OnInitializedAsync()
     {
         _contract = await ContractHandler.GetContractByToken(Token);
- 
+
         if (_contract is { Status: ContractStatus.AguardandoAceitacao }
             && (_contract.TokenGeneratedAt ?? _contract.CreatedAt).AddDays(2) < DateTimeOffset.UtcNow)
         {
             _expired = true;
         }
- 
+
         if (_contract is { Status: ContractStatus.Ativo })
         {
             StartRedirectTimer();
         }
- 
+
         _loading = false;
     }
- 
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Set up JS scrolling monitor dynamically once identity verification passes
-        if (firstRender && _contract is { Status: ContractStatus.AguardandoAceitacao } && _cpfVerified)
+        if (!_scrollMonitorAttached
+            && _contract is { Status: ContractStatus.AguardandoAceitacao }
+            && _cpfVerified)
         {
-            await Js.InvokeVoidAsync("monitorContractScroll", _contractDiv, DotNetObjectReference.Create(this));
+            _scrollMonitorAttached = true;
+            await Task.Delay(200);
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("monitorContractScroll", _contractDiv, _dotNetRef);
         }
     }
- 
+
     [JSInvokable]
     public Task OnScrolledToBottom()
     {
-        // Callback invoked by JS once the element scroll reaches the bottom (legal consent validation)
         _hasScrolledToBottom = true;
         StateHasChanged();
         return Task.CompletedTask;
@@ -232,6 +236,7 @@
     {
         _redirectCts?.Cancel();
         _redirectCts?.Dispose();
+        _dotNetRef?.Dispose();
     }
  
     private void ConfirmCpf()

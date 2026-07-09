@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using landing_page_isis.Infrastructure.Data;
@@ -11,9 +12,11 @@ using landing_page_isis.Infrastructure.Data;
 namespace landingpageisis.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709203055_RemoveContractType")]
+    partial class RemoveContractType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -227,11 +230,6 @@ namespace landingpageisis.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("couple_id");
 
-                    b.Property<string>("CoupleName")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("couple_name");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -247,40 +245,6 @@ namespace landingpageisis.Migrations
                     b.Property<decimal?>("PackagePrice")
                         .HasColumnType("numeric")
                         .HasColumnName("package_price");
-
-                    b.Property<DateOnly?>("Patient2BirthDate")
-                        .HasColumnType("date")
-                        .HasColumnName("patient2_birth_date");
-
-                    b.Property<string>("Patient2Cpf")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("patient2_cpf");
-
-                    b.Property<string>("Patient2CpfHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("patient2_cpf_hash");
-
-                    b.Property<string>("Patient2Email")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("patient2_email");
-
-                    b.Property<string>("Patient2Name")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("patient2_name");
-
-                    b.Property<string>("Patient2Phone")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("patient2_phone");
-
-                    b.Property<string>("Patient2State")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("patient2_state");
 
                     b.Property<DateOnly?>("PatientBirthDate")
                         .HasColumnType("date")
