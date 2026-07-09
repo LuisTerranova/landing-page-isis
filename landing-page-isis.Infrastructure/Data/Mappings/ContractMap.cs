@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace landing_page_isis.Infrastructure.Data.Mappings;
 
+/// <summary>
+/// Configures Entity Framework mapping configurations for the Contract model, including table schema, relationship constraints, PII encryption, and indexing.
+/// </summary>
 public class ContractMap : IEntityTypeConfiguration<Contract>
 {
     public void Configure(EntityTypeBuilder<Contract> builder)
@@ -16,6 +19,7 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .HasMaxLength(150)
             .HasColumnName("patient_name");
 
+        // Encrypt Patient CPF in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder.Property(c => c.PatientCpf)
             .IsRequired(false)
             .HasMaxLength(255)
@@ -25,6 +29,7 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
                 v => AesEncryptionService.Decrypt(v)
             );
 
+        // Encrypt Patient Email in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder.Property(c => c.PatientEmail)
             .IsRequired(false)
             .HasMaxLength(255)
@@ -34,6 +39,7 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
                 v => AesEncryptionService.Decrypt(v)
             );
 
+        // Encrypt Patient Phone in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder.Property(c => c.PatientPhone)
             .IsRequired()
             .HasMaxLength(255)
@@ -92,6 +98,7 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .HasMaxLength(100)
             .HasColumnName("acceptance_token");
 
+        // Unique index on acceptance tokens ensures uniqueness while ignoring nulls (allowing drafts without tokens generated yet)
         builder.HasIndex(c => c.AcceptanceToken)
             .IsUnique()
             .HasFilter("\"acceptance_token\" IS NOT NULL");
@@ -127,6 +134,7 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .HasMaxLength(64)
             .HasColumnName("patient_cpf_hash");
 
+        // Unique index on CPF hash ensures uniqueness only when populated, allowing multiple records with null hashes
         builder.HasIndex(c => c.PatientCpfHash)
             .IsUnique()
             .HasFilter("\"patient_cpf_hash\" IS NOT NULL");

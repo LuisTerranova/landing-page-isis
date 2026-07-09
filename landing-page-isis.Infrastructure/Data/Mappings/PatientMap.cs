@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace landing_page_isis.Infrastructure.Data.Mappings;
 
+/// <summary>
+/// Configures Entity Framework mapping configurations for the Patient model, including schema fields, PII encryption, and indexing.
+/// </summary>
 public class PatientMap : IEntityTypeConfiguration<Patient>
 {
     public void Configure(EntityTypeBuilder<Patient> builder)
@@ -13,6 +16,7 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
 
         builder.Property(p => p.Name).IsRequired().HasMaxLength(150).HasColumnName("name");
 
+        // Encrypt CPF in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder
             .Property(p => p.Cpf)
             .IsRequired(false)
@@ -25,6 +29,7 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
 
         builder.Property(p => p.BirthDate).IsRequired(false).HasColumnName("birth_date");
 
+        // Encrypt Email in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder
             .Property(p => p.Email)
             .IsRequired(false)
@@ -35,6 +40,7 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
                 v => AesEncryptionService.Decrypt(v)
             );
 
+        // Encrypt Phone in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder
             .Property(p => p.Phone)
             .IsRequired()
@@ -63,6 +69,7 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
             .HasMaxLength(150)
             .HasColumnName("payer_name");
 
+        // Encrypt Payer CPF in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
         builder
             .Property(p => p.PayerCpf)
             .IsRequired(false)
@@ -80,6 +87,7 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
             .HasMaxLength(64)
             .HasColumnName("cpf_hash");
 
+        // Unique index on CPF hash ensures uniqueness only when populated, allowing multiple records with null hashes
         builder.HasIndex(p => p.CpfHash)
             .IsUnique()
             .HasFilter("\"cpf_hash\" IS NOT NULL");

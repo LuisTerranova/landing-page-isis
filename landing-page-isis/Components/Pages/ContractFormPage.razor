@@ -5,6 +5,7 @@
 @using landing_page_isis.core.Models
 @using landing_page_isis.Infrastructure.Data
 @rendermode InteractiveServer
+@* Apply the 'contract-policy' rate limiter to prevent script-based form submission flooding *@
 @attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
 @inject IContractHandler ContractHandler
 @inject IPatientHandler PatientHandler
@@ -316,6 +317,7 @@
     {
         get
         {
+            // Compute and format the payer's CPF reactively depending on the selected partner choice
             var raw = _payerChoice == "partner1" ? _p1Cpf : _p2Cpf;
             if (string.IsNullOrEmpty(raw))
                 return string.Empty;
@@ -388,6 +390,8 @@
         }
 
         _processing = true;
+        
+        // Wrap the complete multi-entity registration inside an atomic database transaction to prevent partial couples creation on failure
         await using var transaction = await DbContext.Database.BeginTransactionAsync();
         try
         {

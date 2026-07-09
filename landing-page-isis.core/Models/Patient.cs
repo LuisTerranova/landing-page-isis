@@ -1,7 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace landing_page_isis.core.Models;
 
+/// <summary>
+/// Represents an individual patient profile in the system, storing clinical metadata and linking to contracts and appointments.
+/// </summary>
 public class Patient
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -41,5 +44,6 @@ public class Patient
 
     public Contract? Contract { get; set; }
 
+    // Cryptographic hash of the patient's CPF, used for duplicate checking without violating PII protection rules
     public string? CpfHash { get; set; }
 }

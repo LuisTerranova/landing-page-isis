@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace landing_page_isis.core.Models;
 
+/// <summary>
+/// Represents a service contract drafted for a patient or couple, tracking pricing, terms acceptance, and signature metadata.
+/// </summary>
 public class Contract
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -59,6 +62,7 @@ public class Contract
 
     public Guid? PatientId { get; set; }
 
+    // Cryptographic hash of the patient's CPF, used for duplicate checking without violating PII protection rules
     public string? PatientCpfHash { get; set; }
 
     public Patient? Patient { get; set; }

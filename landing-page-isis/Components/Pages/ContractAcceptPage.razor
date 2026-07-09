@@ -4,6 +4,7 @@
 @using landing_page_isis.core
 @using landing_page_isis.core.Models
 @using RazorLight
+@* Enforce the 'contract-policy' rate limiter to mitigate token brute-forcing and denial-of-service attempts *@
 @attribute [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("contract-policy")]
 @rendermode InteractiveServer
 @inject IContractHandler ContractHandler
@@ -67,18 +68,19 @@
     }
     else if (_contract.Status == ContractStatus.AguardandoAceitacao && !_cpfVerified)
     {
+        @* Challenge the patient for the last 3 digits of their CPF to protect sensitive contract contents before display *@
         <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px; max-width: 500px; margin: 0 auto;">
             <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Primary" Size="Size.Large" />
             <MudText Typo="Typo.h5" Style="color: #284B32; font-weight: 700;" Class="mt-4">Confirme sua identidade</MudText>
             <MudText Typo="Typo.body1" Class="mt-4 mb-6">
                 Para sua segurança, confirme os <strong>3 últimos dígitos</strong> do CPF cadastrado.
             </MudText>
-
+ 
             <div class="d-flex flex-column align-center" style="gap: 8px;">
                 <MudText Typo="Typo.body2">
                     CPF: <strong>XXX.XXX.XXX-</strong>
                 </MudText>
-
+ 
                 <MudTextField T="string"
                               Variant="Variant.Outlined"
                               Label="Últimos 3 dígitos"
@@ -87,7 +89,7 @@
                               Style="width: 160px;"
                               Error="@(!string.IsNullOrEmpty(_cpfError))"
                               ErrorText="@_cpfError" />
-
+ 
                 <MudButton Variant="Variant.Filled"
                            Style="background-color: #284B32; color: white; font-weight: 700; border-radius: 12px; height: 48px; width: 160px;"
                            OnClick="ConfirmCpf">
@@ -104,7 +106,7 @@
         <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-4 text-center">
             Por favor, leia o contrato abaixo até o final para habilitar a aceitação.
         </MudText>
-
+ 
         <MudPaper Elevation="4" Style="border-radius: 24px; overflow: hidden;">
             <div @ref="_contractDiv"
                  id="contract-content"
@@ -112,7 +114,7 @@
                 @((MarkupString)(_contract.ContractDocumentHtml ?? ""))
             </div>
         </MudPaper>
-
+ 
         <div class="d-flex flex-column align-center mt-4" style="gap: 12px;">
             <MudAlert Severity="@(_hasScrolledToBottom ? Severity.Success : Severity.Warning)"
                       Class="mb-2" Style="max-width: 500px;">
@@ -131,7 +133,7 @@
                     </MudText>
                 }
             </MudAlert>
-
+ 
             <MudButton Variant="Variant.Filled"
                        Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px; padding: 0 48px;"
                        OnClick="ShowAcceptConfirmation"
@@ -149,66 +151,68 @@
         </div>
     }
 </MudContainer>
-
+ 
 @code {
     [Parameter] public string Token { get; set; } = string.Empty;
-
+ 
     private Contract? _contract;
     private bool _loading = true;
     private bool _expired;
     private bool _accepting;
     private bool _hasScrolledToBottom;
-
+ 
     private bool _cpfVerified;
     private string _cpfInput = string.Empty;
     private string _cpfError = string.Empty;
-
+ 
     private int _redirectSeconds;
     private CancellationTokenSource? _redirectCts;
-
+ 
     private ElementReference _contractDiv;
-
+ 
     protected override async Task OnInitializedAsync()
     {
         _contract = await ContractHandler.GetContractByToken(Token);
-
+ 
         if (_contract is { Status: ContractStatus.AguardandoAceitacao }
             && (_contract.TokenGeneratedAt ?? _contract.CreatedAt).AddDays(2) < DateTimeOffset.UtcNow)
         {
             _expired = true;
         }
-
+ 
         if (_contract is { Status: ContractStatus.Ativo })
         {
             StartRedirectTimer();
         }
-
+ 
         _loading = false;
     }
-
+ 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Set up JS scrolling monitor dynamically once identity verification passes
         if (firstRender && _contract is { Status: ContractStatus.AguardandoAceitacao } && _cpfVerified)
         {
             await Js.InvokeVoidAsync("monitorContractScroll", _contractDiv, DotNetObjectReference.Create(this));
         }
     }
-
+ 
     [JSInvokable]
     public Task OnScrolledToBottom()
     {
+        // Callback invoked by JS once the element scroll reaches the bottom (legal consent validation)
         _hasScrolledToBottom = true;
         StateHasChanged();
         return Task.CompletedTask;
     }
-
+ 
     private void StartRedirectTimer()
     {
         _redirectSeconds = 5;
         _redirectCts = CancellationTokenSource.CreateLinkedTokenSource(new CancellationToken());
         _ = RedirectAfterDelayAsync(_redirectCts.Token);
     }
-
+ 
     private async Task RedirectAfterDelayAsync(CancellationToken ct)
     {
         while (_redirectSeconds > 0 && !ct.IsCancellationRequested)
@@ -217,41 +221,41 @@
             _redirectSeconds--;
             await InvokeAsync(StateHasChanged);
         }
-
+ 
         if (!ct.IsCancellationRequested)
         {
             Navigation.NavigateTo("/", forceLoad: true);
         }
     }
-
+ 
     public void Dispose()
     {
         _redirectCts?.Cancel();
         _redirectCts?.Dispose();
     }
-
+ 
     private void ConfirmCpf()
     {
         _cpfError = string.Empty;
-
+ 
         if (string.IsNullOrEmpty(_contract?.PatientCpf))
         {
             _cpfVerified = true;
             return;
         }
-
+ 
         var digits = new string(_contract.PatientCpf.Where(char.IsDigit).ToArray());
         var lastThree = digits.Length >= 3 ? digits[^3..] : digits;
-
+ 
         if (_cpfInput.Trim() != lastThree)
         {
             _cpfError = "Os dígitos não conferem. Tente novamente.";
             return;
         }
-
+ 
         _cpfVerified = true;
     }
-
+ 
     private async Task ShowAcceptConfirmation()
     {
         var options = new DialogOptions
@@ -260,7 +264,7 @@
             BackdropClick = false,
             CloseButton = true,
         };
-
+ 
         var confirmed = await DialogService.ShowMessageBoxAsync(
             "Confirmar Aceitação",
             "Tem certeza que deseja aceitar este contrato? Esta ação é irreversível.",
@@ -268,13 +272,13 @@
             cancelText: "Cancelar",
             options: options
         );
-
+ 
         if (confirmed == true)
         {
             await AcceptContract();
         }
     }
-
+ 
     private async Task AcceptContract()
     {
         _accepting = true;
@@ -282,22 +286,24 @@
         {
             if (_contract == null)
                 return;
-
+ 
             var renderContract = _contract;
+            
+            // If couple contract, fetch full couple record (with both partner names) to render the HTML template properly
             if (_contract.CoupleId.HasValue)
             {
                 renderContract = await ContractHandler.GetContractByCoupleId(_contract.CoupleId.Value);
             }
-
+ 
             var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", renderContract ?? _contract);
-
+ 
             var result = await ContractHandler.AcceptContract(Token, html);
             if (result.Success)
             {
                 _contract.Status = ContractStatus.Ativo;
                 _contract.AcceptedAt = DateTimeOffset.UtcNow;
                 _contract.ContractDocumentHtml = html;
-
+ 
                 StartRedirectTimer();
                 StateHasChanged();
             }

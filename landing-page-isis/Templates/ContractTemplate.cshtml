@@ -2,6 +2,9 @@
 @using landing_page_isis.core.Models
 @using landing_page_isis.Extensions
 @model Contract
+@{
+    var separatorUri = landing_page_isis.Extensions.AssetService.GetSeparatorDataUri();
+}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -148,6 +151,14 @@
 
         .footer strong {
             color: #7E0F20;
+        }
+
+        .footer-separator {
+            display: block;
+            width: 80px;
+            height: auto;
+            margin: 0 auto 12px auto;
+            opacity: 0.15;
         }
     </style>
 </head>
@@ -385,6 +396,7 @@
         </div>
     </div>
     <div class="footer">
+        <img src="@separatorUri" alt="" class="footer-separator" />
         <p>
             <strong>Isis Vitória Alves da Silva Barbosa</strong> — Psicóloga Clínica<br>
             Este documento foi gerado eletronicamente e é válido como contrato de prestação de serviços.

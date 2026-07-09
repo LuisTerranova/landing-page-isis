@@ -4,13 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace landing_page_isis.Data;
 
+/// <summary>
+/// Handles database startup migrations application and seeds the default administrator account.
+/// </summary>
 public static class DatabaseSeed
 {
     public static async Task SeedAdmin(this IHost app)
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        
+        // Apply any pending EF Core database migrations dynamically on startup
         await context.Database.MigrateAsync();
+        
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
@@ -48,6 +54,7 @@ public static class DatabaseSeed
         {
             Email = email,
             Name = name ?? "Admin",
+            // Hash the admin's password via BCrypt before saving to database
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
         };
 
