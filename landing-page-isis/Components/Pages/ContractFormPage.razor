@@ -368,6 +368,9 @@
         }
     }
 
+    static string FirstName(string fullName) =>
+    fullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
+
     private async Task HandleSubmitCouple()
     {
         if (!_termsAccepted)
@@ -408,6 +411,7 @@
                 Patient2BirthDate = isP1Payer
                     ? (_p2BirthDate.HasValue ? DateOnly.FromDateTime(_p2BirthDate.Value) : null)
                     : (_p1BirthDate.HasValue ? DateOnly.FromDateTime(_p1BirthDate.Value) : null),
+                CoupleName = $"{FirstName(payerName)} e {FirstName(isP1Payer ? _p2Name : _p1Name)}",
                 TermsAccepted = true,
             };
 

@@ -36,8 +36,8 @@
             <div class="d-flex align-center gap-2">
                 @if (context.CoupleId.HasValue)
                 {
-                    <span>Casal: @context.CoupleName</span>
-                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">Casal</MudChip>
+                    var coupleDisplay = !string.IsNullOrWhiteSpace(context.CoupleName) ? context.CoupleName : context.PatientName;
+                    <span>Casal: @coupleDisplay</span>
                 }
                 else
                 {

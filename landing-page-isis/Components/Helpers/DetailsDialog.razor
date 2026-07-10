@@ -143,13 +143,13 @@
                         <MudForm @bind-IsValid="_isFormValid">
                             <MudGrid>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.Name" Label="Nome" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="150" Counter="150" Immediate="true" />
+                                    <MudTextField @bind-Value="_patientModel.Name" Label="Nome" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="150" Counter="150" Immediate="true" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.Email" Label="E-mail" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="255" Counter="255" Immediate="true" />
+                                    <MudTextField @bind-Value="_patientModel.Email" Label="E-mail" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="255" Counter="255" Immediate="true" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.Phone" Label="Telefone" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="11" Counter="11" />
+                                    <MudTextField @bind-Value="_patientModel.Phone" Label="Telefone" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="11" Counter="11" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
@@ -173,7 +173,7 @@
                                     }
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.StateOfResidency" Label="Estado (UF)" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="2" />
+                                    <MudTextField @bind-Value="_patientModel.StateOfResidency" Label="Estado (UF)" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="2" />
                                 </MudItem>
                                 <MudItem xs="12">
                                     <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
@@ -183,7 +183,7 @@
                                     </MudText>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.PayerName" Label="Nome do Pagador" ReadOnly="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="150" Counter="150" />
+                                    <MudTextField @bind-Value="_patientModel.PayerName" Label="Nome do Pagador" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="150" Counter="150" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
