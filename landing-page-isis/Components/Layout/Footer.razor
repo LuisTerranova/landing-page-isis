@@ -18,37 +18,37 @@ Pós graduanda em neuropsicologia. Transformando histórias a partir de um lugar
                 <MudText Typo="Typo.h6" Style="font-weight: 700; color: white;" Class="mb-4">
                     Links Rápidos
                 </MudText>
-                <div class="d-flex flex-column gap-2">
+                <MudStack Row="false" Spacing="1">
                     <MudLink href="#sobre" Class="footer-link" Underline="Underline.None">Sobre Mim</MudLink>
                     <MudLink href="#servicos" Class="footer-link" Underline="Underline.None">Serviços</MudLink>
                     <MudLink href="#contato" Class="footer-link" Underline="Underline.None">Contato</MudLink>
-                </div>
+                </MudStack>
             </MudItem>
 
             <MudItem xs="12" sm="6" md="4">
                 <MudText Typo="Typo.h6" Style="font-weight: 700; color: white;" Class="mb-4">
                     Contato & Atendimento
                 </MudText>
-                <div class="d-flex flex-column gap-3">
-                    <div class="d-flex align-center gap-2">
+                <MudStack Row="false" Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                         <MudIcon Icon="@Icons.Material.Filled.Language" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
                         <MudText Typo="Typo.body2" Class="footer-link">
                             Atendimento 100% Online (Remoto)
                         </MudText>
-                    </div>
-                    <div class="d-flex align-center gap-2">
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                         <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
                         <MudText Typo="Typo.body2" Class="footer-link">
                             @Environment.GetEnvironmentVariable("CONTACT_PHONE")
                         </MudText>
-                    </div>
-                    <div class="d-flex align-center gap-2">
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                         <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Style="color: rgba(255,255,255,0.7);"/>
                         <MudText Typo="Typo.body2" Class="footer-link">
                             @Environment.GetEnvironmentVariable("EMAIL_ADDRESS")
                         </MudText>
-                    </div>
-                </div>
+                    </MudStack>
+                </MudStack>
             </MudItem>
         </MudGrid>
 

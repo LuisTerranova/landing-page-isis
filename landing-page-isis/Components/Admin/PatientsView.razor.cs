@@ -106,7 +106,7 @@ public partial class PatientsView : ComponentBase
             }
             else
             {
-                Snackbar.Add("Erro ao excluir o paciente.", Severity.Error);
+                Snackbar.Add(result.Message ?? "Erro ao excluir o paciente.", Severity.Error);
             }
         }
     }
@@ -398,7 +398,7 @@ public partial class PatientsView : ComponentBase
             }
             else
             {
-                Snackbar.Add("Erro ao excluir o casal.", Severity.Error);
+                Snackbar.Add(result.Message ?? "Erro ao excluir o casal.", Severity.Error);
             }
         }
     }

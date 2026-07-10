@@ -17,11 +17,11 @@
 <MudContainer MaxWidth="MaxWidth.Large" Class="py-8" Style="min-height: 75vh;">
     @if (_loading)
     {
-        <div class="d-flex flex-column align-center justify-center" style="min-height: 50vh;">
+        <MudStack Row="false" AlignItems="AlignItems.Center" Justify="Justify.Center" Style="min-height: 50vh;">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true"
                                  Size="Size.Large" Class="mb-4" />
             <MudText Typo="Typo.body1">Carregando contrato...</MudText>
-        </div>
+        </MudStack>
     }
     else if (_contract == null)
     {
@@ -75,11 +75,11 @@
                 Para sua segurança, confirme os <strong>3 últimos dígitos</strong> do CPF cadastrado.
             </MudText>
  
-            <div class="d-flex flex-column align-center" style="gap: 8px;">
+<MudStack Row="false" AlignItems="AlignItems.Center" Style="gap: 8px;">
                 <MudText Typo="Typo.body2">
                     CPF: <strong>XXX.XXX.XXX-</strong>
                 </MudText>
- 
+
                 <MudTextField T="string"
                               Variant="Variant.Outlined"
                               Label="Últimos 3 dígitos"
@@ -88,13 +88,13 @@
                               Style="width: 160px;"
                               Error="@(!string.IsNullOrEmpty(_cpfError))"
                               ErrorText="@_cpfError" />
- 
+
                 <MudButton Variant="Variant.Filled"
                            Style="background-color: #284B32; color: white; font-weight: 700; border-radius: 12px; height: 48px; width: 160px;"
                            OnClick="ConfirmCpf">
                     Confirmar
                 </MudButton>
-            </div>
+            </MudStack>
         </MudPaper>
     }
     else if (_contract.Status == ContractStatus.AguardandoAceitacao)
@@ -114,7 +114,7 @@
             </div>
         </MudPaper>
  
-        <div class="d-flex flex-column align-center mt-4" style="gap: 12px;">
+<MudStack Row="false" AlignItems="AlignItems.Center" Spacing="1" Class="mt-4">
             <MudAlert Severity="@(_hasScrolledToBottom ? Severity.Success : Severity.Warning)"
                       Class="mb-2" Style="max-width: 500px;">
                 @if (_hasScrolledToBottom)
@@ -132,7 +132,7 @@
                     </MudText>
                 }
             </MudAlert>
- 
+
             <MudButton Variant="Variant.Filled"
                        Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px; padding: 0 48px;"
                        OnClick="ShowAcceptConfirmation"
@@ -147,7 +147,7 @@
                     <MudText>ACEITAR CONTRATO</MudText>
                 }
             </MudButton>
-        </div>
+        </MudStack>
     }
 </MudContainer>
  
@@ -284,29 +284,31 @@
         }
     }
  
-    private async Task AcceptContract()
+private async Task AcceptContract()
     {
         _accepting = true;
         try
         {
             if (_contract == null)
                 return;
- 
+
             var renderContract = _contract;
-            
+
             // If couple contract, fetch full couple record (with both partner names) to render the HTML template properly
             if (_contract.CoupleId.HasValue)
             {
                 renderContract = await ContractHandler.GetContractByCoupleId(_contract.CoupleId.Value);
             }
- 
-            var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", renderContract ?? _contract);
- 
+
+            renderContract ??= _contract;
+            renderContract.AcceptedAt = DateTimeOffset.UtcNow;
+            var html = await RazorLight.CompileRenderAsync("ContractTemplate.cshtml", renderContract);
+
             var result = await ContractHandler.AcceptContract(Token, html);
             if (result.Success)
             {
                 _contract.Status = ContractStatus.Ativo;
-                _contract.AcceptedAt = DateTimeOffset.UtcNow;
+                _contract.AcceptedAt = renderContract.AcceptedAt;
                 _contract.ContractDocumentHtml = html;
  
                 StartRedirectTimer();

@@ -128,6 +128,12 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (patient == null)
             return new HandlerResult(false, "Paciente não encontrado.");
 
+        var couple = await context.Couples.AnyAsync(c =>
+            c.Patient1Id == id || c.Patient2Id == id);
+
+        if (couple)
+            return new HandlerResult(false, "Não é possível excluir este paciente porque ele faz parte de um casal. Remova o vínculo do casal antes de excluir.");
+
         context.Patients.Remove(patient);
         await context.SaveChangesAsync();
         return new HandlerResult(true);

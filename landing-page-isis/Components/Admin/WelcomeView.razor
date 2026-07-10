@@ -45,7 +45,7 @@ else
                 @(IsSearching ? "RESULTADOS DA BUSCA" : $"AGENDA DE {GetViewTitle()}")
             </MudText>
         </div>
-        <div class="d-flex align-center gap-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
             <div style="width: 250px;">
                 <landing_page_isis.Components.Helpers.SearchBar @bind-SearchQuery="_searchQuery" OnSearch="OnSearch" Placeholder="Localizar paciente..." />
             </div>
@@ -74,7 +74,7 @@ else
                                         })"/>
                 <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Primary" OnClick="@(async () => await ChangeDate(_currentView == ViewMode.Day ? 1 : 7))"/>
             </div>
-        </div>
+        </MudStack>
     </MudItem>
 
     @if (_loading)
@@ -101,7 +101,7 @@ else
                 <MudPaper Elevation="4"
                           Class="@(app.IsCouple ? "pa-6 hover-elevate transition-all schedule-card-couple" : "pa-6 hover-elevate transition-all schedule-card")"
                           Style="border-radius: 20px;">
-                    <div class="d-flex justify-space-between align-start mb-4">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="mb-4">
                         <div>
                             @{
                                 var pvhTime = app.Date.ToPortoVelhoTime();
@@ -117,9 +117,9 @@ else
                                 @app.Status.ToString().ToUpper()
                             </MudChip>
                         </div>
-                    </div>
+                    </MudStack>
 
-                    <div class="d-flex align-center gap-3 mb-4">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
                         <MudAvatar Color="Color.Primary" Size="Size.Medium" Style="border: 2px solid rgba(255,255,255,0.2)">@app.PatientName[0]</MudAvatar>
                         <div>
                             <MudText Typo="Typo.body1" Class="white-text" Style="font-weight: 700">@app.PatientName</MudText>
@@ -127,15 +127,15 @@ else
                                 @(app.IsCouple ? "Consulta terapêutica - Casal" : "Consulta Terapêutica")
                             </MudText>
                         </div>
-                    </div>
+                    </MudStack>
 
                     <MudDivider DividerType="DividerType.Middle" Class="my-4" Style="background-color: rgba(255,255,255,0.1);"/>
 
-                    <div class="d-flex justify-space-between align-center">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                         <MudText Typo="Typo.subtitle1" Class="white-text" Style="font-weight: 800">
                             @app.Price.ToString("C")
                         </MudText>
-                    </div>
+                    </MudStack>
 
                     @if (app.IsCouple)
                     {

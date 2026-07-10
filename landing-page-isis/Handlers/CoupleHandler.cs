@@ -118,6 +118,18 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
         if (couple == null)
             return new HandlerResult(false, "Casal não encontrado.");
 
+        var hasActivePackage = await context.AppointmentPackages.AnyAsync(p =>
+            p.CoupleId == id && p.Status == PackageStatus.Ativo);
+
+        if (hasActivePackage)
+            return new HandlerResult(false, "Não é possível excluir este casal porque ele possui um pacote de consultas ativo. Finalize ou cancele o pacote antes de excluir.");
+
+        var hasActiveContract = await context.Contracts.AnyAsync(c =>
+            c.CoupleId == id && c.Status == ContractStatus.Ativo);
+
+        if (hasActiveContract)
+            return new HandlerResult(false, "Não é possível excluir este casal porque ele possui um contrato ativo.");
+
         context.Couples.Remove(couple);
         await context.SaveChangesAsync();
         return new HandlerResult(true);

@@ -18,7 +18,7 @@
         Preencha seus dados para iniciarmos o processo. Após o envio, um de nossos profissionais entrará em contato.
     </MudText>
 
-    <div class="d-flex justify-center mb-6">
+    <MudStack Row="true" Justify="Justify.Center" Class="mb-6">
         <MudButton OnClick="@(() => _mode = Mode.Individual)"
                    Variant="@(_mode == Mode.Individual ? Variant.Filled : Variant.Outlined)"
                    Color="Color.Primary"
@@ -31,7 +31,7 @@
                    Class="px-8 rounded-r-xl">
             Casal
         </MudButton>
-    </div>
+    </MudStack>
 
     <MudPaper Elevation="4" Class="pa-8" Style="border-radius: 24px;">
         @if (_mode == Mode.Individual)
@@ -91,7 +91,7 @@
                         <MudDivider DividerType="DividerType.Middle" Class="my-4" />
                     </MudItem>
                     <MudItem xs="12">
-                        <div class="d-flex align-center">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
                             <MudCheckBox @bind-Value="_termsAccepted" />
                             <MudText Typo="Typo.body2" Class="ml-2">
                                 Declaro que li e aceito os
@@ -100,7 +100,7 @@
                                 </MudLink>
                                 e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
                             </MudText>
-                        </div>
+                        </MudStack>
                     </MudItem>
                 </MudGrid>
 
@@ -240,7 +240,7 @@
                                       FullWidth="true" />
                     </MudItem>
                     <MudItem xs="12">
-                        <div class="d-flex align-center">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
                             <MudCheckBox @bind-Value="_termsAccepted" />
                             <MudText Typo="Typo.body2" Class="ml-2">
                                 Declaro que li e aceito os
@@ -249,7 +249,7 @@
                                 </MudLink>
                                 e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
                             </MudText>
-                        </div>
+                        </MudStack>
                     </MudItem>
                 </MudGrid>
 

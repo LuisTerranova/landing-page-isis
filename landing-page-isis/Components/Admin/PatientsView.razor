@@ -11,7 +11,7 @@
     PACIENTES
 </MudText>
 
-<div class="d-flex align-center gap-4 mb-4">
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
     <MudButton OnClick="@(() => ShowCouples = false)"
                Variant="@(ShowCouples ? Variant.Text : Variant.Filled)"
                Color="@(ShowCouples ? Color.Default : Color.Primary)"
@@ -24,7 +24,7 @@
                Class="px-6 rounded-r-xl">
         Casais
     </MudButton>
-</div>
+</MudStack>
 
 @if (!ShowCouples)
 {

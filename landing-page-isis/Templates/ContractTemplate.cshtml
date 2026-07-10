@@ -128,6 +128,21 @@
             text-align: center;
         }
 
+        .electronic-stamp {
+            display: inline-block;
+            background-color: #e8f5e9;
+            border: 1px solid #284B32;
+            border-radius: 8px;
+            padding: 16px 32px;
+            margin: 24px auto;
+            font-size: 14px;
+            color: #284B32;
+        }
+
+        .electronic-stamp strong {
+            color: #7E0F20;
+        }
+
         .signature-line {
             width: 60%;
             margin: 40px auto 8px auto;
@@ -410,14 +425,12 @@
 
             @if (Model.AcceptedAt.HasValue)
             {
-                <p>
-                    Contrato aceito eletronicamente em
-                    @Model.AcceptedAt.Value.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm")
-                    (Horário de Brasília)
-                </p>
+                <div class="electronic-stamp">
+                    <strong>✓ ASSINADO ELETRONICAMENTE</strong><br>
+                    @Model.AcceptedAt.Value.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm:ss") (Horário de Brasília)
+                </div>
             }
 
-            <div class="signature-line"></div>
             @if (Model.Couple != null)
             {
                 <p><strong>@Model.Couple.Name</strong></p>

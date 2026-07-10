@@ -33,7 +33,7 @@
             <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@context.FormId</MudChip>
         </MudTd>
         <MudTd DataLabel="Nome">
-            <div class="d-flex align-center gap-2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                 @if (context.CoupleId.HasValue)
                 {
                     var coupleDisplay = !string.IsNullOrWhiteSpace(context.CoupleName) ? context.CoupleName : context.PatientName;
@@ -47,7 +47,7 @@
                 {
                     <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Vinculado</MudChip>
                 }
-            </div>
+            </MudStack>
         </MudTd>
         <MudTd DataLabel="Status">
             <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">
