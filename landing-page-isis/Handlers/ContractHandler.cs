@@ -353,6 +353,8 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
 
         // Manual mapping is preserved here to prevent SetValues from overwriting uneditable fields with default/null values
         existing.Price = contract.Price;
+        existing.InitialAppointments = contract.InitialAppointments;
+        existing.PackagePrice = contract.PackagePrice;
         existing.AcceptanceToken = contract.AcceptanceToken;
         existing.ContractDocumentHtml = contract.ContractDocumentHtml;
         existing.Status = contract.Status;

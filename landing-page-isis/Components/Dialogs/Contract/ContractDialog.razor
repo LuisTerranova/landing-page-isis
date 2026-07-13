@@ -142,6 +142,38 @@
                                   Value="@GetStatusLabel(Model.Status)" Disabled="true" />
                 </MudItem>
             </MudGrid>
+
+            <MudText Typo="Typo.subtitle2" Color="Color.Tertiary" Class="mt-6 mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.CardGiftcard" Class="mr-2 mb-n1" />
+                Pacote de Sessões (opcional)
+            </MudText>
+
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudNumericField T="int?" Label="Nº de Sessões" Variant="Variant.Outlined"
+                                     @bind-Value="Model.InitialAppointments" Min="1" Max="99"
+                                     HelperText="Quantidade de sessões no pacote"
+                                     Disabled="@(!_isEditing)" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField T="decimal?" Label="Preço do Pacote (R$)" Variant="Variant.Outlined"
+                                     @bind-Value="Model.PackagePrice" Format="F2"
+                                     HelperText="Valor total com desconto"
+                                     Disabled="@(!_isEditing)" />
+                </MudItem>
+            </MudGrid>
+
+            @if (_isEditing && Model.Price.HasValue && Model.InitialAppointments.HasValue && Model.PackagePrice.HasValue)
+            {
+                var desconto = (Model.Price.Value * Model.InitialAppointments.Value) - Model.PackagePrice.Value;
+                <MudAlert Severity="Severity.Info" Class="mt-4" Style="font-size: 13px;">
+                    <MudText Typo="Typo.body2">
+                        <strong>@Model.InitialAppointments sessões</strong> avulsas: R$ @((Model.Price.Value * Model.InitialAppointments.Value).ToString("F2"))
+                        &nbsp;→&nbsp; <strong>Pacote:</strong> R$ @Model.PackagePrice.Value.ToString("F2")
+                        &nbsp;|&nbsp; <strong>Desconto:</strong> R$ @desconto.ToString("F2")
+                    </MudText>
+                </MudAlert>
+            }
         </MudForm>
     </DialogContent>
     <DialogActions>
