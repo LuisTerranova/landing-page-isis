@@ -226,63 +226,63 @@
                 }
             </div>
         }
-        else if (!string.IsNullOrEmpty(Model.Patient2Name))
+        else if (Model.SecondaryPatient != null && !string.IsNullOrEmpty(Model.SecondaryPatient.Name))
         {
             <div class="party-box">
                 <h3>CONTRATANTE@(string.IsNullOrEmpty(Model.CoupleName) ? "" : " — " + Model.CoupleName)</h3>
-                <p><strong>Parceiro 1:</strong> @Model.PatientName — CPF: @Model.PatientCpf.FormatCpf()</p>
-                @if (!string.IsNullOrEmpty(Model.PatientEmail))
+                <p><strong>Parceiro 1:</strong> @Model.PrimaryPatient.Name — CPF: @Model.PrimaryPatient.Cpf.FormatCpf()</p>
+                @if (!string.IsNullOrEmpty(Model.PrimaryPatient.Email))
                 {
-                    <p><strong>E-mail:</strong> @Model.PatientEmail</p>
+                    <p><strong>E-mail:</strong> @Model.PrimaryPatient.Email</p>
                 }
-                <p><strong>Telefone:</strong> @Model.PatientPhone.FormatPhone()</p>
-                @if (!string.IsNullOrEmpty(Model.PatientState))
+                <p><strong>Telefone:</strong> @Model.PrimaryPatient.Phone.FormatPhone()</p>
+                @if (!string.IsNullOrEmpty(Model.PrimaryPatient.State))
                 {
-                    <p><strong>Estado:</strong> @Model.PatientState</p>
+                    <p><strong>Estado:</strong> @Model.PrimaryPatient.State</p>
                 }
-                @if (Model.PatientBirthDate.HasValue)
+                @if (Model.PrimaryPatient.BirthDate.HasValue)
                 {
-                    <p><strong>Data de Nascimento:</strong> @Model.PatientBirthDate.Value.ToString("dd/MM/yyyy")</p>
+                    <p><strong>Data de Nascimento:</strong> @Model.PrimaryPatient.BirthDate.Value.ToString("dd/MM/yyyy")</p>
                 }
 
                 <div style="margin-top: 12px; border-top: 1px dashed #284B32; padding-top: 12px;">
-                    <p><strong>Parceiro 2:</strong> @Model.Patient2Name — CPF: @Model.Patient2Cpf.FormatCpf()</p>
-                    @if (!string.IsNullOrEmpty(Model.Patient2Email))
+                    <p><strong>Parceiro 2:</strong> @Model.SecondaryPatient.Name — CPF: @Model.SecondaryPatient.Cpf.FormatCpf()</p>
+                    @if (!string.IsNullOrEmpty(Model.SecondaryPatient.Email))
                     {
-                        <p><strong>E-mail:</strong> @Model.Patient2Email</p>
+                        <p><strong>E-mail:</strong> @Model.SecondaryPatient.Email</p>
                     }
-                    <p><strong>Telefone:</strong> @Model.Patient2Phone.FormatPhone()</p>
-                    @if (!string.IsNullOrEmpty(Model.Patient2State))
+                    <p><strong>Telefone:</strong> @Model.SecondaryPatient.Phone.FormatPhone()</p>
+                    @if (!string.IsNullOrEmpty(Model.SecondaryPatient.State))
                     {
-                        <p><strong>Estado:</strong> @Model.Patient2State</p>
+                        <p><strong>Estado:</strong> @Model.SecondaryPatient.State</p>
                     }
-                    @if (Model.Patient2BirthDate.HasValue)
+                    @if (Model.SecondaryPatient.BirthDate.HasValue)
                     {
-                        <p><strong>Data de Nascimento:</strong> @Model.Patient2BirthDate.Value.ToString("dd/MM/yyyy")</p>
+                        <p><strong>Data de Nascimento:</strong> @Model.SecondaryPatient.BirthDate.Value.ToString("dd/MM/yyyy")</p>
                     }
                 </div>
 
-                <p style="margin-top: 12px;"><strong>Pagador:</strong> @Model.PatientName — CPF: @Model.PatientCpf.FormatCpf()</p>
+                <p style="margin-top: 12px;"><strong>Pagador:</strong> @Model.PrimaryPatient.Name — CPF: @Model.PrimaryPatient.Cpf.FormatCpf()</p>
             </div>
         }
         else
         {
             <div class="party-box">
                 <h3>CONTRATANTE</h3>
-                <p><strong>Nome:</strong> @Model.PatientName</p>
-                <p><strong>CPF:</strong> @Model.PatientCpf.FormatCpf()</p>
-                @if (!string.IsNullOrEmpty(Model.PatientEmail))
+                <p><strong>Nome:</strong> @Model.PrimaryPatient.Name</p>
+                <p><strong>CPF:</strong> @Model.PrimaryPatient.Cpf.FormatCpf()</p>
+                @if (!string.IsNullOrEmpty(Model.PrimaryPatient.Email))
                 {
-                    <p><strong>E-mail:</strong> @Model.PatientEmail</p>
+                    <p><strong>E-mail:</strong> @Model.PrimaryPatient.Email</p>
                 }
-                <p><strong>Telefone:</strong> @Model.PatientPhone.FormatPhone()</p>
-                @if (!string.IsNullOrEmpty(Model.PatientState))
+                <p><strong>Telefone:</strong> @Model.PrimaryPatient.Phone.FormatPhone()</p>
+                @if (!string.IsNullOrEmpty(Model.PrimaryPatient.State))
                 {
-                    <p><strong>Estado:</strong> @Model.PatientState</p>
+                    <p><strong>Estado:</strong> @Model.PrimaryPatient.State</p>
                 }
-                @if (Model.PatientBirthDate.HasValue)
+                @if (Model.PrimaryPatient.BirthDate.HasValue)
                 {
-                    <p><strong>Data de Nascimento:</strong> @Model.PatientBirthDate.Value.ToString("dd/MM/yyyy")</p>
+                    <p><strong>Data de Nascimento:</strong> @Model.PrimaryPatient.BirthDate.Value.ToString("dd/MM/yyyy")</p>
                 }
             </div>
         }
@@ -456,15 +456,15 @@
                 <p><strong>@Model.Couple.Name</strong></p>
                 <p>CONTRATANTE (representado por @Model.Couple.PayerName)</p>
             }
-            else if (!string.IsNullOrEmpty(Model.Patient2Name))
+            else if (Model.SecondaryPatient != null && !string.IsNullOrEmpty(Model.SecondaryPatient.Name))
             {
-                var coupleDisplay = !string.IsNullOrEmpty(Model.CoupleName) ? Model.CoupleName : $"{Model.PatientName} & {Model.Patient2Name}";
+                var coupleDisplay = !string.IsNullOrEmpty(Model.CoupleName) ? Model.CoupleName : $"{Model.PrimaryPatient.Name} & {Model.SecondaryPatient.Name}";
                 <p><strong>@coupleDisplay</strong></p>
-                <p>CONTRATANTE (representado por @Model.PatientName)</p>
+                <p>CONTRATANTE (representado por @Model.PrimaryPatient.Name)</p>
             }
             else
             {
-                <p><strong>@Model.PatientName</strong></p>
+                <p><strong>@Model.PrimaryPatient.Name</strong></p>
                 <p>CONTRATANTE</p>
             }
 

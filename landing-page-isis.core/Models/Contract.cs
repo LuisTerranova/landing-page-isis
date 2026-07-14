@@ -9,28 +9,7 @@ public class Contract
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    [Required(ErrorMessage = "Nome é obrigatório")]
-    [MaxLength(150, ErrorMessage = "Nome deve ter no máximo 150 caracteres")]
-    public string PatientName { get; set; } = string.Empty;
-
-    [MaxLength(14, ErrorMessage = "CPF inválido")]
-    public string? PatientCpf { get; set; }
-
-    [MaxLength(255, ErrorMessage = "E-mail deve ter no máximo 255 caracteres")]
-    [EmailAddress(ErrorMessage = "E-mail inválido")]
-    public string? PatientEmail { get; set; }
-
-    [RegularExpression(
-        @"^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$",
-        ErrorMessage = "Telefone inválido. Use (XX) 9XXXX-XXXX"
-    )]
-    [MaxLength(11, ErrorMessage = "Telefone deve ter no máximo 11 dígitos")]
-    public string PatientPhone { get; set; } = string.Empty;
-
-    [MaxLength(2, ErrorMessage = "Estado deve ser a sigla de 2 letras")]
-    public string? PatientState { get; set; }
-
-    public DateOnly? PatientBirthDate { get; set; }
+    public ContractParticipantInfo PrimaryPatient { get; set; } = new();
 
     public bool TermsAccepted { get; set; }
 
@@ -60,8 +39,6 @@ public class Contract
 
     public Guid? PatientId { get; set; }
 
-    // Cryptographic hash of the patient's CPF, used for duplicate checking without violating PII protection rules
-    public string? PatientCpfHash { get; set; }
 
     public Patient? Patient { get; set; }
 
@@ -71,22 +48,5 @@ public class Contract
 
     public string? CoupleName { get; set; }
 
-    [MaxLength(150)]
-    public string? Patient2Name { get; set; }
-
-    [MaxLength(14)]
-    public string? Patient2Cpf { get; set; }
-
-    [MaxLength(255)]
-    public string? Patient2Email { get; set; }
-
-    [MaxLength(11)]
-    public string Patient2Phone { get; set; } = string.Empty;
-
-    [MaxLength(2)]
-    public string? Patient2State { get; set; }
-
-    public DateOnly? Patient2BirthDate { get; set; }
-
-    public string? Patient2CpfHash { get; set; }
+    public ContractParticipantInfo? SecondaryPatient { get; set; }
 }

@@ -1,0 +1,56 @@
+@namespace landing_page_isis.Components.Helpers
+@using Microsoft.AspNetCore.Components
+@implements IDisposable
+
+<MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px;">
+    <MudIcon Icon="@Icon" Color="Color.Success" Size="Size.Large" />
+    <MudText Typo="Typo.h5" Color="Color.Success" Class="mt-4">@Title</MudText>
+    <MudText Typo="Typo.body2" Class="mt-2">@Message</MudText>
+    @if (_redirectSeconds > 0)
+    {
+        <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-4">
+            Redirecionando em @_redirectSeconds segundos...
+        </MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.CheckCircle;
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public string RedirectUrl { get; set; } = "/";
+    [Parameter] public int RedirectSeconds { get; set; } = 5;
+
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
+
+    private int _redirectSeconds;
+    private CancellationTokenSource? _cts;
+
+    protected override void OnInitialized()
+    {
+        _redirectSeconds = RedirectSeconds;
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(new CancellationToken());
+        _ = RedirectAfterDelayAsync(_cts.Token);
+    }
+
+    private async Task RedirectAfterDelayAsync(CancellationToken ct)
+    {
+        while (_redirectSeconds > 0 && !ct.IsCancellationRequested)
+        {
+            await Task.Delay(1000, ct);
+            _redirectSeconds--;
+            await InvokeAsync(StateHasChanged);
+        }
+
+        if (!ct.IsCancellationRequested)
+        {
+            Navigation.NavigateTo(RedirectUrl, forceLoad: true);
+        }
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

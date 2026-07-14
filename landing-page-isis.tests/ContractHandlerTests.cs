@@ -37,12 +37,15 @@ public class ContractHandlerTests
         return new Contract
         {
             Id = Guid.NewGuid(),
-            PatientName = "Maria Silva",
-            PatientCpf = cpf ?? "529.982.247-25",
-            PatientEmail = "maria@email.com",
-            PatientPhone = "(11) 99999-8888",
-            PatientState = "RO",
-            PatientBirthDate = new DateOnly(1990, 5, 15),
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Maria Silva",
+                Cpf = cpf ?? "529.982.247-25",
+                Email = "maria@email.com",
+                Phone = "(11) 99999-8888",
+                State = "RO",
+                BirthDate = new DateOnly(1990, 5, 15),
+            },
             TermsAccepted = true,
             Status = ContractStatus.Rascunho,
         };
@@ -60,9 +63,9 @@ public class ContractHandlerTests
         Assert.True(result.Success);
         var saved = await context.Contracts.FindAsync(contract.Id);
         Assert.NotNull(saved);
-        Assert.Equal("Maria Silva", saved.PatientName);
-        Assert.Equal("11999998888", saved.PatientPhone);
-        Assert.Equal("52998224725", saved.PatientCpf);
+        Assert.Equal("Maria Silva", saved.PrimaryPatient.Name);
+        Assert.Equal("11999998888", saved.PrimaryPatient.Phone);
+        Assert.Equal("52998224725", saved.PrimaryPatient.Cpf);
     }
 
     [Fact]
@@ -83,7 +86,7 @@ public class ContractHandlerTests
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
         var contract = CreateValidContract();
-        contract.PatientName = "";
+        contract.PrimaryPatient.Name = "";
 
         var result = await handler.CreateContract(contract);
 
@@ -97,7 +100,7 @@ public class ContractHandlerTests
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
         var contract = CreateValidContract();
-        contract.PatientEmail = "invalid-email";
+        contract.PrimaryPatient.Email = "invalid-email";
 
         var result = await handler.CreateContract(contract);
 
@@ -111,7 +114,7 @@ public class ContractHandlerTests
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
         var contract = CreateValidContract();
-        contract.PatientPhone = "123";
+        contract.PrimaryPatient.Phone = "123";
 
         var result = await handler.CreateContract(contract);
 
@@ -165,7 +168,7 @@ public class ContractHandlerTests
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
         var contract = CreateValidContract();
-        contract.PatientState = "XX";
+        contract.PrimaryPatient.State = "XX";
 
         var result = await handler.CreateContract(contract);
 
@@ -179,7 +182,7 @@ public class ContractHandlerTests
         await using var context = GetDatabaseContext();
         var handler = CreateHandler(context);
         var contract = CreateValidContract();
-        contract.PatientBirthDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
+        contract.PrimaryPatient.BirthDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
 
         var result = await handler.CreateContract(contract);
 
@@ -214,8 +217,11 @@ public class ContractHandlerTests
             context.Contracts.Add(new Contract
             {
                 Id = Guid.NewGuid(),
-                PatientName = $"Paciente {i}",
-                PatientPhone = "11999999999",
+                PrimaryPatient = new ContractParticipantInfo
+                {
+                    Name = $"Paciente {i}",
+                    Phone = "11999999999"
+                },
                 TermsAccepted = true,
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
             });
@@ -247,9 +253,9 @@ public class ContractHandlerTests
         var handler = CreateHandler(context);
 
         context.Contracts.AddRange(
-            new Contract { Id = Guid.NewGuid(), PatientName = "João Silva", PatientPhone = "11999999999", TermsAccepted = true },
-            new Contract { Id = Guid.NewGuid(), PatientName = "Maria Souza", PatientPhone = "11999999999", TermsAccepted = true },
-            new Contract { Id = Guid.NewGuid(), PatientName = "Joana Santos", PatientPhone = "11999999999", TermsAccepted = true }
+            new Contract { Id = Guid.NewGuid(), PrimaryPatient = new ContractParticipantInfo { Name = "João Silva", Phone = "11999999999" }, TermsAccepted = true },
+            new Contract { Id = Guid.NewGuid(), PrimaryPatient = new ContractParticipantInfo { Name = "Maria Souza", Phone = "11999999999" }, TermsAccepted = true },
+            new Contract { Id = Guid.NewGuid(), PrimaryPatient = new ContractParticipantInfo { Name = "Joana Santos", Phone = "11999999999" }, TermsAccepted = true }
         );
         await context.SaveChangesAsync();
 
@@ -269,8 +275,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Test",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Test",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
         });
         await context.SaveChangesAsync();
@@ -278,7 +287,7 @@ public class ContractHandlerTests
         var result = await handler.GetContract(id);
 
         Assert.NotNull(result);
-        Assert.Equal("Test", result.PatientName);
+        Assert.Equal("Test", result.PrimaryPatient.Name);
     }
 
     [Fact]
@@ -302,8 +311,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Token Test",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Token Test",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             AcceptanceToken = "abc-123",
         });
@@ -336,8 +348,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Old Name",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Old Name",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Price = 100,
         });
@@ -346,8 +361,11 @@ public class ContractHandlerTests
         var updated = new Contract
         {
             Id = id,
-            PatientName = "Old Name",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Old Name",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Price = 150,
         };
@@ -369,8 +387,11 @@ public class ContractHandlerTests
         var result = await handler.UpdateContract(new Contract
         {
             Id = Guid.NewGuid(),
-            PatientName = "Ghost",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Ghost",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
         });
 
@@ -388,8 +409,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Accept Test",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Accept Test",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.AguardandoAceitacao,
             AcceptanceToken = "accept-token",
@@ -428,8 +452,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = Guid.NewGuid(),
-            PatientName = "Wrong Status",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Wrong Status",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Rascunho,
             AcceptanceToken = "rascunho-token",
@@ -452,8 +479,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = Guid.NewGuid(),
-            PatientName = "Expired",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Expired",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.AguardandoAceitacao,
             AcceptanceToken = "expired-token",
@@ -477,8 +507,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Delete Me",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Delete Me",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Cancelado,
         });
@@ -512,12 +545,15 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = contractId,
-            PatientName = "Convertido Silva",
-            PatientCpf = "529.982.247-25",
-            PatientEmail = "convertido@email.com",
-            PatientPhone = "(11) 91234-5678",
-            PatientState = "RO",
-            PatientBirthDate = new DateOnly(1988, 3, 20),
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Convertido Silva",
+                Cpf = "529.982.247-25",
+                Email = "convertido@email.com",
+                Phone = "(11) 91234-5678",
+                State = "RO",
+                BirthDate = new DateOnly(1988, 3, 20),
+            },
             TermsAccepted = true,
         });
         await context.SaveChangesAsync();
@@ -556,8 +592,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = contractId,
-            PatientName = "Ja Convertido",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Ja Convertido",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             PatientId = Guid.NewGuid() // already linked
         });
@@ -579,9 +618,12 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = contractId,
-            PatientName = "No Cpf",
-            PatientPhone = "11999999999",
-            PatientCpf = null,
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "No Cpf",
+                Phone = "11999999999",
+                Cpf = null
+            },
             TermsAccepted = true
         });
         await context.SaveChangesAsync();
@@ -605,9 +647,12 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = contractId,
-            PatientName = "Empty Phone Cpf",
-            PatientPhone = "",
-            PatientCpf = "",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Empty Phone Cpf",
+                Phone = "",
+                Cpf = ""
+            },
             TermsAccepted = true
         });
         await context.SaveChangesAsync();
@@ -631,8 +676,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Active Contract",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Active Contract",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Ativo,
             Price = 100,
@@ -642,8 +690,11 @@ public class ContractHandlerTests
         var result = await handler.UpdateContract(new Contract
         {
             Id = id,
-            PatientName = "Active Contract",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Active Contract",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Price = 150,
             Status = ContractStatus.Ativo,
@@ -663,8 +714,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "To Cancel",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "To Cancel",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Ativo,
         });
@@ -673,8 +727,11 @@ public class ContractHandlerTests
         var result = await handler.UpdateContract(new Contract
         {
             Id = id,
-            PatientName = "To Cancel",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "To Cancel",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Cancelado,
         });
@@ -695,8 +752,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = id,
-            PatientName = "Cancelled",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Cancelled",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Cancelado,
         });
@@ -705,8 +765,11 @@ public class ContractHandlerTests
         var result = await handler.UpdateContract(new Contract
         {
             Id = id,
-            PatientName = "Cancelled",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Cancelled",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.Cancelado,
         });
@@ -724,8 +787,11 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = Guid.NewGuid(),
-            PatientName = "Expired Token",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Expired Token",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
             Status = ContractStatus.AguardandoAceitacao,
             AcceptanceToken = "expired-generated",
@@ -766,9 +832,12 @@ public class ContractHandlerTests
         context.Contracts.Add(new Contract
         {
             Id = contractId,
-            PatientName = "Dup Cpf",
-            PatientCpf = "529.982.247-25",
-            PatientPhone = "11999999999",
+            PrimaryPatient = new ContractParticipantInfo
+            {
+                Name = "Dup Cpf",
+                Cpf = "529.982.247-25",
+                Phone = "11999999999"
+            },
             TermsAccepted = true,
         });
         await context.SaveChangesAsync();
@@ -777,6 +846,97 @@ public class ContractHandlerTests
 
         Assert.False(result.Success);
         Assert.Equal("Já existe um paciente com este CPF.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldSucceed_WhenPatientIdIsSpecifiedAndExists()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var patientId = Guid.NewGuid();
+        var pepper = Environment.GetEnvironmentVariable("CPF_HASH_PEPPER")!;
+        var cpfData = System.Text.Encoding.UTF8.GetBytes("52998224725:" + pepper);
+        var cpfHash = System.Security.Cryptography.HMACSHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(pepper), cpfData);
+        var cpfHashHex = Convert.ToHexStringLower(cpfHash);
+
+        context.Patients.Add(new Patient
+        {
+            Id = patientId,
+            Name = "Existing Patient",
+            Phone = "11999999999",
+            Cpf = "529.982.247-25",
+            CpfHash = cpfHashHex,
+        });
+        await context.SaveChangesAsync();
+
+        var contract = CreateValidContract("529.982.247-25");
+        contract.PatientId = patientId;
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldFail_WhenPartner2EmailIsInvalid()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+        var contract = CreateValidContract();
+        contract.SecondaryPatient = new ContractParticipantInfo { Name = "Partner Two" };
+        contract.SecondaryPatient.Email = "invalid-email";
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Segundo paciente: E-mail inválido.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldFail_WhenPartner2PhoneIsInvalid()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+        var contract = CreateValidContract();
+        contract.SecondaryPatient = new ContractParticipantInfo { Name = "Partner Two" };
+        contract.SecondaryPatient.Phone = "123";
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Segundo paciente: Telefone inválido. Deve ter 10 ou 11 dígitos.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldFail_WhenPartner2CpfIsInvalid()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+        var contract = CreateValidContract();
+        contract.SecondaryPatient = new ContractParticipantInfo { Name = "Partner Two" };
+        contract.SecondaryPatient.Cpf = "123";
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Segundo paciente: CPF inválido.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldFail_WhenPartnersHaveSameCpf()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+        var contract = CreateValidContract("529.982.247-25");
+        contract.SecondaryPatient = new ContractParticipantInfo { Name = "Partner Two" };
+        contract.SecondaryPatient.Cpf = "529.982.247-25";
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Os dois pacientes devem ser diferentes.", result.Message);
     }
 }
 

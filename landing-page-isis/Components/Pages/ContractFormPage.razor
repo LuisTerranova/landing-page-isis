@@ -1,6 +1,7 @@
 @page "/formulario"
 @using System.Threading.RateLimiting
 @using landing_page_isis.core.Helpers
+@using landing_page_isis.Components.Helpers
 @using landing_page_isis.core.Interfaces
 @using landing_page_isis.core.Models
 
@@ -9,310 +10,183 @@
 @inject IContractHandler ContractHandler
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject IJSRuntime JS
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="py-16">
-    <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
-        Formulário de Cadastro
-    </MudText>
-    <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-10 text-center">
-        Preencha seus dados para iniciarmos o processo. Após o envio, um de nossos profissionais entrará em contato.
-    </MudText>
+    @if (_submittedSuccessfully)
+    {
+        <div style="min-height: calc(100vh - 350px);">
+            <SuccessRedirect Title="Dados Enviados com Sucesso!"
+                             Message="Seus dados foram enviados com sucesso! Em breve entraremos em contato." />
+        </div>
+    }
+    else
+    {
+        <MudText Typo="Typo.h3" Style="color: #284B32; font-weight: 700;" Class="mb-2 text-center">
+            Formulário de Cadastro
+        </MudText>
+        <MudText Typo="Typo.body1" Style="color: #7E0F20;" Class="mb-10 text-center">
+            Preencha seus dados para iniciarmos o processo. Após o envio, um de nossos profissionais entrará em contato.
+        </MudText>
 
-    <MudStack Row="true" Justify="Justify.Center" Class="mb-6">
-        <MudButton OnClick="@(() => _mode = Mode.Individual)"
-                   Variant="@(_mode == Mode.Individual ? Variant.Filled : Variant.Outlined)"
-                   Color="Color.Primary"
-                   Class="px-8 rounded-l-xl">
-            Individual
-        </MudButton>
-        <MudButton OnClick="@(() => _mode = Mode.Casal)"
-                   Variant="@(_mode == Mode.Casal ? Variant.Filled : Variant.Outlined)"
-                   Color="Color.Primary"
-                   Class="px-8 rounded-r-xl">
-            Casal
-        </MudButton>
-    </MudStack>
+        <MudStack Row="true" Justify="Justify.Center" Class="mb-6">
+            <MudButton OnClick="@(() => SetMode(Mode.Individual))"
+                       Variant="@(_mode == Mode.Individual ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Primary"
+                       Class="px-8 rounded-l-xl">
+                Individual
+            </MudButton>
+            <MudButton OnClick="@(() => SetMode(Mode.Casal))"
+                       Variant="@(_mode == Mode.Casal ? Variant.Filled : Variant.Outlined)"
+                       Color="Color.Primary"
+                       Class="px-8 rounded-r-xl">
+                Casal
+            </MudButton>
+        </MudStack>
 
-    <MudPaper Elevation="4" Class="pa-8" Style="border-radius: 24px;">
-        @if (_mode == Mode.Individual)
-        {
-            <EditForm Model="@_contract" OnValidSubmit="HandleSubmitIndividual">
-                <DataAnnotationsValidator />
+        <MudPaper Elevation="4" Class="pa-8" Style="border-radius: 24px;">
+            @if (_mode == Mode.Individual)
+            {
+                <EditForm Model="@_contract" OnValidSubmit="HandleSubmitIndividual">
+                    <DataAnnotationsValidator />
 
-                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
-                    Dados do Paciente
-                </MudText>
+                    <ParticipantFormSection Participant="@_contract.PrimaryPatient" 
+                                            Label="Dados do Paciente" 
+                                            Icon="@Icons.Material.Filled.Person" 
+                                            IsRequired="true" />
 
-                <MudGrid>
-                    <MudItem xs="12">
-                        <MudTextField T="string" Label="Nome Completo" Variant="Variant.Outlined"
-                                      @bind-Value="_contract.PatientName" For="@(() => _contract.PatientName)"
-                                      MaxLength="150" Counter="150"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
-                                      @bind-Value="_contract.PatientCpf" For="@(() => _contract.PatientCpf)"
-                                      Mask="@(new PatternMask("000.000.000-00"))"
-                                      Validation="@(new Func<string, string?>(v => CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                      @bind-Value="_contract.PatientEmail" For="@(() => _contract.PatientEmail)"
-                                      MaxLength="255" Counter="255" Immediate="true"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Telefone (WhatsApp)" Variant="Variant.Outlined"
-                                      @bind-Value="_contract.PatientPhone" For="@(() => _contract.PatientPhone)"
-                                      MaxLength="11" Counter="11"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
-                                   @bind-Value="_contract.PatientState"
-                                   FullWidth="true">
-                            @foreach (var uf in Ufs)
-                            {
-                                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudDatePicker Label="Data de Nascimento"
-                                       @bind-Date="_tempBirthDate"
-                                       Variant="Variant.Outlined"
-                                       DateFormat="dd/MM/yyyy"
-                                       Editable="true" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudDivider DividerType="DividerType.Middle" Class="my-4" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudCheckBox @bind-Value="_termsAccepted" />
-                            <MudText Typo="Typo.body2" Class="ml-2">
-                                Declaro que li e aceito os
-                                <MudLink Href="javascript:void(0)" OnClick="@(async () => await ShowConsentDialog())" Typo="Typo.body2" Style="color: #7E0F20; font-weight: 700; text-decoration: underline;">
-                                    Termos de Consentimento
-                                </MudLink>
-                                e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
+                    <MudGrid Class="mt-4">
+                        <MudItem xs="12">
+                            <MudDivider DividerType="DividerType.Middle" Class="my-4" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudCheckBox @bind-Value="_termsAccepted" />
+                                <MudText Typo="Typo.body2" Class="ml-2">
+                                    Declaro que li e aceito os
+                                    <MudLink Href="javascript:void(0)" OnClick="@(async () => await ShowConsentDialog())" Typo="Typo.body2" Style="color: #7E0F20; font-weight: 700; text-decoration: underline;">
+                                        Termos de Consentimento
+                                    </MudLink>
+                                    e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
+                                </MudText>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                               Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px;"
+                               FullWidth="true"
+                               Class="mt-6"
+                               Disabled="@(_processing || !_termsAccepted)">
+                        @if (_processing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Enviando...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Enviar Dados</MudText>
+                        }
+                    </MudButton>
+                </EditForm>
+            }
+            else
+            {
+                <MudForm @ref="_coupleForm" @bind-IsValid="_coupleFormValid">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Primary" Class="mr-2 mb-n1" />
+                        Dados do Casal
+                    </MudText>
+
+                    <MudDivider DividerType="DividerType.Middle" Class="my-4" />
+
+                    <ParticipantFormSection Participant="@_p1" 
+                                            Label="Parceiro 1" 
+                                            Icon="@Icons.Material.Filled.Person" 
+                                            IsRequired="true" />
+
+                    <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+
+                    <ParticipantFormSection Participant="@_p2" 
+                                            Label="Parceiro 2" 
+                                            Icon="@Icons.Material.Filled.Person" 
+                                            IsRequired="true" />
+
+                    <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1" />
+                                Pagador
                             </MudText>
-                        </MudStack>
-                    </MudItem>
-                </MudGrid>
+                            <MudSelect T="string" Label="Quem será o pagador?" Variant="Variant.Outlined"
+                                       @bind-Value="_payerChoice" Required="true">
+                                <MudSelectItem T="string" Value="@("partner1")">Parceiro 1</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("partner2")">Parceiro 2</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" Label="CPF do Pagador" Variant="Variant.Outlined"
+                                           Value="@PayerCpfDisplay" ReadOnly="true"
+                                           FullWidth="true" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudCheckBox @bind-Value="_termsAccepted" />
+                                <MudText Typo="Typo.body2" Class="ml-2">
+                                    Declaro que li e aceito os
+                                    <MudLink Href="javascript:void(0)" OnClick="@(async () => await ShowConsentDialog())" Typo="Typo.body2" Style="color: #7E0F20; font-weight: 700; text-decoration: underline;">
+                                        Termos de Consentimento
+                                    </MudLink>
+                                    e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
+                                </MudText>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
 
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
-                           Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px;"
-                           FullWidth="true"
-                           Class="mt-6"
-                           Disabled="@(_processing || !_termsAccepted)">
-                    @if (_processing)
-                    {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                        <MudText Class="ms-2">Enviando...</MudText>
-                    }
-                    else
-                    {
-                        <MudText>Enviar Dados</MudText>
-                    }
-                </MudButton>
-            </EditForm>
-        }
-        else
-        {
-            <MudForm @ref="_coupleForm" @bind-IsValid="_coupleFormValid">
-                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Favorite" Color="Color.Primary" Class="mr-2 mb-n1" />
-                    Dados do Casal
-                </MudText>
-
-                <MudDivider DividerType="DividerType.Middle" Class="my-4" />
-                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
-                    Parceiro 1
-                </MudText>
-
-                <MudGrid>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Nome Completo" Variant="Variant.Outlined"
-                                      @bind-Value="_p1Name" Required="true"
-                                      MaxLength="150" Counter="150" Immediate="true" FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
-                                      @bind-Value="_p1Cpf"
-                                      Mask="@(new PatternMask("000.000.000-00"))"
-                                      Validation="@(new Func<string, string?>(v => string.IsNullOrEmpty(v) || CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                      @bind-Value="_p1Email" MaxLength="255" FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Telefone (WhatsApp)" Variant="Variant.Outlined"
-                                      @bind-Value="_p1Phone" Required="true"
-                                      MaxLength="11" Counter="11" FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
-                                   @bind-Value="_p1State" FullWidth="true">
-                            @foreach (var uf in Ufs)
-                            {
-                                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudDatePicker Label="Data de Nascimento"
-                                       @bind-Date="_p1BirthDate"
-                                       Variant="Variant.Outlined"
-                                       DateFormat="dd/MM/yyyy"
-                                       Editable="true" />
-                    </MudItem>
-                </MudGrid>
-
-                <MudDivider DividerType="DividerType.Middle" Class="my-6" />
-                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" />
-                    Parceiro 2
-                </MudText>
-
-                <MudGrid>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Nome Completo" Variant="Variant.Outlined"
-                                      @bind-Value="_p2Name" Required="true"
-                                      MaxLength="150" Counter="150" Immediate="true" FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
-                                      @bind-Value="_p2Cpf"
-                                      Mask="@(new PatternMask("000.000.000-00"))"
-                                      Validation="@(new Func<string, string?>(v => string.IsNullOrEmpty(v) || CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                      @bind-Value="_p2Email" MaxLength="255" FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="Telefone (WhatsApp)" Variant="Variant.Outlined"
-                                      @bind-Value="_p2Phone" Required="true"
-                                      MaxLength="11" Counter="11" FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
-                                   @bind-Value="_p2State" FullWidth="true">
-                            @foreach (var uf in Ufs)
-                            {
-                                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudDatePicker Label="Data de Nascimento"
-                                       @bind-Date="_p2BirthDate"
-                                       Variant="Variant.Outlined"
-                                       DateFormat="dd/MM/yyyy"
-                                       Editable="true" />
-                    </MudItem>
-                </MudGrid>
-
-                <MudDivider DividerType="DividerType.Middle" Class="my-6" />
-                <MudGrid>
-                    <MudItem xs="12">
-                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-4">
-                            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1" />
-                            Pagador
-                        </MudText>
-                        <MudSelect T="string" Label="Quem será o pagador?" Variant="Variant.Outlined"
-                                   @bind-Value="_payerChoice" Required="true">
-                            <MudSelectItem T="string" Value="@("partner1")">Parceiro 1</MudSelectItem>
-                            <MudSelectItem T="string" Value="@("partner2")">Parceiro 2</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                    <MudItem xs="12" md="6">
-                        <MudTextField T="string" Label="CPF do Pagador" Variant="Variant.Outlined"
-                                      Value="@PayerCpfDisplay" ReadOnly="true"
-                                      FullWidth="true" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudCheckBox @bind-Value="_termsAccepted" />
-                            <MudText Typo="Typo.body2" Class="ml-2">
-                                Declaro que li e aceito os
-                                <MudLink Href="javascript:void(0)" OnClick="@(async () => await ShowConsentDialog())" Typo="Typo.body2" Style="color: #7E0F20; font-weight: 700; text-decoration: underline;">
-                                    Termos de Consentimento
-                                </MudLink>
-                                e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
-                            </MudText>
-                        </MudStack>
-                    </MudItem>
-                </MudGrid>
-
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
-                           Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px;"
-                           FullWidth="true"
-                           Class="mt-6"
-                           Disabled="@(_processing || !_termsAccepted)"
-                           OnClick="@HandleSubmitCouple">
-                    @if (_processing)
-                    {
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                        <MudText Class="ms-2">Enviando...</MudText>
-                    }
-                    else
-                    {
-                        <MudText>Enviar Dados</MudText>
-                    }
-                </MudButton>
-            </MudForm>
-        }
-    </MudPaper>
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled"
+                               Style="background-color: #284B32; color: white; height: 56px; font-weight: 700; font-size: 1.1rem; border-radius: 12px;"
+                               FullWidth="true"
+                               Class="mt-6"
+                               Disabled="@(_processing || !_termsAccepted)"
+                               OnClick="@HandleSubmitCouple">
+                        @if (_processing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Enviando...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Enviar Dados</MudText>
+                        }
+                    </MudButton>
+                </MudForm>
+            }
+        </MudPaper>
+    }
 </MudContainer>
 
 @code {
-    private static readonly string[] Ufs =
-    [
-        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-        "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-        "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-    ];
-
     private enum Mode { Individual, Casal }
-    private Mode _mode;
+    private Mode _mode = Mode.Individual;
 
     private Contract _contract = new();
     private bool _processing;
     private bool _termsAccepted;
-    private DateTime? _tempBirthDate;
+    private bool _submittedSuccessfully = false;
 
     private MudForm _coupleForm = null!;
     private bool _coupleFormValid;
 
-    private string _p1Name = string.Empty;
-    private string _p1Cpf = string.Empty;
-    private string _p1Email = string.Empty;
-    private string _p1Phone = string.Empty;
-    private string _p1State = string.Empty;
-    private DateTime? _p1BirthDate;
-    private string _p2Name = string.Empty;
-    private string _p2Cpf = string.Empty;
-    private string _p2Email = string.Empty;
-    private string _p2Phone = string.Empty;
-    private string _p2State = string.Empty;
-    private DateTime? _p2BirthDate;
+    private ContractParticipantInfo _p1 = new();
+    private ContractParticipantInfo _p2 = new();
     private string _payerChoice = "partner1";
 
     private string PayerCpfDisplay
     {
         get
         {
-            // Compute and format the payer's CPF reactively depending on the selected partner choice
-            var raw = _payerChoice == "partner1" ? _p1Cpf : _p2Cpf;
+            var raw = _payerChoice == "partner1" ? _p1.Cpf : _p2.Cpf;
             if (string.IsNullOrEmpty(raw))
                 return string.Empty;
             var digits = new string(raw.Where(char.IsDigit).ToArray());
@@ -320,6 +194,12 @@
                 return raw;
             return Convert.ToUInt64(digits).ToString(@"000\.000\.000\-00");
         }
+    }
+
+    private void SetMode(Mode mode)
+    {
+        _mode = mode;
+        _termsAccepted = false;
     }
 
     private async Task ShowConsentDialog()
@@ -340,7 +220,6 @@
         }
 
         _contract.TermsAccepted = true;
-        _contract.PatientBirthDate = _tempBirthDate.HasValue ? DateOnly.FromDateTime(_tempBirthDate.Value) : null;
 
         _processing = true;
         try
@@ -348,10 +227,9 @@
             var result = await ContractHandler.CreateContract(_contract);
             if (result.Success)
             {
-                Snackbar.Add("Seus dados foram enviados com sucesso! Em breve entraremos em contato.", Severity.Success);
-                _contract = new Contract();
-                _tempBirthDate = null;
-                _termsAccepted = false;
+                _submittedSuccessfully = true;
+                StateHasChanged();
+                await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
             }
             else
             {
@@ -369,7 +247,7 @@
     }
 
     static string FirstName(string fullName) =>
-    fullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
+        fullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
 
     private async Task HandleSubmitCouple()
     {
@@ -390,40 +268,23 @@
         try
         {
             var isP1Payer = _payerChoice == "partner1";
-            var payerName = isP1Payer ? _p1Name : _p2Name;
-            var payerCpf = isP1Payer ? _p1Cpf : _p2Cpf;
+            var payer = isP1Payer ? _p1 : _p2;
+            var partner = isP1Payer ? _p2 : _p1;
 
             var contract = new Contract
             {
-                PatientName = payerName,
-                PatientCpf = payerCpf,
-                PatientPhone = isP1Payer ? _p1Phone : _p2Phone,
-                PatientEmail = isP1Payer ? _p1Email : _p2Email,
-                PatientState = isP1Payer ? _p1State : _p2State,
-                PatientBirthDate = isP1Payer
-                    ? (_p1BirthDate.HasValue ? DateOnly.FromDateTime(_p1BirthDate.Value) : null)
-                    : (_p2BirthDate.HasValue ? DateOnly.FromDateTime(_p2BirthDate.Value) : null),
-                Patient2Name = isP1Payer ? _p2Name : _p1Name,
-                Patient2Cpf = isP1Payer ? _p2Cpf : _p1Cpf,
-                Patient2Phone = isP1Payer ? _p2Phone : _p1Phone,
-                Patient2Email = isP1Payer ? _p2Email : _p1Email,
-                Patient2State = isP1Payer ? _p2State : _p1State,
-                Patient2BirthDate = isP1Payer
-                    ? (_p2BirthDate.HasValue ? DateOnly.FromDateTime(_p2BirthDate.Value) : null)
-                    : (_p1BirthDate.HasValue ? DateOnly.FromDateTime(_p1BirthDate.Value) : null),
-                CoupleName = $"{FirstName(payerName)} e {FirstName(isP1Payer ? _p2Name : _p1Name)}",
+                PrimaryPatient = payer,
+                SecondaryPatient = partner,
+                CoupleName = $"{FirstName(payer.Name)} e {FirstName(partner.Name)}",
                 TermsAccepted = true,
             };
 
             var result = await ContractHandler.CreateContract(contract);
             if (result.Success)
             {
-                Snackbar.Add("Seus dados foram enviados com sucesso! Em breve entraremos em contato.", Severity.Success);
-                _p1Name = _p1Cpf = _p1Email = _p1Phone = _p1State = string.Empty;
-                _p2Name = _p2Cpf = _p2Email = _p2Phone = _p2State = string.Empty;
-                _p1BirthDate = _p2BirthDate = null;
-                _payerChoice = "partner1";
-                _termsAccepted = false;
+                _submittedSuccessfully = true;
+                StateHasChanged();
+                await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
             }
             else
             {

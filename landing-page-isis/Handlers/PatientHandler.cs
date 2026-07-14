@@ -56,14 +56,14 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
 
         if (!string.IsNullOrEmpty(patient.Phone))
         {
-            patient.Phone = OnlyNumbersRegex().Replace(patient.Phone, "");
+            patient.Phone = CpfValidator.Strip(patient.Phone);
             if (patient.Phone.Length < 10 || patient.Phone.Length > 11)
                 return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
         }
 
         if (!string.IsNullOrEmpty(patient.Cpf))
         {
-            patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
+            patient.Cpf = CpfValidator.Strip(patient.Cpf);
             if (!CpfValidator.IsValid(patient.Cpf))
                 return new HandlerResult(false, "CPF inválido.");
             patient.CpfHash = CpfHelper.ComputeHash(patient.Cpf);
@@ -91,16 +91,21 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
 
         if (!string.IsNullOrEmpty(patient.Phone))
         {
-            patient.Phone = OnlyNumbersRegex().Replace(patient.Phone, "");
+            patient.Phone = CpfValidator.Strip(patient.Phone);
             if (patient.Phone.Length < 10 || patient.Phone.Length > 11)
                 return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
         }
 
         if (!string.IsNullOrEmpty(patient.Cpf))
         {
-            patient.Cpf = OnlyNumbersRegex().Replace(patient.Cpf, "");
+            patient.Cpf = CpfValidator.Strip(patient.Cpf);
             if (!CpfValidator.IsValid(patient.Cpf))
                 return new HandlerResult(false, "CPF inválido.");
+            patient.CpfHash = CpfHelper.ComputeHash(patient.Cpf);
+        }
+        else
+        {
+            patient.CpfHash = null;
         }
 
         context.Entry(existing).CurrentValues.SetValues(patient);
@@ -165,9 +170,6 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
 
         return new PaginatedResponse<PatientListItemDto>(items, totalItems, page, pageSize);
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
-    private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
 
     [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
     private static partial System.Text.RegularExpressions.Regex EmailRegex();

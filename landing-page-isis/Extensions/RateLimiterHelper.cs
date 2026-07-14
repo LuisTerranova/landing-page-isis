@@ -1,31 +1,47 @@
-using System.Collections.Concurrent;
-using System.Threading.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace landing_page_isis.Extensions;
 
 public static class RateLimiterHelper
 {
-    private static readonly ConcurrentDictionary<string, FixedWindowRateLimiter> _limiters = new();
+    private static MemoryCache _cache = new(new MemoryCacheOptions());
+    private static readonly object _lock = new();
+
+    private class RateLimitCounter
+    {
+        public int Count { get; set; }
+    }
 
     public static void Reset()
     {
-        foreach (var kv in _limiters)
-            kv.Value.Dispose();
-        _limiters.Clear();
+        lock (_lock)
+        {
+            _cache.Dispose();
+            _cache = new MemoryCache(new MemoryCacheOptions());
+        }
     }
 
-    public static async Task<bool> CheckAsync(string key, int limit, TimeSpan window)
+    public static Task<bool> CheckAsync(string key, int limit, TimeSpan window)
     {
-        var limiter = _limiters.GetOrAdd(key, _ =>
-            new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
+        lock (_lock)
+        {
+            if (!_cache.TryGetValue(key, out RateLimitCounter? counter) || counter == null)
             {
-                PermitLimit = limit,
-                Window = window,
-                QueueLimit = 0,
-            })
-        );
+                counter = new RateLimitCounter { Count = 1 };
+                _cache.Set(key, counter, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = window
+                });
+                return Task.FromResult(true);
+            }
 
-        using var lease = await limiter.AcquireAsync();
-        return lease.IsAcquired;
+            if (counter.Count >= limit)
+            {
+                return Task.FromResult(false);
+            }
+
+            counter.Count++;
+            return Task.FromResult(true);
+        }
     }
 }

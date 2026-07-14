@@ -34,10 +34,9 @@
         </MudTd>
         <MudTd DataLabel="Nome">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                @if (context.CoupleId.HasValue)
+                @if (!string.IsNullOrWhiteSpace(context.CoupleName))
                 {
-                    var coupleDisplay = !string.IsNullOrWhiteSpace(context.CoupleName) ? context.CoupleName : context.PatientName;
-                    <span>Casal: @coupleDisplay</span>
+                    <span>Casal: @context.CoupleName</span>
                 }
                 else
                 {

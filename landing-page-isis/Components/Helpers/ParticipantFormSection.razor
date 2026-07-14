@@ -1,0 +1,74 @@
+@using landing_page_isis.core.Models
+@using landing_page_isis.core.Helpers
+
+<MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+    <MudIcon Icon="@Icon" Class="mr-2 mb-n1" />
+    @Label
+</MudText>
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudTextField T="string" Label="Nome Completo" Variant="Variant.Outlined"
+                       @bind-Value="Participant.Name"
+                       Required="@IsRequired"
+                       MaxLength="150" Counter="150"
+                       FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
+                       @bind-Value="Participant.Cpf"
+                       Mask="@(new PatternMask("000.000.000-00"))"
+                       Validation="@(new Func<string, string?>(v => string.IsNullOrEmpty(v) || CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
+                       FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
+                       @bind-Value="Participant.Email"
+                       MaxLength="255" Counter="255"
+                       FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField T="string" Label="Telefone (WhatsApp)" Variant="Variant.Outlined"
+                       @bind-Value="Participant.Phone"
+                       Required="@IsRequired"
+                       MaxLength="11" Counter="11"
+                       FullWidth="true" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudSelect T="string" Label="Estado (UF)" Variant="Variant.Outlined"
+                   @bind-Value="Participant.State"
+                   FullWidth="true">
+            @foreach (var uf in Ufs)
+            {
+                <MudSelectItem T="string" Value="@uf">@uf</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudDatePicker Label="Data de Nascimento"
+                       @bind-Date="_tempBirthDate"
+                       Variant="Variant.Outlined"
+                       DateFormat="dd/MM/yyyy"
+                       Editable="true" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public ContractParticipantInfo Participant { get; set; } = new();
+    [Parameter] public string Label { get; set; } = "Dados do Paciente";
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Person;
+    [Parameter] public bool IsRequired { get; set; } = true;
+
+    private static readonly string[] Ufs =
+    [
+        "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+        "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+        "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+    ];
+
+    private DateTime? _tempBirthDate
+    {
+        get => Participant.BirthDate.HasValue ? Participant.BirthDate.Value.ToDateTime(TimeOnly.MinValue) : null;
+        set => Participant.BirthDate = value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
+    }
+}

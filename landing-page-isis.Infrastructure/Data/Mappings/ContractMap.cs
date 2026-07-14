@@ -14,49 +14,58 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
         builder.ToTable("contracts");
         builder.HasKey(c => c.Id);
 
-        builder.Property(c => c.PatientName)
-            .IsRequired()
-            .HasMaxLength(150)
-            .HasColumnName("patient_name");
+        builder.OwnsOne(c => c.PrimaryPatient, p =>
+        {
+            p.Property(pt => pt.Name)
+                .IsRequired()
+                .HasMaxLength(150)
+                .HasColumnName("patient_name");
 
-        // Encrypt Patient CPF in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
-        builder.Property(c => c.PatientCpf)
-            .IsRequired(false)
-            .HasMaxLength(255)
-            .HasColumnName("patient_cpf")
-            .HasConversion(
-                v => AesEncryptionService.Encrypt(v ?? ""),
-                v => AesEncryptionService.Decrypt(v)
-            );
+            p.Property(pt => pt.Cpf)
+                .IsRequired(false)
+                .HasMaxLength(255)
+                .HasColumnName("patient_cpf")
+                .HasConversion(
+                    v => AesEncryptionService.Encrypt(v ?? ""),
+                    v => AesEncryptionService.Decrypt(v)
+                );
 
-        // Encrypt Patient Email in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
-        builder.Property(c => c.PatientEmail)
-            .IsRequired(false)
-            .HasMaxLength(255)
-            .HasColumnName("patient_email")
-            .HasConversion(
-                v => AesEncryptionService.Encrypt(v ?? ""),
-                v => AesEncryptionService.Decrypt(v)
-            );
+            p.Property(pt => pt.Email)
+                .IsRequired(false)
+                .HasMaxLength(255)
+                .HasColumnName("patient_email")
+                .HasConversion(
+                    v => AesEncryptionService.Encrypt(v ?? ""),
+                    v => AesEncryptionService.Decrypt(v)
+                );
 
-        // Encrypt Patient Phone in the database to secure sensitive patient data (complying with GDPR/LGPD requirements)
-        builder.Property(c => c.PatientPhone)
-            .IsRequired()
-            .HasMaxLength(255)
-            .HasColumnName("patient_phone")
-            .HasConversion(
-                v => AesEncryptionService.Encrypt(v ?? ""),
-                v => AesEncryptionService.Decrypt(v)
-            );
+            p.Property(pt => pt.Phone)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("patient_phone")
+                .HasConversion(
+                    v => AesEncryptionService.Encrypt(v ?? ""),
+                    v => AesEncryptionService.Decrypt(v)
+                );
 
-        builder.Property(c => c.PatientState)
-            .IsRequired(false)
-            .HasMaxLength(2)
-            .HasColumnName("patient_state");
+            p.Property(pt => pt.State)
+                .IsRequired(false)
+                .HasMaxLength(2)
+                .HasColumnName("patient_state");
 
-        builder.Property(c => c.PatientBirthDate)
-            .IsRequired(false)
-            .HasColumnName("patient_birth_date");
+            p.Property(pt => pt.BirthDate)
+                .IsRequired(false)
+                .HasColumnName("patient_birth_date");
+
+            p.Property(pt => pt.CpfHash)
+                .IsRequired(false)
+                .HasMaxLength(64)
+                .HasColumnName("patient_cpf_hash");
+
+            p.HasIndex(pt => pt.CpfHash)
+                .IsUnique()
+                .HasFilter("\"patient_cpf_hash\" IS NOT NULL");
+        });
 
         builder.Property(c => c.TermsAccepted)
             .IsRequired()
@@ -124,15 +133,7 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .IsRequired(false)
             .HasColumnName("patient_id");
 
-        builder.Property(c => c.PatientCpfHash)
-            .IsRequired(false)
-            .HasMaxLength(64)
-            .HasColumnName("patient_cpf_hash");
 
-        // Unique index on CPF hash ensures uniqueness only when populated, allowing multiple records with null hashes
-        builder.HasIndex(c => c.PatientCpfHash)
-            .IsUnique()
-            .HasFilter("\"patient_cpf_hash\" IS NOT NULL");
 
         builder.HasOne(c => c.Patient)
             .WithOne(p => p.Contract)
@@ -161,50 +162,57 @@ public class ContractMap : IEntityTypeConfiguration<Contract>
             .HasMaxLength(150)
             .HasColumnName("couple_name");
 
-        builder.Property(c => c.Patient2Name)
-            .IsRequired(false)
-            .HasMaxLength(150)
-            .HasColumnName("patient2_name");
+        builder.OwnsOne(c => c.SecondaryPatient, p =>
+        {
+            p.Property(pt => pt.Name)
+                .IsRequired(false)
+                .HasMaxLength(150)
+                .HasColumnName("patient2_name");
 
-        builder.Property(c => c.Patient2Cpf)
-            .IsRequired(false)
-            .HasMaxLength(255)
-            .HasColumnName("patient2_cpf")
-            .HasConversion(
-                v => AesEncryptionService.Encrypt(v ?? ""),
-                v => AesEncryptionService.Decrypt(v)
-            );
+            p.Property(pt => pt.Cpf)
+                .IsRequired(false)
+                .HasMaxLength(255)
+                .HasColumnName("patient2_cpf")
+                .HasConversion(
+                    v => AesEncryptionService.Encrypt(v ?? ""),
+                    v => AesEncryptionService.Decrypt(v)
+                );
 
-        builder.Property(c => c.Patient2Email)
-            .IsRequired(false)
-            .HasMaxLength(255)
-            .HasColumnName("patient2_email")
-            .HasConversion(
-                v => AesEncryptionService.Encrypt(v ?? ""),
-                v => AesEncryptionService.Decrypt(v)
-            );
+            p.Property(pt => pt.Email)
+                .IsRequired(false)
+                .HasMaxLength(255)
+                .HasColumnName("patient2_email")
+                .HasConversion(
+                    v => AesEncryptionService.Encrypt(v ?? ""),
+                    v => AesEncryptionService.Decrypt(v)
+                );
 
-        builder.Property(c => c.Patient2Phone)
-            .IsRequired(false)
-            .HasMaxLength(255)
-            .HasColumnName("patient2_phone")
-            .HasConversion(
-                v => AesEncryptionService.Encrypt(v ?? ""),
-                v => AesEncryptionService.Decrypt(v)
-            );
+            p.Property(pt => pt.Phone)
+                .IsRequired(false)
+                .HasMaxLength(255)
+                .HasColumnName("patient2_phone")
+                .HasConversion(
+                    v => AesEncryptionService.Encrypt(v ?? ""),
+                    v => AesEncryptionService.Decrypt(v)
+                );
 
-        builder.Property(c => c.Patient2State)
-            .IsRequired(false)
-            .HasMaxLength(2)
-            .HasColumnName("patient2_state");
+            p.Property(pt => pt.State)
+                .IsRequired(false)
+                .HasMaxLength(2)
+                .HasColumnName("patient2_state");
 
-        builder.Property(c => c.Patient2BirthDate)
-            .IsRequired(false)
-            .HasColumnName("patient2_birth_date");
+            p.Property(pt => pt.BirthDate)
+                .IsRequired(false)
+                .HasColumnName("patient2_birth_date");
 
-        builder.Property(c => c.Patient2CpfHash)
-            .IsRequired(false)
-            .HasMaxLength(64)
-            .HasColumnName("patient2_cpf_hash");
+            p.Property(pt => pt.CpfHash)
+                .IsRequired(false)
+                .HasMaxLength(64)
+                .HasColumnName("patient2_cpf_hash");
+
+            p.HasIndex(pt => pt.CpfHash)
+                .IsUnique()
+                .HasFilter("\"patient2_cpf_hash\" IS NOT NULL");
+        });
     }
 }

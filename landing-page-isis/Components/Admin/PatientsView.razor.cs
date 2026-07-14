@@ -209,11 +209,14 @@ public partial class PatientsView : ComponentBase
                 contractModel = new Contract
                 {
                     CoupleId = couple.Id,
-                    PatientName = couple.Name,
-                    PatientCpf = couple.PayerCpf,
-                    PatientPhone = couple.Patient1.Phone,
-                    PatientEmail = couple.Patient1.Email,
-                    PatientState = couple.Patient1.StateOfResidency,
+                    PrimaryPatient = new ContractParticipantInfo
+                    {
+                        Name = couple.Name,
+                        Cpf = couple.PayerCpf,
+                        Phone = couple.Patient1.Phone,
+                        Email = couple.Patient1.Email,
+                        State = couple.Patient1.StateOfResidency,
+                    },
                     TermsAccepted = couple.PolicySigned,
                 };
 
@@ -266,12 +269,15 @@ public partial class PatientsView : ComponentBase
                 contractModel = new Contract
                 {
                     PatientId = dto.Id,
-                    PatientName = fullPatient.Name,
-                    PatientCpf = fullPatient.Cpf,
-                    PatientEmail = fullPatient.Email,
-                    PatientPhone = fullPatient.Phone,
-                    PatientState = fullPatient.StateOfResidency,
-                    PatientBirthDate = fullPatient.BirthDate,
+                    PrimaryPatient = new ContractParticipantInfo
+                    {
+                        Name = fullPatient.Name,
+                        Cpf = fullPatient.Cpf,
+                        Email = fullPatient.Email,
+                        Phone = fullPatient.Phone,
+                        State = fullPatient.StateOfResidency,
+                        BirthDate = fullPatient.BirthDate,
+                    },
                     TermsAccepted = fullPatient.PolicySigned,
                 };
 

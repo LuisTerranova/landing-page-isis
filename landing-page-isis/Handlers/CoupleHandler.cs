@@ -78,7 +78,7 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
 
         if (!string.IsNullOrEmpty(couple.PayerCpf))
         {
-            couple.PayerCpf = OnlyNumbersRegex().Replace(couple.PayerCpf, "");
+            couple.PayerCpf = landing_page_isis.core.Helpers.CpfValidator.Strip(couple.PayerCpf);
             if (couple.PayerCpf.Length != 11)
                 return new HandlerResult(false, "CPF do pagador inválido. Deve ter 11 dígitos.");
         }
@@ -100,9 +100,24 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
         if (couple.Name.Length > 150)
             return new HandlerResult(false, "Nome do casal deve ter no máximo 150 caracteres.");
 
+        if (couple.Patient1Id == couple.Patient2Id)
+            return new HandlerResult(false, "Os dois pacientes devem ser diferentes.");
+
+        // Enforce that a patient cannot belong to more than one couple concurrently (excluding this couple)
+        var alreadyInCouple = await context.Couples.AnyAsync(c =>
+            c.Id != couple.Id &&
+            (c.Patient1Id == couple.Patient1Id
+            || c.Patient2Id == couple.Patient1Id
+            || c.Patient1Id == couple.Patient2Id
+            || c.Patient2Id == couple.Patient2Id)
+        );
+
+        if (alreadyInCouple)
+            return new HandlerResult(false, "Um dos pacientes já pertence a outro casal.");
+
         if (!string.IsNullOrEmpty(couple.PayerCpf))
         {
-            couple.PayerCpf = OnlyNumbersRegex().Replace(couple.PayerCpf, "");
+            couple.PayerCpf = landing_page_isis.core.Helpers.CpfValidator.Strip(couple.PayerCpf);
             if (couple.PayerCpf.Length != 11)
                 return new HandlerResult(false, "CPF do pagador inválido. Deve ter 11 dígitos.");
         }
@@ -197,7 +212,4 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
             ))
             .ToListAsync(ct);
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
-    private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
 }

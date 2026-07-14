@@ -3,6 +3,7 @@
 @layout ContractAcceptLayout
 @using landing_page_isis.core
 @using landing_page_isis.core.Models
+@using landing_page_isis.Components.Helpers
 @using RazorLight
 
 @rendermode InteractiveServer
@@ -10,7 +11,6 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject RazorLightEngine RazorLight
-@inject NavigationManager Navigation
 @inject IJSRuntime Js
 @implements IDisposable
 
@@ -33,19 +33,8 @@
     }
     else if (_contract.Status == ContractStatus.Ativo)
     {
-        <MudPaper Elevation="4" Class="pa-10 text-center" Style="border-radius: 24px;">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
-            <MudText Typo="Typo.h5" Color="Color.Success" Class="mt-4">Contrato já aceito</MudText>
-            <MudText Typo="Typo.body2" Class="mt-2">
-                Este contrato foi aceito em @_contract.AcceptedAt?.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm").
-            </MudText>
-            @if (_redirectSeconds > 0)
-            {
-                <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-4">
-                    Redirecionando em @_redirectSeconds segundos...
-                </MudText>
-            }
-        </MudPaper>
+        <SuccessRedirect Title="Contrato já aceito"
+                         Message="@_successMessage" />
     }
     else if (_contract.Status == ContractStatus.Cancelado)
     {
@@ -159,14 +148,12 @@
     private bool _expired;
     private bool _accepting;
     private bool _hasScrolledToBottom;
+    private string _successMessage = string.Empty;
  
-    private bool _cpfVerified;
+private bool _cpfVerified;
     private string _cpfInput = string.Empty;
     private string _cpfError = string.Empty;
- 
-    private int _redirectSeconds;
-    private CancellationTokenSource? _redirectCts;
- 
+
     private ElementReference _contractDiv;
     private bool _scrollMonitorAttached;
     private DotNetObjectReference<ContractAcceptPage>? _dotNetRef;
@@ -183,7 +170,7 @@
 
         if (_contract is { Status: ContractStatus.Ativo })
         {
-            StartRedirectTimer();
+            _successMessage = $"Este contrato foi aceito em {_contract.AcceptedAt?.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy 'às' HH:mm")}.";
         }
 
         _loading = false;
@@ -210,49 +197,21 @@
         return Task.CompletedTask;
     }
  
-    private void StartRedirectTimer()
+public void Dispose()
     {
-        _redirectSeconds = 5;
-        _redirectCts = CancellationTokenSource.CreateLinkedTokenSource(new CancellationToken());
-        _ = RedirectAfterDelayAsync(_redirectCts.Token);
-    }
- 
-    private async Task RedirectAfterDelayAsync(CancellationToken ct)
-    {
-        while (_redirectSeconds > 0 && !ct.IsCancellationRequested)
-        {
-            await Task.Delay(1000, ct);
-            _redirectSeconds--;
-            await InvokeAsync(StateHasChanged);
-        }
- 
-        if (!ct.IsCancellationRequested)
-        {
-            Navigation.NavigateTo("/", forceLoad: true);
-        }
-    }
- 
-    public void Dispose()
-    {
-        _redirectCts?.Cancel();
-        _redirectCts?.Dispose();
         _dotNetRef?.Dispose();
     }
  
-    private void ConfirmCpf()
+    private async Task ConfirmCpf()
     {
         _cpfError = string.Empty;
  
-        if (string.IsNullOrEmpty(_contract?.PatientCpf))
-        {
-            _cpfVerified = true;
+        if (_contract == null)
             return;
-        }
  
-        var digits = new string(_contract.PatientCpf.Where(char.IsDigit).ToArray());
-        var lastThree = digits.Length >= 3 ? digits[^3..] : digits;
+        var valid = await ContractHandler.VerifyCpfDigits(_contract.Id, _cpfInput);
  
-        if (_cpfInput.Trim() != lastThree)
+        if (!valid)
         {
             _cpfError = "Os dígitos não conferem. Tente novamente.";
             return;
@@ -309,9 +268,8 @@ private async Task AcceptContract()
             {
                 _contract.Status = ContractStatus.Ativo;
                 _contract.AcceptedAt = renderContract.AcceptedAt;
-                _contract.ContractDocumentHtml = html;
- 
-                StartRedirectTimer();
+_contract.ContractDocumentHtml = html;
+
                 StateHasChanged();
             }
             else

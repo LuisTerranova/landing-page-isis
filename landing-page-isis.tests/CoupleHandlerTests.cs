@@ -264,7 +264,7 @@ public class CoupleHandlerTests
         await using var context = GetDatabaseContext();
         var handler = new CoupleHandler(context);
 
-        var couple = new Couple { Name = "Original Name" };
+        var couple = new Couple { Name = "Original Name", Patient1Id = Guid.NewGuid(), Patient2Id = Guid.NewGuid() };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -281,7 +281,7 @@ public class CoupleHandlerTests
         await using var context = GetDatabaseContext();
         var handler = new CoupleHandler(context);
 
-        var couple = new Couple { Name = "Original Name" };
+        var couple = new Couple { Name = "Original Name", Patient1Id = Guid.NewGuid(), Patient2Id = Guid.NewGuid() };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -294,6 +294,58 @@ public class CoupleHandlerTests
         Assert.NotNull(saved);
         Assert.Equal("Updated Name", saved.Name);
         Assert.Equal("12345678901", saved.PayerCpf);
+    }
+
+    [Fact]
+    public async Task UpdateCouple_ShouldReturnFalse_WhenPatientsAreSame()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new CoupleHandler(context);
+
+        var couple = new Couple { Name = "Original Name", Patient1Id = Guid.NewGuid(), Patient2Id = Guid.NewGuid() };
+        context.Couples.Add(couple);
+        await context.SaveChangesAsync();
+
+        var sameId = Guid.NewGuid();
+        couple.Patient1Id = sameId;
+        couple.Patient2Id = sameId;
+
+        var result = await handler.UpdateCouple(couple);
+
+        Assert.False(result.Success);
+        Assert.Equal("Os dois pacientes devem ser diferentes.", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateCouple_ShouldReturnFalse_WhenPatientAlreadyInAnotherCouple()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new CoupleHandler(context);
+
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var p3 = Guid.NewGuid();
+
+        // Existing couple
+        context.Couples.Add(new Couple
+        {
+            Name = "First Couple",
+            Patient1Id = p1,
+            Patient2Id = p2
+        });
+
+        // Couple to update
+        var couple = new Couple { Name = "Second Couple", Patient1Id = Guid.NewGuid(), Patient2Id = p3 };
+        context.Couples.Add(couple);
+        await context.SaveChangesAsync();
+
+        // Update second couple to use p1
+        couple.Patient1Id = p1;
+
+        var result = await handler.UpdateCouple(couple);
+
+        Assert.False(result.Success);
+        Assert.Equal("Um dos pacientes já pertence a outro casal.", result.Message);
     }
 
     [Fact]

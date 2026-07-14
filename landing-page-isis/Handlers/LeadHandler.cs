@@ -63,7 +63,7 @@ public partial class LeadHandler(
             return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
 
         if (!string.IsNullOrEmpty(lead.Phone))
-            lead.Phone = OnlyNumbersRegex().Replace(lead.Phone, "");
+            lead.Phone = landing_page_isis.core.Helpers.CpfValidator.Strip(lead.Phone);
 
         context.Leads.Add(lead);
         await context.SaveChangesAsync();
@@ -146,7 +146,7 @@ public partial class LeadHandler(
             return string.Empty;
 
         // Clean phone number
-        var cleanPhone = OnlyNumbersRegex().Replace(lead.Phone, "");
+        var cleanPhone = landing_page_isis.core.Helpers.CpfValidator.Strip(lead.Phone);
 
         // Add Brazil country code (55)
         if (cleanPhone.Length == 10 || cleanPhone.Length == 11)
@@ -176,7 +176,4 @@ public partial class LeadHandler(
         // Build WhatsApp click-to-chat API redirection link
         return $"https://wa.me/{cleanPhone}?text={encodedText}";
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
-    private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
 }

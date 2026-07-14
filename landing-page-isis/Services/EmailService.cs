@@ -11,6 +11,7 @@ namespace landing_page_isis.Services;
 public class EmailService(
     IServiceProvider services,
     IHttpClientFactory httpFactory,
+    RazorLightEngine razor,
     ILogger<EmailService> logger
 ) : BackgroundService
 {
@@ -26,12 +27,6 @@ public class EmailService(
 
     // Determines the interval for checking upcoming appointments during business hours.
     private readonly TimeSpan _period = TimeSpan.FromHours(1);
-
-    // Razor engine used to compile and render email templates from .cshtml files.
-    private readonly RazorLightEngine _razor = new RazorLightEngineBuilder()
-        .UseFileSystemProject(Path.Combine(Directory.GetCurrentDirectory(), "Templates"))
-        .UseMemoryCachingProvider()
-        .Build();
 
     /// <summary>
     /// Executes the background service, running the reminder loop continuously during Porto Velho business hours.
@@ -165,7 +160,7 @@ public class EmailService(
                 return false;
 
             // Render template dynamically using RazorLight with appointment metadata
-            var html = await _razor.CompileRenderAsync("AppointmentReminder.cshtml", appointment);
+            var html = await razor.CompileRenderAsync("AppointmentReminder.cshtml", appointment);
 
             var http = httpFactory.CreateClient("resend");
             var response = await http.PostAsJsonAsync(

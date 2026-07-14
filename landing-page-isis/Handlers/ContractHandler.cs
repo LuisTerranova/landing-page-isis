@@ -65,7 +65,7 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
             .Select(c => new
             {
                 c.Id,
-                c.PatientName,
+                PatientName = c.PrimaryPatient.Name,
                 c.Status,
                 c.Price,
                 c.CreatedAt,
@@ -114,74 +114,34 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
         if (!await RateLimiterHelper.CheckAsync($"contract:{ip}", 5, TimeSpan.FromMinutes(1)))
             return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
 
-        if (string.IsNullOrWhiteSpace(contract.PatientName))
-            return new HandlerResult(false, "Nome é obrigatório.");
-
-        if (contract.PatientName.Length > 150)
-            return new HandlerResult(false, "Nome deve ter no máximo 150 caracteres.");
-
-        if (
-            !string.IsNullOrEmpty(contract.PatientEmail)
-            && !EmailRegex().IsMatch(contract.PatientEmail)
-        )
-            return new HandlerResult(false, "E-mail inválido.");
-
-        if (!string.IsNullOrEmpty(contract.PatientPhone))
-        {
-            contract.PatientPhone = OnlyNumbersRegex().Replace(contract.PatientPhone, "");
-            if (contract.PatientPhone.Length < 10 || contract.PatientPhone.Length > 11)
-                return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
-        }
-
-        if (!string.IsNullOrEmpty(contract.PatientCpf))
-        {
-            contract.PatientCpf = OnlyNumbersRegex().Replace(contract.PatientCpf, "");
-            if (!CpfValidator.IsValid(contract.PatientCpf))
-                return new HandlerResult(false, "CPF inválido.");
-        }
-
-        if (
-            !string.IsNullOrEmpty(contract.PatientState)
-            && !ValidUfs.Contains(contract.PatientState.ToUpperInvariant())
-        )
-        {
-            return new HandlerResult(false, "Estado (UF) inválido.");
-        }
-
-        if (
-            contract.PatientBirthDate.HasValue
-            && contract.PatientBirthDate.Value > DateOnly.FromDateTime(DateTime.Today)
-        )
-        {
-            return new HandlerResult(false, "Data de nascimento inválida.");
-        }
-
         if (!contract.TermsAccepted)
             return new HandlerResult(false, "É necessário aceitar os termos.");
 
-        if (!string.IsNullOrEmpty(contract.PatientCpf))
+        Guid? excludePatient1Id = contract.PatientId;
+        Guid? excludePatient2Id = null;
+
+        if (contract.CoupleId.HasValue)
         {
-            // Compute cryptographic hash of CPF for privacy-safe querying and indexing
-            var cpfHash = CpfHelper.ComputeHash(contract.PatientCpf);
-
-            // Verify CPF uniqueness in pending/active contracts
-            var existingInContracts = await context.Contracts.AnyAsync(c =>
-                c.PatientCpfHash == cpfHash && c.Status != ContractStatus.Cancelado
-            );
-
-            if (existingInContracts)
-                return new HandlerResult(false, "Já existe um cadastro com este CPF.");
-
-            // For couple contracts the payer is one of the partners — skip patient dedup
-            if (string.IsNullOrEmpty(contract.Patient2Name))
+            var couple = await context.Couples.AsNoTracking().FirstOrDefaultAsync(c => c.Id == contract.CoupleId.Value);
+            if (couple != null)
             {
-                var existingInPatients = await context.Patients.AnyAsync(p => p.CpfHash == cpfHash);
-
-                if (existingInPatients)
-                    return new HandlerResult(false, "Já existe um cadastro com este CPF.");
+                excludePatient1Id = couple.Patient1Id;
+                excludePatient2Id = couple.Patient2Id;
             }
+        }
 
-            contract.PatientCpfHash = cpfHash;
+        var primaryResult = await ValidateAndHashParticipant(contract.PrimaryPatient, contract.Id, excludePatient1Id, excludePatient2Id, isRequired: true, "Paciente");
+        if (!primaryResult.Success)
+            return primaryResult;
+
+        if (contract.SecondaryPatient != null && !string.IsNullOrWhiteSpace(contract.SecondaryPatient.Name))
+        {
+            var secondaryResult = await ValidateAndHashParticipant(contract.SecondaryPatient, contract.Id, excludePatient1Id, excludePatient2Id, isRequired: false, "Segundo paciente");
+            if (!secondaryResult.Success)
+                return secondaryResult;
+
+            if (contract.PrimaryPatient.Cpf == contract.SecondaryPatient.Cpf && !string.IsNullOrEmpty(contract.PrimaryPatient.Cpf))
+                return new HandlerResult(false, "Os dois pacientes devem ser diferentes.");
         }
 
         contract.CreatedAt = DateTimeOffset.UtcNow;
@@ -234,26 +194,9 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
         if (contract.PatientId.HasValue || contract.CoupleId.HasValue)
             return;
 
-        if (string.IsNullOrWhiteSpace(contract.Patient2Name))
+        if (contract.SecondaryPatient == null || string.IsNullOrWhiteSpace(contract.SecondaryPatient.Name))
         {
-            var cpf = !string.IsNullOrEmpty(contract.PatientCpf)
-                ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
-                : contract.PatientCpf;
-
-            var patient = new Patient
-            {
-                Name = contract.PatientName,
-                Cpf = cpf,
-                Email = contract.PatientEmail,
-                Phone = !string.IsNullOrEmpty(contract.PatientPhone)
-                    ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
-                    : contract.PatientPhone,
-                StateOfResidency = contract.PatientState,
-                BirthDate = contract.PatientBirthDate,
-                PolicySigned = true,
-                CpfHash = !string.IsNullOrEmpty(cpf) ? CpfHelper.ComputeHash(cpf) : null,
-            };
-
+            var patient = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: true);
             context.Patients.Add(patient);
             await context.SaveChangesAsync();
 
@@ -263,41 +206,8 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
         }
         else
         {
-            var p1Cpf = !string.IsNullOrEmpty(contract.PatientCpf)
-                ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
-                : contract.PatientCpf;
-
-            var p1 = new Patient
-            {
-                Name = contract.PatientName,
-                Cpf = p1Cpf,
-                Email = contract.PatientEmail,
-                Phone = !string.IsNullOrEmpty(contract.PatientPhone)
-                    ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
-                    : contract.PatientPhone,
-                StateOfResidency = contract.PatientState,
-                BirthDate = contract.PatientBirthDate,
-                PolicySigned = true,
-                CpfHash = !string.IsNullOrEmpty(p1Cpf) ? CpfHelper.ComputeHash(p1Cpf) : null,
-            };
-
-            var p2Cpf = !string.IsNullOrEmpty(contract.Patient2Cpf)
-                ? OnlyNumbersRegex().Replace(contract.Patient2Cpf, "")
-                : contract.Patient2Cpf;
-
-            var p2 = new Patient
-            {
-                Name = contract.Patient2Name,
-                Cpf = p2Cpf,
-                Email = contract.Patient2Email,
-                Phone = !string.IsNullOrEmpty(contract.Patient2Phone)
-                    ? OnlyNumbersRegex().Replace(contract.Patient2Phone, "")
-                    : contract.Patient2Phone,
-                StateOfResidency = contract.Patient2State,
-                BirthDate = contract.Patient2BirthDate,
-                PolicySigned = true,
-                CpfHash = !string.IsNullOrEmpty(p2Cpf) ? CpfHelper.ComputeHash(p2Cpf) : null,
-            };
+            var p1 = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: true);
+            var p2 = CreatePatientFromParticipant(contract.SecondaryPatient, policySigned: true);
 
             context.Patients.AddRange(p1, p2);
             await context.SaveChangesAsync();
@@ -311,8 +221,8 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
                 Name = coupleName,
                 Patient1Id = p1.Id,
                 Patient2Id = p2.Id,
-                PayerName = contract.PatientName,
-                PayerCpf = p1Cpf,
+                PayerName = contract.PrimaryPatient.Name,
+                PayerCpf = p1.Cpf,
                 PolicySigned = true,
             };
 
@@ -391,7 +301,7 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
         var queryable = context.Contracts.Include(c => c.Couple).AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query))
-            queryable = queryable.Where(c => c.PatientName.Contains(query));
+            queryable = queryable.Where(c => c.PrimaryPatient.Name.Contains(query));
 
         var totalItems = await queryable.CountAsync(ct);
 
@@ -405,7 +315,7 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
             .Select(c => new
             {
                 c.Id,
-                c.PatientName,
+                PatientName = c.PrimaryPatient.Name,
                 c.Status,
                 c.Price,
                 c.CreatedAt,
@@ -447,20 +357,14 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
                 "Contrato de casal não pode ser convertido em paciente individual."
             );
 
-        var phone = !string.IsNullOrEmpty(contract.PatientPhone)
-            ? OnlyNumbersRegex().Replace(contract.PatientPhone, "")
-            : contract.PatientPhone;
-
-        var cpf = !string.IsNullOrEmpty(contract.PatientCpf)
-            ? OnlyNumbersRegex().Replace(contract.PatientCpf, "")
-            : contract.PatientCpf;
-
-        if (!string.IsNullOrEmpty(cpf))
+        if (!string.IsNullOrEmpty(contract.PrimaryPatient.Cpf))
         {
+            var cpf = landing_page_isis.core.Helpers.CpfValidator.Strip(contract.PrimaryPatient.Cpf);
             var cpfHash = CpfHelper.ComputeHash(cpf);
 
             var existingContract = await context.Contracts.AnyAsync(c =>
-                c.PatientCpfHash == cpfHash && c.Id != contract.Id
+                (c.PrimaryPatient.CpfHash == cpfHash || (c.SecondaryPatient != null && c.SecondaryPatient.CpfHash == cpfHash)) && 
+                c.Id != contract.Id
             );
             if (existingContract)
                 return new HandlerResult(false, "Já existe um contrato com este CPF.");
@@ -470,17 +374,7 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
                 return new HandlerResult(false, "Já existe um paciente com este CPF.");
         }
 
-        var patient = new Patient
-        {
-            Name = contract.PatientName,
-            Cpf = cpf,
-            Email = contract.PatientEmail,
-            Phone = phone,
-            StateOfResidency = contract.PatientState,
-            BirthDate = contract.PatientBirthDate,
-            PolicySigned = contract.TermsAccepted,
-            CpfHash = !string.IsNullOrEmpty(cpf) ? CpfHelper.ComputeHash(cpf) : null,
-        };
+        var patient = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: contract.TermsAccepted);
 
         // Wrap patient creation and contract association inside a transaction to ensure database consistency
         await using var transaction = await context.Database.BeginTransactionAsync();
@@ -514,8 +408,121 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
             .FirstOrDefaultAsync(c => c.CoupleId == coupleId);
     }
 
-    [System.Text.RegularExpressions.GeneratedRegex(@"[^\d]")]
-    private static partial System.Text.RegularExpressions.Regex OnlyNumbersRegex();
+    public async Task<bool> VerifyCpfDigits(Guid contractId, string inputDigits)
+    {
+        var contract = await context.Contracts.AsNoTracking().FirstOrDefaultAsync(c => c.Id == contractId);
+        if (contract == null || string.IsNullOrEmpty(contract.PrimaryPatient.Cpf))
+            return true;
+
+        var digits = new string(contract.PrimaryPatient.Cpf.Where(char.IsDigit).ToArray());
+        var lastThree = digits.Length >= 3 ? digits[^3..] : digits;
+        return inputDigits.Trim() == lastThree;
+    }
+
+    private async Task<HandlerResult> ValidateAndHashParticipant(
+        ContractParticipantInfo participant,
+        Guid contractId,
+        Guid? excludePatient1Id,
+        Guid? excludePatient2Id,
+        bool isRequired,
+        string participantLabel)
+    {
+        var prefix = participantLabel == "Paciente" ? "" : $"{participantLabel}: ";
+
+        if (isRequired && string.IsNullOrWhiteSpace(participant.Name))
+            return new HandlerResult(false, $"{prefix}Nome é obrigatório.");
+
+        if (!string.IsNullOrEmpty(participant.Name) && participant.Name.Length > 150)
+            return new HandlerResult(false, $"{prefix}Nome deve ter no máximo 150 caracteres.");
+
+        if (
+            !string.IsNullOrEmpty(participant.Email)
+            && !EmailRegex().IsMatch(participant.Email)
+        )
+            return new HandlerResult(false, $"{prefix}E-mail inválido.");
+
+        if (!string.IsNullOrEmpty(participant.Phone))
+        {
+            participant.Phone = landing_page_isis.core.Helpers.CpfValidator.Strip(participant.Phone);
+            if (participant.Phone.Length < 10 || participant.Phone.Length > 11)
+                return new HandlerResult(false, $"{prefix}Telefone inválido. Deve ter 10 ou 11 dígitos.");
+        }
+        else if (isRequired)
+        {
+            return new HandlerResult(false, $"{prefix}Telefone é obrigatório.");
+        }
+
+        if (!string.IsNullOrEmpty(participant.Cpf))
+        {
+            participant.Cpf = landing_page_isis.core.Helpers.CpfValidator.Strip(participant.Cpf);
+            if (!CpfValidator.IsValid(participant.Cpf))
+                return new HandlerResult(false, $"{prefix}CPF inválido.");
+        }
+
+        if (
+            !string.IsNullOrEmpty(participant.State)
+            && !ValidUfs.Contains(participant.State.ToUpperInvariant())
+        )
+        {
+            return new HandlerResult(false, $"{prefix}Estado (UF) inválido.");
+        }
+
+        if (
+            participant.BirthDate.HasValue
+            && participant.BirthDate.Value > DateOnly.FromDateTime(DateTime.Today)
+        )
+        {
+            return new HandlerResult(false, $"{prefix}Data de nascimento inválida.");
+        }
+
+        if (!string.IsNullOrEmpty(participant.Cpf))
+        {
+            var cpfHash = CpfHelper.ComputeHash(participant.Cpf);
+
+            var existingInContracts = await context.Contracts.AnyAsync(c =>
+                c.Id != contractId && 
+                (c.PrimaryPatient.CpfHash == cpfHash || (c.SecondaryPatient != null && c.SecondaryPatient.CpfHash == cpfHash)) && 
+                c.Status != ContractStatus.Cancelado
+            );
+
+            if (existingInContracts)
+                return new HandlerResult(false, participantLabel == "Paciente" ? "Já existe um cadastro com este CPF." : $"Já existe um cadastro com o CPF do {participantLabel.ToLower()}.");
+
+            var existingInPatients = await context.Patients.AnyAsync(p =>
+                p.CpfHash == cpfHash &&
+                p.Id != excludePatient1Id &&
+                p.Id != excludePatient2Id
+            );
+
+            if (existingInPatients)
+                return new HandlerResult(false, participantLabel == "Paciente" ? "Já existe um cadastro com este CPF." : $"Já existe um cadastro com o CPF do {participantLabel.ToLower()}.");
+
+            participant.CpfHash = cpfHash;
+        }
+
+        return new HandlerResult(true);
+    }
+
+    private Patient CreatePatientFromParticipant(ContractParticipantInfo participant, bool policySigned)
+    {
+        var cpf = !string.IsNullOrEmpty(participant.Cpf)
+            ? landing_page_isis.core.Helpers.CpfValidator.Strip(participant.Cpf)
+            : participant.Cpf;
+
+        return new Patient
+        {
+            Name = participant.Name,
+            Cpf = cpf,
+            Email = participant.Email,
+            Phone = !string.IsNullOrEmpty(participant.Phone)
+                ? landing_page_isis.core.Helpers.CpfValidator.Strip(participant.Phone)
+                : participant.Phone,
+            StateOfResidency = participant.State,
+            BirthDate = participant.BirthDate,
+            PolicySigned = policySigned,
+            CpfHash = !string.IsNullOrEmpty(cpf) ? CpfHelper.ComputeHash(cpf) : null,
+        };
+    }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
     private static partial System.Text.RegularExpressions.Regex EmailRegex();

@@ -25,4 +25,5 @@ public interface IContractHandler
     Task<HandlerResult> ConvertToPatient(Guid id);
     Task<Contract?> GetContractByPatientId(Guid patientId);
     Task<Contract?> GetContractByCoupleId(Guid coupleId);
+    Task<bool> VerifyCpfDigits(Guid contractId, string digits);
 }

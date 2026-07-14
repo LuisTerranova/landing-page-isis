@@ -17,7 +17,7 @@
     </TitleContent>
     <DialogContent>
         <MudForm @bind-IsValid="@_formValido">
-            @if (!string.IsNullOrEmpty(Model.Patient2Name))
+            @if (Model.SecondaryPatient != null && !string.IsNullOrEmpty(Model.SecondaryPatient.Name))
             {
                 <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-4">
                     <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2 mb-n1" />
@@ -32,27 +32,27 @@
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Parceiro 1" Variant="Variant.Outlined"
-                                      Value="@Model.PatientName" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Name" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="CPF Parceiro 1" Variant="Variant.Outlined"
-                                      Value="@Model.PatientCpf.FormatCpf()" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Cpf.FormatCpf()" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                      Value="@Model.PatientEmail" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Email" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Telefone" Variant="Variant.Outlined"
-                                      Value="@Model.PatientPhone.FormatPhone()" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Phone.FormatPhone()" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Estado" Variant="Variant.Outlined"
-                                      Value="@Model.PatientState" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.State" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Nascimento" Variant="Variant.Outlined"
-                                      Value="@(Model.PatientBirthDate?.ToString("dd/MM/yyyy") ?? "—")" Disabled="true" />
+                                      Value="@(Model.PrimaryPatient.BirthDate?.ToString("dd/MM/yyyy") ?? "—")" Disabled="true" />
                     </MudItem>
                 </MudGrid>
 
@@ -61,31 +61,31 @@
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Parceiro 2" Variant="Variant.Outlined"
-                                      Value="@Model.Patient2Name" Disabled="true" />
+                                      Value="@Model.SecondaryPatient.Name" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="CPF Parceiro 2" Variant="Variant.Outlined"
-                                      Value="@Model.Patient2Cpf.FormatCpf()" Disabled="true" />
+                                      Value="@Model.SecondaryPatient.Cpf.FormatCpf()" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                      Value="@Model.Patient2Email" Disabled="true" />
+                                      Value="@Model.SecondaryPatient.Email" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Telefone" Variant="Variant.Outlined"
-                                      Value="@Model.Patient2Phone.FormatPhone()" Disabled="true" />
+                                      Value="@Model.SecondaryPatient.Phone.FormatPhone()" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Estado" Variant="Variant.Outlined"
-                                      Value="@Model.Patient2State" Disabled="true" />
+                                      Value="@Model.SecondaryPatient.State" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Nascimento" Variant="Variant.Outlined"
-                                      Value="@(Model.Patient2BirthDate?.ToString("dd/MM/yyyy") ?? "—")" Disabled="true" />
+                                      Value="@(Model.SecondaryPatient.BirthDate?.ToString("dd/MM/yyyy") ?? "—")" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12">
                         <MudTextField T="string" Label="Pagador" Variant="Variant.Outlined"
-                                      Value="@Model.PatientName" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Name" Disabled="true" />
                     </MudItem>
                 </MudGrid>
             }
@@ -99,27 +99,27 @@
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Nome" Variant="Variant.Outlined"
-                                      Value="Model.PatientName" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Name" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
-                                      Value="Model.PatientCpf.FormatCpf()" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Cpf.FormatCpf()" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined"
-                                      Value="Model.PatientEmail" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Email" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Telefone" Variant="Variant.Outlined"
-                                      Value="Model.PatientPhone.FormatPhone()" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.Phone.FormatPhone()" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Estado" Variant="Variant.Outlined"
-                                      Value="Model.PatientState" Disabled="true" />
+                                      Value="@Model.PrimaryPatient.State" Disabled="true" />
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudTextField T="string" Label="Nascimento" Variant="Variant.Outlined"
-                                      Value="@(Model.PatientBirthDate?.ToString("dd/MM/yyyy") ?? "—")" Disabled="true" />
+                                      Value="@(Model.PrimaryPatient.BirthDate?.ToString("dd/MM/yyyy") ?? "—")" Disabled="true" />
                     </MudItem>
                 </MudGrid>
             }
@@ -145,8 +145,20 @@
 
             <MudText Typo="Typo.subtitle2" Color="Color.Tertiary" Class="mt-6 mb-4">
                 <MudIcon Icon="@Icons.Material.Filled.CardGiftcard" Class="mr-2 mb-n1" />
-                Pacote de Sessões (opcional)
+                Pacote de Sessões
             </MudText>
+
+            @if (_isEditing && Model.Price.HasValue && Model.InitialAppointments.HasValue && Model.PackagePrice.HasValue)
+            {
+                var desconto = (Model.Price.Value * Model.InitialAppointments.Value) - Model.PackagePrice.Value;
+                <MudAlert Severity="Severity.Info" Class="mb-4" Style="font-size: 13px;">
+                    <MudText Typo="Typo.body2">
+                        <strong>@Model.InitialAppointments sessões</strong> avulsas: R$ @((Model.Price.Value * Model.InitialAppointments.Value).ToString("F2"))
+                        &nbsp;→&nbsp; <strong>Pacote:</strong> R$ @Model.PackagePrice.Value.ToString("F2")
+                        &nbsp;|&nbsp; <strong>Desconto:</strong> R$ @desconto.ToString("F2")
+                    </MudText>
+                </MudAlert>
+            }
 
             <MudGrid>
                 <MudItem xs="12" md="6">
@@ -163,17 +175,6 @@
                 </MudItem>
             </MudGrid>
 
-            @if (_isEditing && Model.Price.HasValue && Model.InitialAppointments.HasValue && Model.PackagePrice.HasValue)
-            {
-                var desconto = (Model.Price.Value * Model.InitialAppointments.Value) - Model.PackagePrice.Value;
-                <MudAlert Severity="Severity.Info" Class="mt-4" Style="font-size: 13px;">
-                    <MudText Typo="Typo.body2">
-                        <strong>@Model.InitialAppointments sessões</strong> avulsas: R$ @((Model.Price.Value * Model.InitialAppointments.Value).ToString("F2"))
-                        &nbsp;→&nbsp; <strong>Pacote:</strong> R$ @Model.PackagePrice.Value.ToString("F2")
-                        &nbsp;|&nbsp; <strong>Desconto:</strong> R$ @desconto.ToString("F2")
-                    </MudText>
-                </MudAlert>
-            }
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -251,7 +252,7 @@
 
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Confirmar Cancelamento",
-            $"Tem certeza que deseja cancelar o contrato de {(string.IsNullOrEmpty(Model.CoupleName) ? Model.PatientName : Model.CoupleName)}?",
+            $"Tem certeza que deseja cancelar o contrato de {(string.IsNullOrEmpty(Model.CoupleName) ? Model.PrimaryPatient.Name : Model.CoupleName)}?",
             yesText: "Sim, Cancelar",
             cancelText: "Voltar",
             options: options
@@ -311,10 +312,10 @@
         _gerando = true;
         try
         {
-            if (!string.IsNullOrEmpty(Model.Patient2Name) && string.IsNullOrWhiteSpace(Model.CoupleName))
+            if (Model.SecondaryPatient != null && !string.IsNullOrEmpty(Model.SecondaryPatient.Name) && string.IsNullOrWhiteSpace(Model.CoupleName))
             {
-                var firstName1 = Model.PatientName?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
-                var firstName2 = Model.Patient2Name?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
+                var firstName1 = Model.PrimaryPatient.Name?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
+                var firstName2 = Model.SecondaryPatient.Name?.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? string.Empty;
                 Model.CoupleName = $"{firstName1} e {firstName2}";
             }
 

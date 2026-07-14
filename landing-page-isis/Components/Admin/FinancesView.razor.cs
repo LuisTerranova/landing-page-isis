@@ -115,20 +115,41 @@ public partial class FinancesView : ComponentBase
             // 4. Total Revenue for Period
             _totalRevenue = _realizedRevenue + _pendingRevenue;
 
-            // 5. Monthly Revenue Chart Data (Bar)
+            // 5. Monthly Revenue Chart Data (Bar) - Query the entire calendar year of the start date for full trend
+            var yearStart = new DateTimeOffset(new DateTime(_startDate.Value.Year, 1, 1), TimeSpan.Zero);
+            var yearEnd = new DateTimeOffset(new DateTime(_startDate.Value.Year, 12, 31, 23, 59, 59), TimeSpan.Zero);
+
+            var chartAppointments = await AppointmentHandler.GetAllAppointmentsByDateRange(
+                yearStart,
+                yearEnd,
+                CancellationToken.None
+            );
+
+            var chartPackages = await PackageHandler.GetAllPackagesByDateRange(
+                yearStart,
+                yearEnd,
+                CancellationToken.None
+            );
+
             var monthlyData = new double[12];
             for (int i = 1; i <= 12; i++)
             {
                 var monthlyAppointments = (double)
-                    appointments
+                    chartAppointments
                         .Where(a =>
-                            a.AppointmentDate.Month == i
+                            a.AppointmentDate.Year == _startDate.Value.Year
+                            && a.AppointmentDate.Month == i
                             && a.AppointmentStatus == AppointmentStatusEnum.Realizada
                         )
                         .Sum(a => a.Price);
 
                 var monthlyPackages = (double)
-                    packages.Where(p => p.CreatedAt.Month == i).Sum(p => p.Price);
+                    chartPackages
+                        .Where(p => 
+                            p.CreatedAt.Year == _startDate.Value.Year
+                            && p.CreatedAt.Month == i
+                        )
+                        .Sum(p => p.Price);
 
                 monthlyData[i - 1] = monthlyAppointments + monthlyPackages;
             }
@@ -151,7 +172,7 @@ public partial class FinancesView : ComponentBase
 
             _monthlyRevenueSeries =
             [
-                new ChartSeries<double> { Name = "Receita Realizada (R$)", Data = monthlyData },
+                new ChartSeries<double> { Name = $"Receita Realizada - {_startDate.Value.Year} (R$)", Data = monthlyData },
             ];
 
             StateHasChanged();

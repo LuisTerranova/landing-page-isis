@@ -16,6 +16,7 @@ public class PatientHandlerTests
         databaseContext.Database.EnsureCreated();
 
         Environment.SetEnvironmentVariable("ENCRYPTION_KEY", "test-encryption-key-32-bytes----");
+        Environment.SetEnvironmentVariable("CPF_HASH_PEPPER", "test-pepper-secret");
 
         return databaseContext;
     }

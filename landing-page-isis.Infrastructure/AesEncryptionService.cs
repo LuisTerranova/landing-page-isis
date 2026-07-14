@@ -84,8 +84,7 @@ public static class AesEncryptionService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
-            return string.Empty;
+            throw new CryptographicException("Failed to decrypt the cipher text. Check if the ENCRYPTION_KEY environment variable is correct.", ex);
         }
     }
 }
