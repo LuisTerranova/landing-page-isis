@@ -35,5 +35,6 @@ app.MapGet(
 );
 
 await app.SeedAdmin();
+await app.MigrateCpfHashes();
 
 app.Run();

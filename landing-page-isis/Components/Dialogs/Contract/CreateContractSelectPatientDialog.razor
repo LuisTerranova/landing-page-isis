@@ -1,0 +1,174 @@
+@namespace landing_page_isis.Components.Dialogs
+@using landing_page_isis.core
+@using landing_page_isis.core.Interfaces
+@using landing_page_isis.core.Models
+@using landing_page_isis.core.Models.DTOs
+@using landing_page_isis.Extensions
+
+@inject ISnackbar Snackbar
+@inject IPatientHandler PatientHandler
+@inject ICoupleHandler CoupleHandler
+@inject IContractHandler ContractHandler
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AddCard" Class="mr-3 mb-n1" />
+            Criar Contrato (Paciente Existente)
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_formValido">
+            <MudRadioGroup T="bool" @bind-Value="_isCouple" Class="mb-4 d-flex justify-center">
+                <MudRadio Value="false" Color="Color.Primary">Individual</MudRadio>
+                <MudRadio Value="true" Color="Color.Primary">Casal</MudRadio>
+            </MudRadioGroup>
+
+            @if (!_isCouple)
+            {
+                <MudAutocomplete T="PatientListItemDto" 
+                                 Label="Pesquisar Paciente" 
+                                 @bind-Value="_selectedPatient"
+                                 SearchFunc="@SearchPatients"
+                                 ToStringFunc="@(p => p == null ? "" : $"{p.Name} ({p.Phone.FormatPhone()})")"
+                                 Variant="Variant.Outlined"
+                                 Required="true"
+                                 Placeholder="Digite o nome ou telefone..."
+                                 AdornmentIcon="@Icons.Material.Filled.Search"
+                                 AdornmentColor="Color.Primary" />
+            }
+            else
+            {
+                <MudAutocomplete T="CoupleListItemDto" 
+                                 Label="Pesquisar Casal" 
+                                 @bind-Value="_selectedCouple"
+                                 SearchFunc="@SearchCouples"
+                                 ToStringFunc="@(c => c == null ? "" : c.Name)"
+                                 Variant="Variant.Outlined"
+                                 Required="true"
+                                 Placeholder="Digite o nome do casal..."
+                                 AdornmentIcon="@Icons.Material.Filled.Search"
+                                 AdornmentColor="Color.Primary" />
+
+                @if (_selectedCouple != null)
+                {
+                    <MudSelect T="string" Label="Quem será o pagador?" Variant="Variant.Outlined"
+                               @bind-Value="_payerChoice" Required="true" Class="mt-4">
+                        <MudSelectItem Value="@("partner1")">@_selectedCouple.Partner1Name</MudSelectItem>
+                        <MudSelectItem Value="@("partner2")">@_selectedCouple.Partner2Name</MudSelectItem>
+                    </MudSelect>
+                }
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar" Color="Color.Error">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Avancar" Disabled="@(!_formValido || (_isCouple ? _selectedCouple == null : _selectedPatient == null))">
+            Criar e Configurar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private bool _formValido;
+    private bool _isCouple;
+    private PatientListItemDto? _selectedPatient;
+    private CoupleListItemDto? _selectedCouple;
+    private string _payerChoice = "partner1";
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private async Task<IEnumerable<PatientListItemDto>> SearchPatients(string value, CancellationToken token)
+    {
+        var response = await PatientHandler.QueryPatients(value ?? "", 0, 20, token);
+        return response.Items;
+    }
+
+    private async Task<IEnumerable<CoupleListItemDto>> SearchCouples(string value, CancellationToken token)
+    {
+        var response = await CoupleHandler.QueryCouples(value ?? "", 0, 20, token);
+        return response.Items;
+    }
+
+    private async Task Avancar()
+    {
+        Contract contract;
+        if (!_isCouple)
+        {
+            if (_selectedPatient == null) return;
+            var patient = await PatientHandler.GetPatient(_selectedPatient.Id);
+            if (patient == null)
+            {
+                Snackbar.Add("Paciente não encontrado.", Severity.Error);
+                return;
+            }
+
+            contract = new Contract
+            {
+                PatientId = patient.Id,
+                PrimaryPatient = new ContractParticipantInfo
+                {
+                    Name = patient.Name,
+                    Cpf = patient.Cpf,
+                    Email = patient.Email,
+                    Phone = patient.Phone,
+                    State = patient.StateOfResidency,
+                    BirthDate = patient.BirthDate,
+                },
+                TermsAccepted = patient.PolicySigned,
+            };
+        }
+        else
+        {
+            if (_selectedCouple == null) return;
+            var couple = await CoupleHandler.GetCouple(_selectedCouple.Id);
+            if (couple == null)
+            {
+                Snackbar.Add("Casal não encontrado.", Severity.Error);
+                return;
+            }
+
+            var isP1Payer = _payerChoice == "partner1";
+            var payer = isP1Payer ? couple.Patient1 : couple.Patient2;
+            var partner = isP1Payer ? couple.Patient2 : couple.Patient1;
+
+            contract = new Contract
+            {
+                CoupleId = couple.Id,
+                PrimaryPatient = new ContractParticipantInfo
+                {
+                    Name = payer.Name,
+                    Cpf = payer.Cpf,
+                    Email = payer.Email,
+                    Phone = payer.Phone,
+                    State = payer.StateOfResidency,
+                    BirthDate = payer.BirthDate,
+                },
+                SecondaryPatient = new ContractParticipantInfo
+                {
+                    Name = partner.Name,
+                    Cpf = partner.Cpf,
+                    Email = partner.Email,
+                    Phone = partner.Phone,
+                    State = partner.StateOfResidency,
+                    BirthDate = partner.BirthDate,
+                },
+                CoupleName = couple.Name,
+                TermsAccepted = couple.PolicySigned,
+            };
+        }
+
+        // Save the contract draft to the database
+        var result = await ContractHandler.CreateContract(contract);
+        if (result.Success)
+        {
+            MudDialog.Close(DialogResult.Ok(contract));
+        }
+        else
+        {
+            Snackbar.Add($"Erro ao criar contrato: {result.Message}", Severity.Error);
+        }
+    }
+}

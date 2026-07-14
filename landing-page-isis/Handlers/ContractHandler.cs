@@ -196,38 +196,103 @@ public partial class ContractHandler(AppDbContext context, IHttpContextAccessor 
 
         if (contract.SecondaryPatient == null || string.IsNullOrWhiteSpace(contract.SecondaryPatient.Name))
         {
-            var patient = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: true);
-            context.Patients.Add(patient);
-            await context.SaveChangesAsync();
+            // Contrato Individual
+            var cpfHash = !string.IsNullOrEmpty(contract.PrimaryPatient.Cpf) 
+                ? CpfHelper.ComputeHash(landing_page_isis.core.Helpers.CpfValidator.Strip(contract.PrimaryPatient.Cpf)) 
+                : null;
 
-            contract.PatientId = patient.Id;
+            Patient? existingPatient = null;
+            if (cpfHash != null)
+            {
+                existingPatient = await context.Patients.FirstOrDefaultAsync(p => p.CpfHash == cpfHash);
+            }
+
+            if (existingPatient != null)
+            {
+                // Paciente já existe, apenas vincula e garante assinatura da política
+                contract.PatientId = existingPatient.Id;
+                existingPatient.PolicySigned = true;
+                context.Patients.Update(existingPatient);
+            }
+            else
+            {
+                // Cria novo paciente
+                var patient = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: true);
+                context.Patients.Add(patient);
+                await context.SaveChangesAsync();
+                contract.PatientId = patient.Id;
+            }
+
             contract.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync();
         }
         else
         {
-            var p1 = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: true);
-            var p2 = CreatePatientFromParticipant(contract.SecondaryPatient, policySigned: true);
+            // Contrato de Casal
+            var cpfHash1 = !string.IsNullOrEmpty(contract.PrimaryPatient.Cpf) 
+                ? CpfHelper.ComputeHash(landing_page_isis.core.Helpers.CpfValidator.Strip(contract.PrimaryPatient.Cpf)) 
+                : null;
+            var cpfHash2 = !string.IsNullOrEmpty(contract.SecondaryPatient.Cpf) 
+                ? CpfHelper.ComputeHash(landing_page_isis.core.Helpers.CpfValidator.Strip(contract.SecondaryPatient.Cpf)) 
+                : null;
 
-            context.Patients.AddRange(p1, p2);
-            await context.SaveChangesAsync();
+            Patient? p1 = cpfHash1 != null ? await context.Patients.FirstOrDefaultAsync(p => p.CpfHash == cpfHash1) : null;
+            Patient? p2 = cpfHash2 != null ? await context.Patients.FirstOrDefaultAsync(p => p.CpfHash == cpfHash2) : null;
 
-            var coupleName = !string.IsNullOrWhiteSpace(contract.CoupleName)
-                ? contract.CoupleName
-                : $"{p1.Name} & {p2.Name}";
-
-            var couple = new Couple
+            if (p1 == null)
             {
-                Name = coupleName,
-                Patient1Id = p1.Id,
-                Patient2Id = p2.Id,
-                PayerName = contract.PrimaryPatient.Name,
-                PayerCpf = p1.Cpf,
-                PolicySigned = true,
-            };
+                p1 = CreatePatientFromParticipant(contract.PrimaryPatient, policySigned: true);
+                context.Patients.Add(p1);
+            }
+            else
+            {
+                p1.PolicySigned = true;
+                context.Patients.Update(p1);
+            }
 
-            context.Couples.Add(couple);
+            if (p2 == null)
+            {
+                p2 = CreatePatientFromParticipant(contract.SecondaryPatient, policySigned: true);
+                context.Patients.Add(p2);
+            }
+            else
+            {
+                p2.PolicySigned = true;
+                context.Patients.Update(p2);
+            }
+
             await context.SaveChangesAsync();
+
+            // Busca se já existe uma relação de casal entre esses dois pacientes (independente da ordem)
+            var couple = await context.Couples.FirstOrDefaultAsync(c => 
+                (c.Patient1Id == p1.Id && c.Patient2Id == p2.Id) || 
+                (c.Patient1Id == p2.Id && c.Patient2Id == p1.Id)
+            );
+
+            if (couple == null)
+            {
+                var coupleName = !string.IsNullOrWhiteSpace(contract.CoupleName)
+                    ? contract.CoupleName
+                    : $"{p1.Name} & {p2.Name}";
+
+                couple = new Couple
+                {
+                    Name = coupleName,
+                    Patient1Id = p1.Id,
+                    Patient2Id = p2.Id,
+                    PayerName = contract.PrimaryPatient.Name,
+                    PayerCpf = p1.Cpf,
+                    PolicySigned = true,
+                };
+                context.Couples.Add(couple);
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                couple.PolicySigned = true;
+                context.Couples.Update(couple);
+                await context.SaveChangesAsync();
+            }
 
             contract.CoupleId = couple.Id;
             contract.UpdatedAt = DateTimeOffset.UtcNow;

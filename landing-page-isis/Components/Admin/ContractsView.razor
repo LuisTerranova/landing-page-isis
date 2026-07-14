@@ -18,7 +18,8 @@
               OnDelete="@(DeleteContract)"
               ShowSearchBar="true"
               @bind-SearchQuery="_searchQuery"
-              ShowCreateButton="false">
+              ShowCreateButton="true"
+              OnCreate="OpenCreate">
 
     <HeaderColumns>
         <MudTh>ID</MudTh>

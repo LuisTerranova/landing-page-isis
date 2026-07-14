@@ -152,6 +152,43 @@ public partial class ContractsView : ComponentBase
         }
     }
 
+    private async Task OpenCreate()
+    {
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            BackdropClick = true,
+            CloseButton = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateContractSelectPatientDialog>("Criar Contrato", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Contract createdContract })
+        {
+            var editOptions = new DialogOptions
+            {
+                CloseOnEscapeKey = false,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                BackdropClick = false,
+                CloseButton = true,
+            };
+
+            var parameters = new DialogParameters<ContractDialog>
+            {
+                { x => x.Model, createdContract }
+            };
+
+            var editDialog = await DialogService.ShowAsync<ContractDialog>("Configurar Contrato Criado", parameters, editOptions);
+            await editDialog.Result;
+
+            await _table.ReloadAsync();
+        }
+    }
+
     private async Task OpenViewDocument(ContractListItemDto dto)
     {
         var fullContract = await ContractHandler.GetContract(dto.Id);

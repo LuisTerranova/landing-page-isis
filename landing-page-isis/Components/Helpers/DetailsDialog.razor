@@ -979,16 +979,32 @@
 
         if (IsCouple)
         {
+            var isP2Payer = Couple!.PayerCpf == Couple.Patient2.Cpf;
+            var payer = isP2Payer ? Couple.Patient2 : Couple.Patient1;
+            var partner = isP2Payer ? Couple.Patient1 : Couple.Patient2;
+
             contract = new Contract
             {
                 CoupleId = Couple!.Id,
                 PrimaryPatient = new ContractParticipantInfo
                 {
-                    Name = Couple.Name,
-                    Cpf = Couple.PayerCpf,
-                    Phone = Couple.Patient1.Phone,
-                    State = Couple.Patient1.StateOfResidency,
+                    Name = payer.Name,
+                    Cpf = payer.Cpf,
+                    Email = payer.Email,
+                    Phone = payer.Phone,
+                    State = payer.StateOfResidency,
+                    BirthDate = payer.BirthDate,
                 },
+                SecondaryPatient = new ContractParticipantInfo
+                {
+                    Name = partner.Name,
+                    Cpf = partner.Cpf,
+                    Email = partner.Email,
+                    Phone = partner.Phone,
+                    State = partner.StateOfResidency,
+                    BirthDate = partner.BirthDate,
+                },
+                CoupleName = Couple.Name,
                 TermsAccepted = Couple.PolicySigned,
             };
         }
