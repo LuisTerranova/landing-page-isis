@@ -23,9 +23,7 @@ public static class AssetService
         }
 
         return candidates.FirstOrDefault(File.Exists)
-            ?? throw new FileNotFoundException(
-                "isis-content-separator.png not found."
-            );
+            ?? throw new FileNotFoundException("isis-content-separator.png not found.");
     }
 
     public static byte[] GetSeparatorBytes()

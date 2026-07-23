@@ -47,16 +47,14 @@ public static class AppExtensions
         app.UseStaticFiles();
         app.UseRouting();
 
-
-
         // Setup Blazor Authentication, Authorization, and Anti-forgery protections
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseAntiforgery();
-        
+
         // Serve static web assets optimized by .NET 9
         app.MapStaticAssets();
-        
+
         // Map the root App Blazor component and configure Interactive Server rendering mode
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
     }

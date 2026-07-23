@@ -28,7 +28,7 @@ public static class DateTimeExtensions
         // Force the DateTimeKind to unspecified so that GetUtcOffset calculates the offset correctly for Porto Velho timezone
         var unspecified = DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
         var offset = PortoVelhoZone.GetUtcOffset(unspecified);
-        
+
         // Build the offset and shift it to UTC representation
         return new DateTimeOffset(unspecified, offset).ToUniversalTime();
     }

@@ -2,6 +2,9 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace landing_page_isis.Extensions;
 
+/// <summary>
+/// Helper class for rate limiting operations.
+/// </summary>
 public static class RateLimiterHelper
 {
     private static MemoryCache _cache = new(new MemoryCacheOptions());
@@ -28,10 +31,11 @@ public static class RateLimiterHelper
             if (!_cache.TryGetValue(key, out RateLimitCounter? counter) || counter == null)
             {
                 counter = new RateLimitCounter { Count = 1 };
-                _cache.Set(key, counter, new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = window
-                });
+                _cache.Set(
+                    key,
+                    counter,
+                    new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = window }
+                );
                 return Task.FromResult(true);
             }
 

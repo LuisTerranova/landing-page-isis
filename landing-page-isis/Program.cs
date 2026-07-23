@@ -27,14 +27,11 @@ app.MapGet(
         }
         catch
         {
-            return Results.StatusCode(
-                Microsoft.AspNetCore.Http.StatusCodes.Status503ServiceUnavailable
-            );
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
         }
     }
 );
 
 await app.SeedAdmin();
-await app.MigrateCpfHashes();
 
 app.Run();
