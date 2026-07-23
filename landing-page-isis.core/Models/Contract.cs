@@ -39,7 +39,6 @@ public class Contract
 
     public Guid? PatientId { get; set; }
 
-
     public Patient? Patient { get; set; }
 
     public Guid? CoupleId { get; set; }

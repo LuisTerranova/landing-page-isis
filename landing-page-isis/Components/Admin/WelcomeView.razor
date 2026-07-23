@@ -47,7 +47,7 @@ else
         </div>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
             <div style="width: 250px;">
-                <landing_page_isis.Components.Helpers.SearchBar @bind-SearchQuery="_searchQuery" OnSearch="OnSearch" Placeholder="Localizar paciente..." />
+                <SearchBar @bind-SearchQuery="_searchQuery" OnSearch="OnSearch" Placeholder="Localizar paciente..." />
             </div>
             <div class="custom-button-group" style="@(IsSearching ? "opacity: 0.5; pointer-events: none;" : "")">
                 <MudButton OnClick="@(async () => await ToggleView(ViewMode.Day))"

@@ -230,7 +230,7 @@ public partial class PatientsView : ComponentBase
 
             var parameters = new DialogParameters<ContractDialog>
             {
-                { x => x.Model, contractModel }
+                { x => x.Model, contractModel },
             };
 
             var options = new DialogOptions
@@ -291,7 +291,7 @@ public partial class PatientsView : ComponentBase
 
             var parameters = new DialogParameters<ContractDialog>
             {
-                { x => x.Model, contractModel }
+                { x => x.Model, contractModel },
             };
 
             var options = new DialogOptions

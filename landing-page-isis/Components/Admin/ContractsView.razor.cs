@@ -115,11 +115,17 @@ public partial class ContractsView : ComponentBase
         try
         {
             await Js.InvokeVoidAsync("navigator.clipboard.writeText", link);
-            Snackbar.Add("Link de aceitação copiado para a área de transferência!", Severity.Success);
+            Snackbar.Add(
+                "Link de aceitação copiado para a área de transferência!",
+                Severity.Success
+            );
         }
         catch
         {
-            Snackbar.Add($"Não foi possível copiar automaticamente. Link: {link}", Severity.Warning);
+            Snackbar.Add(
+                $"Não foi possível copiar automaticamente. Link: {link}",
+                Severity.Warning
+            );
         }
     }
 
@@ -129,10 +135,7 @@ public partial class ContractsView : ComponentBase
         if (fullContract == null)
             return;
 
-        var parameters = new DialogParameters<ContractDialog>
-        {
-            { x => x.Model, fullContract }
-        };
+        var parameters = new DialogParameters<ContractDialog> { { x => x.Model, fullContract } };
 
         var options = new DialogOptions
         {
@@ -143,7 +146,11 @@ public partial class ContractsView : ComponentBase
             CloseButton = true,
         };
 
-        var dialog = await DialogService.ShowAsync<ContractDialog>("Editar Contrato", parameters, options);
+        var dialog = await DialogService.ShowAsync<ContractDialog>(
+            "Editar Contrato",
+            parameters,
+            options
+        );
         var result = await dialog.Result;
 
         if (result is { Canceled: false })
@@ -163,7 +170,10 @@ public partial class ContractsView : ComponentBase
             CloseButton = true,
         };
 
-        var dialog = await DialogService.ShowAsync<CreateContractSelectPatientDialog>("Criar Contrato", options);
+        var dialog = await DialogService.ShowAsync<CreateContractSelectPatientDialog>(
+            "Criar Contrato",
+            options
+        );
         var result = await dialog.Result;
 
         if (result is { Canceled: false, Data: Contract createdContract })
@@ -179,10 +189,14 @@ public partial class ContractsView : ComponentBase
 
             var parameters = new DialogParameters<ContractDialog>
             {
-                { x => x.Model, createdContract }
+                { x => x.Model, createdContract },
             };
 
-            var editDialog = await DialogService.ShowAsync<ContractDialog>("Configurar Contrato Criado", parameters, editOptions);
+            var editDialog = await DialogService.ShowAsync<ContractDialog>(
+                "Configurar Contrato Criado",
+                parameters,
+                editOptions
+            );
             await editDialog.Result;
 
             await _table.ReloadAsync();
@@ -200,7 +214,7 @@ public partial class ContractsView : ComponentBase
 
         var parameters = new DialogParameters<DocumentViewDialog>
         {
-            { x => x.HtmlContent, fullContract.ContractDocumentHtml }
+            { x => x.HtmlContent, fullContract.ContractDocumentHtml },
         };
 
         var options = new DialogOptions
@@ -212,7 +226,11 @@ public partial class ContractsView : ComponentBase
             CloseButton = true,
         };
 
-        await DialogService.ShowAsync<DocumentViewDialog>("Visualizar Contrato", parameters, options);
+        await DialogService.ShowAsync<DocumentViewDialog>(
+            "Visualizar Contrato",
+            parameters,
+            options
+        );
     }
 
     private async Task ConvertToPatient(ContractListItemDto dto)
@@ -248,12 +266,13 @@ public partial class ContractsView : ComponentBase
         }
     }
 
-    private static Color GetStatusColor(ContractStatus status) => status switch
-    {
-        ContractStatus.Rascunho => Color.Default,
-        ContractStatus.AguardandoAceitacao => Color.Warning,
-        ContractStatus.Ativo => Color.Success,
-        ContractStatus.Cancelado => Color.Error,
-        _ => Color.Default,
-    };
+    private static Color GetStatusColor(ContractStatus status) =>
+        status switch
+        {
+            ContractStatus.Rascunho => Color.Default,
+            ContractStatus.AguardandoAceitacao => Color.Warning,
+            ContractStatus.Ativo => Color.Success,
+            ContractStatus.Cancelado => Color.Error,
+            _ => Color.Default,
+        };
 }

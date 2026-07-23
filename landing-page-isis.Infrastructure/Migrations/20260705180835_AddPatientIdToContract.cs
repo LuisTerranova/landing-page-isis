@@ -15,14 +15,16 @@ namespace landingpageisis.Migrations
                 name: "patient_id",
                 table: "contracts",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_contracts_patient_id",
                 table: "contracts",
                 column: "patient_id",
                 unique: true,
-                filter: "\"patient_id\" IS NOT NULL");
+                filter: "\"patient_id\" IS NOT NULL"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_contracts_patients_patient_id",
@@ -30,7 +32,8 @@ namespace landingpageisis.Migrations
                 column: "patient_id",
                 principalTable: "patients",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.SetNull
+            );
         }
 
         /// <inheritdoc />
@@ -38,15 +41,12 @@ namespace landingpageisis.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_contracts_patients_patient_id",
-                table: "contracts");
+                table: "contracts"
+            );
 
-            migrationBuilder.DropIndex(
-                name: "IX_contracts_patient_id",
-                table: "contracts");
+            migrationBuilder.DropIndex(name: "IX_contracts_patient_id", table: "contracts");
 
-            migrationBuilder.DropColumn(
-                name: "patient_id",
-                table: "contracts");
+            migrationBuilder.DropColumn(name: "patient_id", table: "contracts");
         }
     }
 }

@@ -10,9 +10,7 @@ namespace landingpageisis.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "type",
-                table: "contracts");
+            migrationBuilder.DropColumn(name: "type", table: "contracts");
         }
 
         /// <inheritdoc />
@@ -22,7 +20,8 @@ namespace landingpageisis.Migrations
                 name: "type",
                 table: "contracts",
                 type: "text",
-                nullable: true);
+                nullable: true
+            );
         }
     }
 }

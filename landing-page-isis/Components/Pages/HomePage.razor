@@ -1,6 +1,7 @@
 @page "/"
 @using landing_page_isis.Components.Forms
 @using landing_page_isis.Components.Layout
+@using System.Text.Json
 @layout MainLayout
 @inject IJSRuntime Js
 
@@ -41,7 +42,7 @@
             "addressCountry": "BR"
           },
           "url": "https://psi.isisvitoria.com.br/",
-          "telephone": @(System.Text.Json.JsonSerializer.Serialize(Environment.GetEnvironmentVariable("CONTACT_PHONE") ?? "")),
+          "telephone": @(JsonSerializer.Serialize(Environment.GetEnvironmentVariable("CONTACT_PHONE") ?? "")),
           "priceRange": "$$",
           "knowsAbout": ["Psicologia Histórico-cultural", "Psicoterapia Individual", "Psicoterapia de Casal", "Desenvolvimento Humano"],
           "offers": {

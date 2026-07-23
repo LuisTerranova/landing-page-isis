@@ -13,10 +13,10 @@ public static class DatabaseSeed
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         // Apply any pending EF Core database migrations dynamically on startup
         await context.Database.MigrateAsync();
-        
+
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();

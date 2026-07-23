@@ -2,8 +2,8 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Extensions;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 using Microsoft.Extensions.Logging;
+using MudBlazor;
 
 namespace landing_page_isis.Components.Admin;
 
@@ -30,9 +30,10 @@ public partial class FinancesView : ComponentBase
     private DateTime? _startDate;
     private DateTime? _endDate;
 
-    private string _rangeLabel => _startDate is not null && _endDate is not null
-        ? $"{_startDate:dd MMM} → {_endDate:dd MMM yyyy}"
-        : "";
+    private string _rangeLabel =>
+        _startDate is not null && _endDate is not null
+            ? $"{_startDate:dd MMM} → {_endDate:dd MMM yyyy}"
+            : "";
 
     // KPIs
     private decimal _realizedRevenue;
@@ -58,7 +59,8 @@ public partial class FinancesView : ComponentBase
 
     private void ShiftDateRange(int months)
     {
-        if (_startDate is null || _endDate is null) return;
+        if (_startDate is null || _endDate is null)
+            return;
         var daysDiff = (_endDate.Value - _startDate.Value).Days;
         _startDate = _startDate.Value.AddMonths(months);
         _endDate = _startDate.Value.AddDays(daysDiff);
@@ -84,7 +86,10 @@ public partial class FinancesView : ComponentBase
         try
         {
             var startOffset = new DateTimeOffset(_startDate!.Value.Date, TimeSpan.Zero);
-            var endOffset = new DateTimeOffset(_endDate!.Value.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);
+            var endOffset = new DateTimeOffset(
+                _endDate!.Value.Date.AddDays(1).AddTicks(-1),
+                TimeSpan.Zero
+            );
 
             var appointments = await AppointmentHandler.GetAllAppointmentsByDateRange(
                 startOffset,
@@ -116,8 +121,14 @@ public partial class FinancesView : ComponentBase
             _totalRevenue = _realizedRevenue + _pendingRevenue;
 
             // 5. Monthly Revenue Chart Data (Bar) - Query the entire calendar year of the start date for full trend
-            var yearStart = new DateTimeOffset(new DateTime(_startDate.Value.Year, 1, 1), TimeSpan.Zero);
-            var yearEnd = new DateTimeOffset(new DateTime(_startDate.Value.Year, 12, 31, 23, 59, 59), TimeSpan.Zero);
+            var yearStart = new DateTimeOffset(
+                new DateTime(_startDate.Value.Year, 1, 1),
+                TimeSpan.Zero
+            );
+            var yearEnd = new DateTimeOffset(
+                new DateTime(_startDate.Value.Year, 12, 31, 23, 59, 59),
+                TimeSpan.Zero
+            );
 
             var chartAppointments = await AppointmentHandler.GetAllAppointmentsByDateRange(
                 yearStart,
@@ -145,9 +156,8 @@ public partial class FinancesView : ComponentBase
 
                 var monthlyPackages = (double)
                     chartPackages
-                        .Where(p => 
-                            p.CreatedAt.Year == _startDate.Value.Year
-                            && p.CreatedAt.Month == i
+                        .Where(p =>
+                            p.CreatedAt.Year == _startDate.Value.Year && p.CreatedAt.Month == i
                         )
                         .Sum(p => p.Price);
 
@@ -172,7 +182,11 @@ public partial class FinancesView : ComponentBase
 
             _monthlyRevenueSeries =
             [
-                new ChartSeries<double> { Name = $"Receita Realizada - {_startDate.Value.Year} (R$)", Data = monthlyData },
+                new ChartSeries<double>
+                {
+                    Name = $"Receita Realizada - {_startDate.Value.Year} (R$)",
+                    Data = monthlyData,
+                },
             ];
 
             StateHasChanged();

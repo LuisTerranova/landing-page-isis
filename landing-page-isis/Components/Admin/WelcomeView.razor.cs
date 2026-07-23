@@ -78,18 +78,18 @@ public partial class WelcomeView : ComponentBase
                     default
                 );
                 _totalItems = queryResult.TotalItems;
-        _appointments = queryResult
-            .Items.Select(a => new AppointmentViewModel
-            {
-                Id = a.Id,
-                Date = a.AppointmentDate,
-                PatientName = a.PatientName ?? "N/A",
-                Status = a.AppointmentStatus,
-                Price = a.Price,
-                IsCouple = a.CoupleId.HasValue,
-            })
-            .OrderByDescending(a => a.Date)
-            .ToList();
+                _appointments = queryResult
+                    .Items.Select(a => new AppointmentViewModel
+                    {
+                        Id = a.Id,
+                        Date = a.AppointmentDate,
+                        PatientName = a.PatientName ?? "N/A",
+                        Status = a.AppointmentStatus,
+                        Price = a.Price,
+                        IsCouple = a.CoupleId.HasValue,
+                    })
+                    .OrderByDescending(a => a.Date)
+                    .ToList();
             }
             else
             {

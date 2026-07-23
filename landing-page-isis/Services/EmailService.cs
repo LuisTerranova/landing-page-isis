@@ -129,7 +129,10 @@ public class EmailService(
             // Send reminders and update the DB to prevent duplicate emails
             foreach (var dto in eligible)
             {
-                var appointment = await appointmentHandler.GetAppointmentWithPatient(dto.Id, dto.PatientId!.Value);
+                var appointment = await appointmentHandler.GetAppointmentWithPatient(
+                    dto.Id,
+                    dto.PatientId!.Value
+                );
                 if (appointment == null)
                     continue;
 

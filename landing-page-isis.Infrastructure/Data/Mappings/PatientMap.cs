@@ -82,14 +82,13 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
 
         builder.HasMany(p => p.Appointments).WithOne(p => p.Patient);
 
-        builder.Property(p => p.CpfHash)
+        builder
+            .Property(p => p.CpfHash)
             .IsRequired(false)
             .HasMaxLength(64)
             .HasColumnName("cpf_hash");
 
         // Unique index on CPF hash ensures uniqueness only when populated, allowing multiple records with null hashes
-        builder.HasIndex(p => p.CpfHash)
-            .IsUnique()
-            .HasFilter("\"cpf_hash\" IS NOT NULL");
+        builder.HasIndex(p => p.CpfHash).IsUnique().HasFilter("\"cpf_hash\" IS NOT NULL");
     }
 }
