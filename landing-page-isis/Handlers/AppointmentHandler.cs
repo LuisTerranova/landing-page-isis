@@ -293,7 +293,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
     public async Task<int> CountPendingRecordsAsync()
     {
         var now = DateTimeOffset.UtcNow;
-        
+
         // Count scheduled appointments in the past that do not have clinical note records written yet
         return await context
             .Appointments.AsNoTracking()

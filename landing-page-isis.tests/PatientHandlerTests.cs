@@ -21,11 +21,19 @@ public class PatientHandlerTests
         return databaseContext;
     }
 
+    private PatientHandler GetHandler(AppDbContext context)
+    {
+        return new PatientHandler(
+            context,
+            new landing_page_isis.core.Validators.PatientValidator()
+        );
+    }
+
     [Fact]
     public async Task CreatePatient_ShouldReturnFalse_WhenNull()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var result = await handler.CreatePatient(null);
 
@@ -37,7 +45,7 @@ public class PatientHandlerTests
     public async Task CreatePatient_ShouldReturnTrue_AndFormatPhoneAndCpf()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var patient = new Patient
         {
@@ -62,7 +70,7 @@ public class PatientHandlerTests
     public async Task GetPatients_ShouldReturnPaginatedList()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         for (int i = 0; i < 5; i++)
         {
@@ -90,7 +98,7 @@ public class PatientHandlerTests
     public async Task GetPatient_ShouldReturnPatient_WhenExists()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var id = Guid.NewGuid();
         context.Patients.Add(
@@ -116,7 +124,7 @@ public class PatientHandlerTests
     public async Task UpdatePatient_ShouldReturnTrue_WhenValid_AndFormatPhoneAndCpf()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var id = Guid.NewGuid();
         context.Patients.Add(
@@ -155,7 +163,7 @@ public class PatientHandlerTests
     public async Task UpdatePatient_ShouldReturnFalse_WhenNotFound()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var patient = new Patient
         {
@@ -176,7 +184,7 @@ public class PatientHandlerTests
     public async Task DeletePatient_ShouldReturnTrue_WhenExists()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var id = Guid.NewGuid();
         context.Patients.Add(
@@ -201,7 +209,7 @@ public class PatientHandlerTests
     public async Task DeletePatient_ShouldReturnFalse_WhenNotFound()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var result = await handler.DeletePatient(Guid.NewGuid());
 
@@ -213,15 +221,33 @@ public class PatientHandlerTests
     public async Task GetPatientEmailMap_ShouldReturnCorrectMap()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         var id1 = Guid.NewGuid();
         var id2 = Guid.NewGuid();
         var id3 = Guid.NewGuid();
 
-        var p1 = new Patient { Id = id1, Name = "A", Email = "a@test.com", Phone = "11" };
-        var p2 = new Patient { Id = id2, Name = "B", Email = "b@test.com", Phone = "22" };
-        var p3 = new Patient { Id = id3, Name = "C", Email = null, Phone = "33" };
+        var p1 = new Patient
+        {
+            Id = id1,
+            Name = "A",
+            Email = "a@test.com",
+            Phone = "11",
+        };
+        var p2 = new Patient
+        {
+            Id = id2,
+            Name = "B",
+            Email = "b@test.com",
+            Phone = "22",
+        };
+        var p3 = new Patient
+        {
+            Id = id3,
+            Name = "C",
+            Email = null,
+            Phone = "33",
+        };
         context.Patients.AddRange(p1, p2, p3);
         await context.SaveChangesAsync();
 
@@ -238,12 +264,27 @@ public class PatientHandlerTests
     public async Task QueryPatients_ShouldReturnFilteredPatients()
     {
         await using var context = GetDatabaseContext();
-        var handler = new PatientHandler(context);
+        var handler = GetHandler(context);
 
         context.Patients.AddRange(
-            new Patient { Id = Guid.NewGuid(), Name = "John Doe", Phone = "11" },
-            new Patient { Id = Guid.NewGuid(), Name = "Jane Doe", Phone = "22" },
-            new Patient { Id = Guid.NewGuid(), Name = "Bob Smith", Phone = "33" }
+            new Patient
+            {
+                Id = Guid.NewGuid(),
+                Name = "John Doe",
+                Phone = "11",
+            },
+            new Patient
+            {
+                Id = Guid.NewGuid(),
+                Name = "Jane Doe",
+                Phone = "22",
+            },
+            new Patient
+            {
+                Id = Guid.NewGuid(),
+                Name = "Bob Smith",
+                Phone = "33",
+            }
         );
         await context.SaveChangesAsync();
 
@@ -254,4 +295,3 @@ public class PatientHandlerTests
         Assert.Contains(result.Items, p => p.Name == "Jane Doe");
     }
 }
-

@@ -308,15 +308,17 @@ public class AppointmentPackageHandlerTests
         var coupleId = Guid.NewGuid();
         for (int i = 0; i < 4; i++)
         {
-            context.AppointmentPackages.Add(new AppointmentPackage
-            {
-                Id = Guid.NewGuid(),
-                CoupleId = coupleId,
-                TotalAppointments = 10,
-                RemainingAppointments = 10,
-                Price = 800,
-                CreatedAt = DateTimeOffset.UtcNow.AddDays(-i)
-            });
+            context.AppointmentPackages.Add(
+                new AppointmentPackage
+                {
+                    Id = Guid.NewGuid(),
+                    CoupleId = coupleId,
+                    TotalAppointments = 10,
+                    RemainingAppointments = 10,
+                    Price = 800,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-i),
+                }
+            );
         }
         await context.SaveChangesAsync();
 
@@ -327,4 +329,3 @@ public class AppointmentPackageHandlerTests
         Assert.All(result.Items, pkg => Assert.Equal(coupleId, pkg.CoupleId));
     }
 }
-

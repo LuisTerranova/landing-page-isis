@@ -1,3 +1,4 @@
+using FluentValidation;
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
@@ -10,7 +11,7 @@ namespace landing_page_isis.Handlers;
 /// <summary>
 /// Handles registration and lookup of couples for therapy, ensuring patients are uniquely mapped and not duplicated across other couple units.
 /// </summary>
-public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
+public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) : ICoupleHandler
 {
     public async Task<PaginatedResponse<CoupleListItemDto>> GetCouples(
         int page,
@@ -56,14 +57,9 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
 
     public async Task<HandlerResult> CreateCouple(Couple couple)
     {
-        if (string.IsNullOrWhiteSpace(couple.Name))
-            return new HandlerResult(false, "Nome do casal é obrigatório.");
-
-        if (couple.Name.Length > 150)
-            return new HandlerResult(false, "Nome do casal deve ter no máximo 150 caracteres.");
-
-        if (couple.Patient1Id == couple.Patient2Id)
-            return new HandlerResult(false, "Os dois pacientes devem ser diferentes.");
+        var validation = await validator.ValidateAsync(couple);
+        if (!validation.IsValid)
+            return new HandlerResult(false, validation.Errors.First().ErrorMessage);
 
         // Enforce that a patient cannot belong to more than one couple concurrently
         var alreadyInCouple = await context.Couples.AnyAsync(c =>
@@ -77,11 +73,7 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
             return new HandlerResult(false, "Um dos pacientes já pertence a outro casal.");
 
         if (!string.IsNullOrEmpty(couple.PayerCpf))
-        {
             couple.PayerCpf = landing_page_isis.core.Helpers.CpfValidator.Strip(couple.PayerCpf);
-            if (couple.PayerCpf.Length != 11)
-                return new HandlerResult(false, "CPF do pagador inválido. Deve ter 11 dígitos.");
-        }
 
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
@@ -94,33 +86,26 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
         if (existing == null)
             return new HandlerResult(false, "Casal não encontrado.");
 
-        if (string.IsNullOrWhiteSpace(couple.Name))
-            return new HandlerResult(false, "Nome do casal é obrigatório.");
-
-        if (couple.Name.Length > 150)
-            return new HandlerResult(false, "Nome do casal deve ter no máximo 150 caracteres.");
-
-        if (couple.Patient1Id == couple.Patient2Id)
-            return new HandlerResult(false, "Os dois pacientes devem ser diferentes.");
+        var validation = await validator.ValidateAsync(couple);
+        if (!validation.IsValid)
+            return new HandlerResult(false, validation.Errors.First().ErrorMessage);
 
         // Enforce that a patient cannot belong to more than one couple concurrently (excluding this couple)
         var alreadyInCouple = await context.Couples.AnyAsync(c =>
-            c.Id != couple.Id &&
-            (c.Patient1Id == couple.Patient1Id
-            || c.Patient2Id == couple.Patient1Id
-            || c.Patient1Id == couple.Patient2Id
-            || c.Patient2Id == couple.Patient2Id)
+            c.Id != couple.Id
+            && (
+                c.Patient1Id == couple.Patient1Id
+                || c.Patient2Id == couple.Patient1Id
+                || c.Patient1Id == couple.Patient2Id
+                || c.Patient2Id == couple.Patient2Id
+            )
         );
 
         if (alreadyInCouple)
             return new HandlerResult(false, "Um dos pacientes já pertence a outro casal.");
 
         if (!string.IsNullOrEmpty(couple.PayerCpf))
-        {
             couple.PayerCpf = landing_page_isis.core.Helpers.CpfValidator.Strip(couple.PayerCpf);
-            if (couple.PayerCpf.Length != 11)
-                return new HandlerResult(false, "CPF do pagador inválido. Deve ter 11 dígitos.");
-        }
 
         context.Entry(existing).CurrentValues.SetValues(couple);
         await context.SaveChangesAsync();
@@ -134,16 +119,24 @@ public partial class CoupleHandler(AppDbContext context) : ICoupleHandler
             return new HandlerResult(false, "Casal não encontrado.");
 
         var hasActivePackage = await context.AppointmentPackages.AnyAsync(p =>
-            p.CoupleId == id && p.Status == PackageStatus.Ativo);
+            p.CoupleId == id && p.Status == PackageStatus.Ativo
+        );
 
         if (hasActivePackage)
-            return new HandlerResult(false, "Não é possível excluir este casal porque ele possui um pacote de consultas ativo. Finalize ou cancele o pacote antes de excluir.");
+            return new HandlerResult(
+                false,
+                "Não é possível excluir este casal porque ele possui um pacote de consultas ativo. Finalize ou cancele o pacote antes de excluir."
+            );
 
         var hasActiveContract = await context.Contracts.AnyAsync(c =>
-            c.CoupleId == id && c.Status == ContractStatus.Ativo);
+            c.CoupleId == id && c.Status == ContractStatus.Ativo
+        );
 
         if (hasActiveContract)
-            return new HandlerResult(false, "Não é possível excluir este casal porque ele possui um contrato ativo.");
+            return new HandlerResult(
+                false,
+                "Não é possível excluir este casal porque ele possui um contrato ativo."
+            );
 
         context.Couples.Remove(couple);
         await context.SaveChangesAsync();

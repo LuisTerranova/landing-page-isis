@@ -1,3 +1,4 @@
+using FluentValidation;
 using landing_page_isis.core;
 using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
@@ -11,7 +12,7 @@ namespace landing_page_isis.Handlers;
 /// <summary>
 /// Handles CRUD operations, pagination queries, and metadata mapping for individual Patient profiles.
 /// </summary>
-public partial class PatientHandler(AppDbContext context) : IPatientHandler
+public class PatientHandler(AppDbContext context, IValidator<Patient> validator) : IPatientHandler
 {
     public async Task<PaginatedResponse<PatientListItemDto>> GetPatients(
         int page,
@@ -45,27 +46,16 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (patient == null)
             return new HandlerResult(false, "Dados inválidos.");
 
-        if (string.IsNullOrWhiteSpace(patient.Name))
-            return new HandlerResult(false, "Nome é obrigatório.");
-
-        if (patient.Name.Length > 150)
-            return new HandlerResult(false, "Nome deve ter no máximo 150 caracteres.");
-
-        if (!string.IsNullOrEmpty(patient.Email) && !EmailRegex().IsMatch(patient.Email))
-            return new HandlerResult(false, "E-mail inválido.");
+        var validation = await validator.ValidateAsync(patient);
+        if (!validation.IsValid)
+            return new HandlerResult(false, validation.Errors.First().ErrorMessage);
 
         if (!string.IsNullOrEmpty(patient.Phone))
-        {
             patient.Phone = CpfValidator.Strip(patient.Phone);
-            if (patient.Phone.Length < 10 || patient.Phone.Length > 11)
-                return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
-        }
 
         if (!string.IsNullOrEmpty(patient.Cpf))
         {
             patient.Cpf = CpfValidator.Strip(patient.Cpf);
-            if (!CpfValidator.IsValid(patient.Cpf))
-                return new HandlerResult(false, "CPF inválido.");
             patient.CpfHash = CpfHelper.ComputeHash(patient.Cpf);
         }
 
@@ -80,27 +70,16 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (existing == null)
             return new HandlerResult(false, "Paciente não encontrado.");
 
-        if (string.IsNullOrWhiteSpace(patient.Name))
-            return new HandlerResult(false, "Nome é obrigatório.");
-
-        if (patient.Name.Length > 150)
-            return new HandlerResult(false, "Nome deve ter no máximo 150 caracteres.");
-
-        if (!string.IsNullOrEmpty(patient.Email) && !EmailRegex().IsMatch(patient.Email))
-            return new HandlerResult(false, "E-mail inválido.");
+        var validation = await validator.ValidateAsync(patient);
+        if (!validation.IsValid)
+            return new HandlerResult(false, validation.Errors.First().ErrorMessage);
 
         if (!string.IsNullOrEmpty(patient.Phone))
-        {
             patient.Phone = CpfValidator.Strip(patient.Phone);
-            if (patient.Phone.Length < 10 || patient.Phone.Length > 11)
-                return new HandlerResult(false, "Telefone inválido. Deve ter 10 ou 11 dígitos.");
-        }
 
         if (!string.IsNullOrEmpty(patient.Cpf))
         {
             patient.Cpf = CpfValidator.Strip(patient.Cpf);
-            if (!CpfValidator.IsValid(patient.Cpf))
-                return new HandlerResult(false, "CPF inválido.");
             patient.CpfHash = CpfHelper.ComputeHash(patient.Cpf);
         }
         else
@@ -119,7 +98,7 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
     )
     {
         var distinctIds = ids.Distinct().ToList();
-        
+
         // Bulk fetch patient emails in a single query to prevent N+1 performance issues in background workers
         return await context
             .Patients.Where(p => distinctIds.Contains(p.Id))
@@ -133,11 +112,13 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
         if (patient == null)
             return new HandlerResult(false, "Paciente não encontrado.");
 
-        var couple = await context.Couples.AnyAsync(c =>
-            c.Patient1Id == id || c.Patient2Id == id);
+        var couple = await context.Couples.AnyAsync(c => c.Patient1Id == id || c.Patient2Id == id);
 
         if (couple)
-            return new HandlerResult(false, "Não é possível excluir este paciente porque ele faz parte de um casal. Remova o vínculo do casal antes de excluir.");
+            return new HandlerResult(
+                false,
+                "Não é possível excluir este paciente porque ele faz parte de um casal. Remova o vínculo do casal antes de excluir."
+            );
 
         context.Patients.Remove(patient);
         await context.SaveChangesAsync();
@@ -170,7 +151,4 @@ public partial class PatientHandler(AppDbContext context) : IPatientHandler
 
         return new PaginatedResponse<PatientListItemDto>(items, totalItems, page, pageSize);
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
-    private static partial System.Text.RegularExpressions.Regex EmailRegex();
 }

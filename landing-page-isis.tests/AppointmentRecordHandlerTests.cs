@@ -264,13 +264,15 @@ public class AppointmentRecordHandlerTests
 
         var appId = Guid.NewGuid();
         var recordId = Guid.NewGuid();
-        context.AppointmentRecords.Add(new AppointmentRecord
-        {
-            Id = recordId,
-            AppointmentId = appId,
-            Note = "Sessão tranquila.",
-            CreatedAt = DateTimeOffset.UtcNow
-        });
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = recordId,
+                AppointmentId = appId,
+                Note = "Sessão tranquila.",
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.GetAppointmentRecordByAppointmentId(appId);
@@ -280,4 +282,3 @@ public class AppointmentRecordHandlerTests
         Assert.Equal("Sessão tranquila.", result.Note);
     }
 }
-

@@ -1,4 +1,5 @@
 using landing_page_isis.core;
+using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
@@ -11,12 +12,12 @@ namespace landing_page_isis.Handlers;
 /// <summary>
 /// Handles patient leads lifecycle operations, including onboarding validation, approval/promotion to Patient entity, periodic purging, and WhatsApp link generation.
 /// </summary>
-public partial class LeadHandler(
+public class LeadHandler(
     AppDbContext context,
-    IHttpContextAccessor httpContextAccessor
+    IHttpContextAccessor httpContextAccessor,
+    FluentValidation.IValidator<Lead> validator
 ) : ILeadHandler
 {
-
     public async Task<PaginatedResponse<LeadListItemDto>> GetLeads(
         int page,
         int pageSize,
@@ -58,12 +59,17 @@ public partial class LeadHandler(
         if (lead == null)
             return new HandlerResult(false, "Dados não podem ser nulos.");
 
-        var ip = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var validation = await validator.ValidateAsync(lead);
+        if (!validation.IsValid)
+            return new HandlerResult(false, validation.Errors.First().ErrorMessage);
+
+        var ip =
+            httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         if (!await RateLimiterHelper.CheckAsync($"lead:{ip}", 3, TimeSpan.FromMinutes(1)))
             return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
 
         if (!string.IsNullOrEmpty(lead.Phone))
-            lead.Phone = landing_page_isis.core.Helpers.CpfValidator.Strip(lead.Phone);
+            lead.Phone = CpfValidator.Strip(lead.Phone);
 
         context.Leads.Add(lead);
         await context.SaveChangesAsync();
@@ -146,7 +152,7 @@ public partial class LeadHandler(
             return string.Empty;
 
         // Clean phone number
-        var cleanPhone = landing_page_isis.core.Helpers.CpfValidator.Strip(lead.Phone);
+        var cleanPhone = CpfValidator.Strip(lead.Phone);
 
         // Add Brazil country code (55)
         if (cleanPhone.Length == 10 || cleanPhone.Length == 11)

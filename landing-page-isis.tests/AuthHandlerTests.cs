@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using landing_page_isis.core;
+using landing_page_isis.core.ApplicationUser;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
-using landing_page_isis.core.ApplicationUser;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
@@ -31,7 +31,9 @@ public class AuthHandlerTests
         return context;
     }
 
-    private (AuthHandler Handler, Mock<IAuthenticationService> AuthMock) CreateHandler(AppDbContext context)
+    private (AuthHandler Handler, Mock<IAuthenticationService> AuthMock) CreateHandler(
+        AppDbContext context
+    )
     {
         var authMock = new Mock<IAuthenticationService>();
 
@@ -56,32 +58,40 @@ public class AuthHandlerTests
         var password = "senha123";
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
-        context.Users.Add(new User
-        {
-            Name = "Admin",
-            Email = "admin@isis.com",
-            PasswordHash = passwordHash,
-        });
+        context.Users.Add(
+            new User
+            {
+                Name = "Admin",
+                Email = "admin@isis.com",
+                PasswordHash = passwordHash,
+            }
+        );
         await context.SaveChangesAsync();
 
         authMock
-            .Setup(a => a.SignInAsync(
-                It.IsAny<HttpContext>(),
-                "Cookies",
-                It.IsAny<ClaimsPrincipal>(),
-                It.IsAny<AuthenticationProperties>()))
+            .Setup(a =>
+                a.SignInAsync(
+                    It.IsAny<HttpContext>(),
+                    "Cookies",
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<AuthenticationProperties>()
+                )
+            )
             .Returns(Task.CompletedTask);
 
         var result = await handler.Login("admin@isis.com", password);
 
         Assert.True(result.Success);
         authMock.Verify(
-            a => a.SignInAsync(
-                It.IsAny<HttpContext>(),
-                "Cookies",
-                It.IsAny<ClaimsPrincipal>(),
-                It.IsAny<AuthenticationProperties>()),
-            Times.Once);
+            a =>
+                a.SignInAsync(
+                    It.IsAny<HttpContext>(),
+                    "Cookies",
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<AuthenticationProperties>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -102,12 +112,14 @@ public class AuthHandlerTests
         await using var context = GetDatabaseContext();
         var (handler, _) = CreateHandler(context);
 
-        context.Users.Add(new User
-        {
-            Name = "Admin",
-            Email = "admin@isis.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("senha_correta"),
-        });
+        context.Users.Add(
+            new User
+            {
+                Name = "Admin",
+                Email = "admin@isis.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("senha_correta"),
+            }
+        );
         await context.SaveChangesAsync();
 
         var result = await handler.Login("admin@isis.com", "senha_errada");

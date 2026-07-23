@@ -1,7 +1,9 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Models;
+using landing_page_isis.Extensions;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,14 +21,18 @@ public class LeadHandlerTests
             .Options;
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
-        landing_page_isis.Extensions.RateLimiterHelper.Reset();
+        RateLimiterHelper.Reset();
         return context;
     }
 
     private LeadHandler CreateHandler(AppDbContext context)
     {
-        var httpAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor();
-        return new LeadHandler(context, httpAccessor);
+        var httpAccessor = new HttpContextAccessor();
+        return new LeadHandler(
+            context,
+            httpAccessor,
+            new landing_page_isis.core.Validators.LeadValidator()
+        );
     }
 
     [Fact]

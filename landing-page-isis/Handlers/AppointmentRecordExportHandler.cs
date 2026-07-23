@@ -529,5 +529,4 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
     {
         body.AppendChild(new OpenXml.Paragraph(new OpenXml.Run()));
     }
-
 }

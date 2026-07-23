@@ -61,7 +61,7 @@ public class AuthHandler(AppDbContext dbContext, IHttpContextAccessor httpContex
     {
         if (Context == null)
             return false;
-        
+
         // Terminate cookie session and clear client authentication state
         await Context.SignOutAsync();
         return true;

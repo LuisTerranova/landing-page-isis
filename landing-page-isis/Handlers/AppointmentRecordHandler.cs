@@ -112,7 +112,7 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (existing == null)
             return new HandlerResult(false, "Nota não encontrada.");
 
-        // Psychological records must preserve historical integrity. 
+        // Psychological records must preserve historical integrity.
         // We append rectifications rather than overwriting existing text to comply with medical record auditing rules.
         existing.Note +=
             $"\n\nRetificado em {DateTimeOffset.UtcNow.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";

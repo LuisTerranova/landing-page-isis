@@ -19,27 +19,46 @@ public class CoupleHandlerTests
         return context;
     }
 
+    private CoupleHandler GetHandler(AppDbContext context)
+    {
+        return new CoupleHandler(context, new landing_page_isis.core.Validators.CoupleValidator());
+    }
+
     [Fact]
     public async Task GetCouples_ShouldReturnPaginatedList()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999", Email = "p1@test.com" };
-        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999", Email = "p2@test.com" };
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 1",
+            Phone = "11999999999",
+            Email = "p1@test.com",
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 2",
+            Phone = "11999999999",
+            Email = "p2@test.com",
+        };
         context.Patients.AddRange(p1, p2);
 
         for (int i = 0; i < 5; i++)
         {
-            context.Couples.Add(new Couple
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Couple {i}",
-                Patient1Id = p1.Id,
-                Patient2Id = p2.Id,
-                Patient1 = p1,
-                Patient2 = p2
-            });
+            context.Couples.Add(
+                new Couple
+                {
+                    Id = Guid.NewGuid(),
+                    Name = $"Couple {i}",
+                    Patient1Id = p1.Id,
+                    Patient2Id = p2.Id,
+                    Patient1 = p1,
+                    Patient2 = p2,
+                }
+            );
         }
         await context.SaveChangesAsync();
 
@@ -53,10 +72,20 @@ public class CoupleHandlerTests
     public async Task GetCouple_ShouldReturnCouple_WhenExists()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999" };
-        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999" };
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 1",
+            Phone = "11999999999",
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 2",
+            Phone = "11999999999",
+        };
         context.Patients.AddRange(p1, p2);
 
         var coupleId = Guid.NewGuid();
@@ -67,7 +96,7 @@ public class CoupleHandlerTests
             Patient1Id = p1.Id,
             Patient2Id = p2.Id,
             Patient1 = p1,
-            Patient2 = p2
+            Patient2 = p2,
         };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
@@ -83,13 +112,13 @@ public class CoupleHandlerTests
     public async Task CreateCouple_ShouldReturnFalse_WhenNameIsEmpty()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple
         {
             Name = "",
             Patient1Id = Guid.NewGuid(),
-            Patient2Id = Guid.NewGuid()
+            Patient2Id = Guid.NewGuid(),
         };
 
         var result = await handler.CreateCouple(couple);
@@ -102,13 +131,13 @@ public class CoupleHandlerTests
     public async Task CreateCouple_ShouldReturnFalse_WhenNameTooLong()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple
         {
             Name = new string('A', 151),
             Patient1Id = Guid.NewGuid(),
-            Patient2Id = Guid.NewGuid()
+            Patient2Id = Guid.NewGuid(),
         };
 
         var result = await handler.CreateCouple(couple);
@@ -121,14 +150,14 @@ public class CoupleHandlerTests
     public async Task CreateCouple_ShouldReturnFalse_WhenPatientsAreSame()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var patientId = Guid.NewGuid();
         var couple = new Couple
         {
             Name = "Couple Same",
             Patient1Id = patientId,
-            Patient2Id = patientId
+            Patient2Id = patientId,
         };
 
         var result = await handler.CreateCouple(couple);
@@ -141,25 +170,27 @@ public class CoupleHandlerTests
     public async Task CreateCouple_ShouldReturnFalse_WhenPatientAlreadyInAnotherCouple()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var p1 = Guid.NewGuid();
         var p2 = Guid.NewGuid();
         var p3 = Guid.NewGuid();
 
-        context.Couples.Add(new Couple
-        {
-            Name = "First Couple",
-            Patient1Id = p1,
-            Patient2Id = p2
-        });
+        context.Couples.Add(
+            new Couple
+            {
+                Name = "First Couple",
+                Patient1Id = p1,
+                Patient2Id = p2,
+            }
+        );
         await context.SaveChangesAsync();
 
         var newCouple = new Couple
         {
             Name = "Conflict Couple",
             Patient1Id = p1,
-            Patient2Id = p3
+            Patient2Id = p3,
         };
 
         var result = await handler.CreateCouple(newCouple);
@@ -172,14 +203,14 @@ public class CoupleHandlerTests
     public async Task CreateCouple_ShouldReturnFalse_WhenPayerCpfIsInvalid()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple
         {
             Name = "Couple Cpf Test",
             Patient1Id = Guid.NewGuid(),
             Patient2Id = Guid.NewGuid(),
-            PayerCpf = "123"
+            PayerCpf = "123",
         };
 
         var result = await handler.CreateCouple(couple);
@@ -192,14 +223,14 @@ public class CoupleHandlerTests
     public async Task CreateCouple_ShouldReturnTrue_WhenValidAndFormatCpf()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple
         {
             Name = "Couple Cpf Test",
             Patient1Id = Guid.NewGuid(),
             Patient2Id = Guid.NewGuid(),
-            PayerCpf = "123.456.789-01"
+            PayerCpf = "123.456.789-01",
         };
 
         var result = await handler.CreateCouple(couple);
@@ -214,7 +245,7 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnFalse_WhenNotFound()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple { Id = Guid.NewGuid(), Name = "Couple" };
 
@@ -228,7 +259,7 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnFalse_WhenNameIsEmpty()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple { Name = "Original Name" };
         context.Couples.Add(couple);
@@ -245,7 +276,7 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnFalse_WhenNameTooLong()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple { Name = "Original Name" };
         context.Couples.Add(couple);
@@ -262,9 +293,14 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnFalse_WhenPayerCpfIsInvalid()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var couple = new Couple { Name = "Original Name", Patient1Id = Guid.NewGuid(), Patient2Id = Guid.NewGuid() };
+        var couple = new Couple
+        {
+            Name = "Original Name",
+            Patient1Id = Guid.NewGuid(),
+            Patient2Id = Guid.NewGuid(),
+        };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -279,9 +315,14 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnTrue_WhenValidAndFormatCpf()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var couple = new Couple { Name = "Original Name", Patient1Id = Guid.NewGuid(), Patient2Id = Guid.NewGuid() };
+        var couple = new Couple
+        {
+            Name = "Original Name",
+            Patient1Id = Guid.NewGuid(),
+            Patient2Id = Guid.NewGuid(),
+        };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -300,9 +341,14 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnFalse_WhenPatientsAreSame()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var couple = new Couple { Name = "Original Name", Patient1Id = Guid.NewGuid(), Patient2Id = Guid.NewGuid() };
+        var couple = new Couple
+        {
+            Name = "Original Name",
+            Patient1Id = Guid.NewGuid(),
+            Patient2Id = Guid.NewGuid(),
+        };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -320,22 +366,29 @@ public class CoupleHandlerTests
     public async Task UpdateCouple_ShouldReturnFalse_WhenPatientAlreadyInAnotherCouple()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var p1 = Guid.NewGuid();
         var p2 = Guid.NewGuid();
         var p3 = Guid.NewGuid();
 
         // Existing couple
-        context.Couples.Add(new Couple
-        {
-            Name = "First Couple",
-            Patient1Id = p1,
-            Patient2Id = p2
-        });
+        context.Couples.Add(
+            new Couple
+            {
+                Name = "First Couple",
+                Patient1Id = p1,
+                Patient2Id = p2,
+            }
+        );
 
         // Couple to update
-        var couple = new Couple { Name = "Second Couple", Patient1Id = Guid.NewGuid(), Patient2Id = p3 };
+        var couple = new Couple
+        {
+            Name = "Second Couple",
+            Patient1Id = Guid.NewGuid(),
+            Patient2Id = p3,
+        };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -352,7 +405,7 @@ public class CoupleHandlerTests
     public async Task DeleteCouple_ShouldReturnFalse_WhenNotFound()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var result = await handler.DeleteCouple(Guid.NewGuid());
 
@@ -364,7 +417,7 @@ public class CoupleHandlerTests
     public async Task DeleteCouple_ShouldReturnTrue_WhenExists()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
         var couple = new Couple { Name = "Delete Me" };
         context.Couples.Add(couple);
@@ -381,15 +434,37 @@ public class CoupleHandlerTests
     public async Task QueryCouples_ShouldReturnFilteredCouples()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999", Email = "p1@test.com" };
-        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999", Email = "p2@test.com" };
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 1",
+            Phone = "11999999999",
+            Email = "p1@test.com",
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 2",
+            Phone = "11999999999",
+            Email = "p2@test.com",
+        };
         context.Patients.AddRange(p1, p2);
 
         context.Couples.AddRange(
-            new Couple { Name = "Adam & Eve", Patient1 = p1, Patient2 = p2 },
-            new Couple { Name = "Romeo & Juliet", Patient1 = p1, Patient2 = p2 }
+            new Couple
+            {
+                Name = "Adam & Eve",
+                Patient1 = p1,
+                Patient2 = p2,
+            },
+            new Couple
+            {
+                Name = "Romeo & Juliet",
+                Patient1 = p1,
+                Patient2 = p2,
+            }
         );
         await context.SaveChangesAsync();
 
@@ -403,13 +478,30 @@ public class CoupleHandlerTests
     public async Task GetCoupleByPatientId_ShouldReturnCouple_WhenPatientIsMember()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999" };
-        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999" };
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 1",
+            Phone = "11999999999",
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 2",
+            Phone = "11999999999",
+        };
         context.Patients.AddRange(p1, p2);
 
-        var couple = new Couple { Name = "Test Couple", Patient1Id = p1.Id, Patient2Id = p2.Id, Patient1 = p1, Patient2 = p2 };
+        var couple = new Couple
+        {
+            Name = "Test Couple",
+            Patient1Id = p1.Id,
+            Patient2Id = p2.Id,
+            Patient1 = p1,
+            Patient2 = p2,
+        };
         context.Couples.Add(couple);
         await context.SaveChangesAsync();
 
@@ -423,15 +515,37 @@ public class CoupleHandlerTests
     public async Task GetAllCouples_ShouldReturnAllCouples()
     {
         await using var context = GetDatabaseContext();
-        var handler = new CoupleHandler(context);
+        var handler = GetHandler(context);
 
-        var p1 = new Patient { Id = Guid.NewGuid(), Name = "Patient 1", Phone = "11999999999", Email = "p1@test.com" };
-        var p2 = new Patient { Id = Guid.NewGuid(), Name = "Patient 2", Phone = "11999999999", Email = "p2@test.com" };
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 1",
+            Phone = "11999999999",
+            Email = "p1@test.com",
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Patient 2",
+            Phone = "11999999999",
+            Email = "p2@test.com",
+        };
         context.Patients.AddRange(p1, p2);
 
         context.Couples.AddRange(
-            new Couple { Name = "Couple A", Patient1 = p1, Patient2 = p2 },
-            new Couple { Name = "Couple B", Patient1 = p1, Patient2 = p2 }
+            new Couple
+            {
+                Name = "Couple A",
+                Patient1 = p1,
+                Patient2 = p2,
+            },
+            new Couple
+            {
+                Name = "Couple B",
+                Patient1 = p1,
+                Patient2 = p2,
+            }
         );
         await context.SaveChangesAsync();
 
