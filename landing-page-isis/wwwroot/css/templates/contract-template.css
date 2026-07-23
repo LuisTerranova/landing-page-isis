@@ -1,0 +1,164 @@
+body {
+    font-family: 'Glacial Indifference', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.8;
+    color: #284B32;
+    margin: 0;
+    padding: 0;
+    background-color: #F7EAD5;
+}
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e8dcc8;
+}
+
+.header {
+    background-color: #284B32;
+    color: #F7EAD5;
+    padding: 40px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.header .subtitle {
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+.content {
+    padding: 50px;
+}
+
+h2 {
+    font-size: 18px;
+    color: #7E0F20;
+    border-bottom: 2px solid #7E0F20;
+    padding-bottom: 8px;
+    margin-top: 36px;
+    margin-bottom: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.party-box {
+    background-color: #F7EAD5;
+    border-left: 4px solid #284B32;
+    padding: 20px 24px;
+    border-radius: 0 12px 12px 0;
+    margin-bottom: 24px;
+}
+
+.party-box h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: #7E0F20;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.party-box p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.clause {
+    margin-bottom: 20px;
+}
+
+.clause h3 {
+    font-size: 15px;
+    color: #284B32;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.clause p {
+    font-size: 14px;
+    text-align: justify;
+    margin: 0;
+}
+
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+}
+
+.details-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e8dcc8;
+}
+
+.details-table td:first-child {
+    font-weight: 700;
+    color: #7E0F20;
+    width: 40%;
+}
+
+.signature-section {
+    margin-top: 60px;
+    text-align: center;
+}
+
+.electronic-stamp {
+    display: inline-block;
+    background-color: #e8f5e9;
+    border: 1px solid #284B32;
+    border-radius: 8px;
+    padding: 16px 32px;
+    margin: 24px auto;
+    font-size: 14px;
+    color: #284B32;
+}
+
+.electronic-stamp strong {
+    color: #7E0F20;
+}
+
+.signature-line {
+    width: 60%;
+    margin: 40px auto 8px auto;
+    border-bottom: 1px solid #284B32;
+}
+
+.signature-section p {
+    font-size: 13px;
+    color: #7E0F20;
+    margin: 4px 0;
+}
+
+.footer {
+    background-color: #F7EAD5;
+    color: #284B32;
+    padding: 24px 40px;
+    text-align: center;
+    font-size: 12px;
+    border-top: 1px solid #e8dcc8;
+}
+
+.footer strong {
+    color: #7E0F20;
+}
+
+.footer-separator {
+    display: block;
+    width: 80px;
+    height: auto;
+    margin: 0 auto 12px auto;
+    opacity: 0.15;
+}

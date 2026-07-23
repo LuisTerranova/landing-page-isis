@@ -1,181 +1,15 @@
-@using landing_page_isis.core
 @using landing_page_isis.core.Models
 @using landing_page_isis.Extensions
 @model Contract
 @{
-    var separatorUri = landing_page_isis.Extensions.AssetService.GetSeparatorDataUri();
+    var separatorUri = AssetService.GetSeparatorDataUri();
 }
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Contrato de Prestação de Serviços Psicológicos</title>
-    <style>
-        body {
-            font-family: 'Glacial Indifference', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.8;
-            color: #284B32;
-            margin: 0;
-            padding: 0;
-            background-color: #F7EAD5;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 40px auto;
-            background-color: #ffffff;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e8dcc8;
-        }
-
-        .header {
-            background-color: #284B32;
-            color: #F7EAD5;
-            padding: 40px;
-            text-align: center;
-        }
-
-        .header h1 {
-            margin: 0 0 8px 0;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .header .subtitle {
-            font-size: 14px;
-            font-weight: 300;
-            letter-spacing: 1px;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 50px;
-        }
-
-        h2 {
-            font-size: 18px;
-            color: #7E0F20;
-            border-bottom: 2px solid #7E0F20;
-            padding-bottom: 8px;
-            margin-top: 36px;
-            margin-bottom: 16px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        .party-box {
-            background-color: #F7EAD5;
-            border-left: 4px solid #284B32;
-            padding: 20px 24px;
-            border-radius: 0 12px 12px 0;
-            margin-bottom: 24px;
-        }
-
-        .party-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 15px;
-            color: #7E0F20;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        .party-box p {
-            margin: 4px 0;
-            font-size: 14px;
-        }
-
-        .clause {
-            margin-bottom: 20px;
-        }
-
-        .clause h3 {
-            font-size: 15px;
-            color: #284B32;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .clause p {
-            font-size: 14px;
-            text-align: justify;
-            margin: 0;
-        }
-
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-
-        .details-table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid #e8dcc8;
-        }
-
-        .details-table td:first-child {
-            font-weight: 700;
-            color: #7E0F20;
-            width: 40%;
-        }
-
-        .signature-section {
-            margin-top: 60px;
-            text-align: center;
-        }
-
-        .electronic-stamp {
-            display: inline-block;
-            background-color: #e8f5e9;
-            border: 1px solid #284B32;
-            border-radius: 8px;
-            padding: 16px 32px;
-            margin: 24px auto;
-            font-size: 14px;
-            color: #284B32;
-        }
-
-        .electronic-stamp strong {
-            color: #7E0F20;
-        }
-
-        .signature-line {
-            width: 60%;
-            margin: 40px auto 8px auto;
-            border-bottom: 1px solid #284B32;
-        }
-
-        .signature-section p {
-            font-size: 13px;
-            color: #7E0F20;
-            margin: 4px 0;
-        }
-
-        .footer {
-            background-color: #F7EAD5;
-            color: #284B32;
-            padding: 24px 40px;
-            text-align: center;
-            font-size: 12px;
-            border-top: 1px solid #e8dcc8;
-        }
-
-        .footer strong {
-            color: #7E0F20;
-        }
-
-        .footer-separator {
-            display: block;
-            width: 80px;
-            height: auto;
-            margin: 0 auto 12px auto;
-            opacity: 0.15;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/templates/contract-template.css" />
 </head>
 <body>
 <div class="container">
@@ -322,6 +156,10 @@
                 ao CONTRATANTE, compreendendo sessões de psicoterapia individual, a serem realizadas em
                 consultório ou por meio digital (online), conforme previamente acordado entre as partes.
             </p>
+            <p>
+                Para as sessões online, é de responsabilidade do CONTRATANTE garantir conexão estável à internet,
+                dispositivo adequado e estar em ambiente privado, silencioso e livre de interrupções que garantam o sigilo da sessão.
+            </p>
         </div>
 
         <div class="clause">
@@ -357,8 +195,9 @@
                 com o valor exato a ser simulado previamente.
             </p>
             <p>
-                Os valores serão reajustados anualmente a partir do mês de fevereiro, com base no
-                índice de inflação acumulada no ano anterior, conforme divulgado pelo Banco Central.
+                Os honorários poderão sofrer reajuste a cada 6 (seis) meses a critério da CONTRATADA,
+                mediante comunicação prévia de 30 (trinta) dias ao CONTRATANTE, facultando a este a 
+                rescisão do contrato caso não concorde com o novo valor.
             </p>
         </div>
 
@@ -367,7 +206,13 @@
             <p>
                 As sessões terão duração aproximada de 50 (cinquenta) minutos, com frequência
                 semanal acordada entre as partes. A tolerância máxima de atraso é de 20 (vinte)
-                minutos; após esse prazo, a sessão será reagendada.
+                minutos; após esse prazo, a sessão será reagendada, caso haja disponibilidade do
+                contratado, caso contrário, será considerado falta.
+            </p>
+            <p>
+                Em caso de atraso por parte do CONTRATANTE dentro da tolerância de 20 minutos, a
+                sessão será realizada no tempo restante do horário agendado, terminando pontualmente
+                no horário previsto para não prejudicar os atendimentos subsequentes.
             </p>
             <p>
                 O cancelamento ou reagendamento deverá ser comunicado com, no mínimo, 24 (vinte e
@@ -397,12 +242,14 @@
         </div>
 
         <div class="clause">
-            <h3>CLÁUSULA 5ª — DA COMUNICAÇÃO</h3>
+            <h3>CLÁUSULA 5ª — DA COMUNICAÇÃO E EMERGÊNCIAS</h3>
             <p>
                 A comunicação entre as partes dar-se-á preferencialmente durante as sessões. Para
                 assuntos administrativos, o CONTRATANTE poderá entrar em contato pelo telefone
-                (69) 99223-4931 (WhatsApp). A CONTRATADA retornará assim que possível,
-                no prazo máximo de 24 (vinte e quatro) horas.
+                (69) 99223-4931 (WhatsApp) de segunda a sexta-feira, em horário comercial. A CONTRATADA retornará assim que possível, no prazo máximo de 24 (vinte e quatro) horas úteis.
+            </p>
+            <p>
+                Em situações de crise severa, urgência ou emergência médica/psiquiátrica, o CONTRATANTE deve procurar atendimento imediato no pronto-socorro mais próximo ou acionar o CVV (188) / SAMU (192), não sendo o WhatsApp um canal de atendimento de emergência.
             </p>
         </div>
 
@@ -415,6 +262,9 @@
                 Recomenda-se a realização de uma sessão de encerramento para avaliação do processo
                 e orientações finais. Em caso de desistência do pacote mensal após o pagamento,
                 os valores não serão reembolsados, salvo acordo expresso entre as partes.
+            </p>
+            <p>
+                A CONTRATADA reserva-se o direito de rescindir o atendimento e realizar o devido encaminhamento do paciente nos casos de: desrespeito, falta recorrente não justificada, ou quando identificar razões éticas e técnicas que exijam o encerramento da intervenção, garantindo o devido alinhamento na sessão de encerramento.
             </p>
         </div>
 
