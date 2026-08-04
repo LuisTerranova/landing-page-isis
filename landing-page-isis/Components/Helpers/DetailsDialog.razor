@@ -1005,7 +1005,7 @@
                     BirthDate = partner.BirthDate,
                 },
                 CoupleName = Couple.Name,
-                TermsAccepted = Couple.PolicySigned,
+                TermsAccepted = true,
             };
         }
         else if (Patient != null)
@@ -1023,7 +1023,7 @@
                         Phone = couple.Patient1.Phone,
                         State = couple.Patient1.StateOfResidency,
                     },
-                    TermsAccepted = couple.PolicySigned,
+                    TermsAccepted = true,
                 };
             }
             else
@@ -1040,7 +1040,7 @@
                         State = Patient.StateOfResidency,
                         BirthDate = Patient.BirthDate,
                     },
-                    TermsAccepted = Patient.PolicySigned,
+                    TermsAccepted = true,
                 };
             }
         }

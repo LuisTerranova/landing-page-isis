@@ -1026,4 +1026,57 @@ public class ContractHandlerTests
         Assert.False(result.Success);
         Assert.Equal("Os dois pacientes devem ser diferentes.", result.Message);
     }
+
+    [Fact]
+    public async Task CreateContract_ShouldSucceed_WhenPatientIdIsSpecified_EvenIfTermsAcceptedIsFalse()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var patientId = Guid.NewGuid();
+        context.Patients.Add(
+            new Patient
+            {
+                Id = patientId,
+                Name = "Existing Patient Unsigned",
+                Phone = "11999999999",
+                PolicySigned = false,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var contract = CreateValidContract("529.982.247-25");
+        contract.PatientId = patientId;
+        contract.TermsAccepted = false;
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task CreateContract_ShouldSucceed_WhenCoupleIdIsSpecified_EvenIfTermsAcceptedIsFalse()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var coupleId = Guid.NewGuid();
+        context.Couples.Add(
+            new Couple
+            {
+                Id = coupleId,
+                Name = "Existing Couple Unsigned",
+                PolicySigned = false,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var contract = CreateValidContract("529.982.247-25");
+        contract.CoupleId = coupleId;
+        contract.TermsAccepted = false;
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.True(result.Success);
+    }
 }

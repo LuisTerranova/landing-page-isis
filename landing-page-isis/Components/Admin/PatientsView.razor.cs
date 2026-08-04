@@ -217,7 +217,7 @@ public partial class PatientsView : ComponentBase
                         Email = couple.Patient1.Email,
                         State = couple.Patient1.StateOfResidency,
                     },
-                    TermsAccepted = couple.PolicySigned,
+                    TermsAccepted = true,
                 };
 
                 var createResult = await ContractHandler.CreateContract(contractModel);
@@ -278,7 +278,7 @@ public partial class PatientsView : ComponentBase
                         State = fullPatient.StateOfResidency,
                         BirthDate = fullPatient.BirthDate,
                     },
-                    TermsAccepted = fullPatient.PolicySigned,
+                    TermsAccepted = true,
                 };
 
                 var createResult = await ContractHandler.CreateContract(contractModel);

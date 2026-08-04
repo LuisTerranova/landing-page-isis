@@ -91,7 +91,7 @@ public class ContractHandler(
         if (!await RateLimiterHelper.CheckAsync($"contract:{ip}", 5, TimeSpan.FromMinutes(1)))
             return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
 
-        if (!contract.TermsAccepted)
+        if (!contract.TermsAccepted && !contract.PatientId.HasValue && !contract.CoupleId.HasValue)
             return new HandlerResult(false, "É necessário aceitar os termos.");
 
         Guid? excludePatient1Id = contract.PatientId;
