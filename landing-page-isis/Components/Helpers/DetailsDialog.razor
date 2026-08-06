@@ -1066,7 +1066,7 @@
         var result = await dialog.Result;
         if (result is { Canceled: false })
         {
-            var saveResult = await ContractHandler.CreateContract(contract);
+            var saveResult = await ContractHandler.CreateInsiderContract(contract);
             if (saveResult.Success)
             {
                 Snackbar.Add("Contrato criado com sucesso!", Severity.Success);

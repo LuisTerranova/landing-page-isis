@@ -43,15 +43,21 @@
                 {
                     <span>@context.PatientName</span>
                 }
-                @if (context.PatientId.HasValue)
+                @if (context.PatientId.HasValue || context.CoupleId.HasValue)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Vinculado</MudChip>
+                    <MudTooltip Text="Cadastrado no sistema" Placement="Placement.Right">
+                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success" Size="Size.Small" Class="ms-1" />
+                    </MudTooltip>
                 }
             </MudStack>
         </MudTd>
         <MudTd DataLabel="Status">
-            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">
-                @context.Status
+            <MudChip T="string"
+                     Variant="Variant.Filled"
+                     Size="Size.Small"
+                     Class="@($"status-{context.Status.ToString().ToLower()}")"
+                     Style="min-width: 150px; justify-content: center;">
+                @GetStatusLabel(context.Status)
             </MudChip>
         </MudTd>
         <MudTd DataLabel="Valor">@(context.Price.HasValue ? $"R$ {context.Price.Value:F2}" : "—")</MudTd>

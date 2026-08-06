@@ -220,7 +220,7 @@ public partial class PatientsView : ComponentBase
                     TermsAccepted = true,
                 };
 
-                var createResult = await ContractHandler.CreateContract(contractModel);
+                var createResult = await ContractHandler.CreateInsiderContract(contractModel);
                 if (!createResult.Success)
                 {
                     Snackbar.Add($"Erro ao criar contrato: {createResult.Message}", Severity.Error);
@@ -281,7 +281,7 @@ public partial class PatientsView : ComponentBase
                     TermsAccepted = true,
                 };
 
-                var createResult = await ContractHandler.CreateContract(contractModel);
+                var createResult = await ContractHandler.CreateInsiderContract(contractModel);
                 if (!createResult.Success)
                 {
                     Snackbar.Add($"Erro ao criar contrato: {createResult.Message}", Severity.Error);

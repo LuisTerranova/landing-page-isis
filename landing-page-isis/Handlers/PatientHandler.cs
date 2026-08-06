@@ -129,10 +129,22 @@ public class PatientHandler(AppDbContext context, IValidator<Patient> validator)
         string query,
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        bool excludeWithActiveContract = false
     )
     {
         var queryable = context.Patients.AsNoTracking();
+
+        if (excludeWithActiveContract)
+        {
+            queryable = queryable.Where(p => 
+                !context.Contracts.Any(c => c.PatientId == p.Id && c.Status != ContractStatus.Cancelado) &&
+                !context.Couples.Any(c => 
+                    (c.Patient1Id == p.Id || c.Patient2Id == p.Id) && 
+                    context.Contracts.Any(cc => cc.CoupleId == c.Id && cc.Status != ContractStatus.Cancelado)
+                )
+            );
+        }
 
         if (!string.IsNullOrWhiteSpace(query))
             queryable = queryable.Where(p => p.Name.Contains(query));

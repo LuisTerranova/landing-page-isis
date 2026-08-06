@@ -18,7 +18,8 @@ public interface IPatientHandler
         string query,
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        bool excludeWithActiveContract = false
     );
     Task<Dictionary<Guid, string?>> GetPatientEmailMap(IEnumerable<Guid> ids, CancellationToken ct);
 }

@@ -86,13 +86,36 @@ public class ContractHandler(
         if (contract == null)
             return new HandlerResult(false, "Dados inválidos.");
 
+        if (contract.PatientId.HasValue || contract.CoupleId.HasValue)
+            return await CreateInsiderContract(contract);
+
+        if (!contract.TermsAccepted)
+            return new HandlerResult(false, "É necessário aceitar os termos.");
+
+        return await CreateContractInternal(contract, isInsider: false);
+    }
+
+    public async Task<HandlerResult> CreateInsiderContract(Contract? contract)
+    {
+        if (contract == null)
+            return new HandlerResult(false, "Dados inválidos.");
+
+        if (!contract.PatientId.HasValue && !contract.CoupleId.HasValue)
+            return new HandlerResult(
+                false,
+                "O contrato deve estar vinculado a um paciente ou casal existente."
+            );
+
+        contract.TermsAccepted = true;
+        return await CreateContractInternal(contract, isInsider: true);
+    }
+
+    private async Task<HandlerResult> CreateContractInternal(Contract contract, bool isInsider)
+    {
         var ip =
             httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         if (!await RateLimiterHelper.CheckAsync($"contract:{ip}", 5, TimeSpan.FromMinutes(1)))
             return new HandlerResult(false, "Muitas tentativas. Tente novamente mais tarde.");
-
-        if (!contract.TermsAccepted && !contract.PatientId.HasValue && !contract.CoupleId.HasValue)
-            return new HandlerResult(false, "É necessário aceitar os termos.");
 
         Guid? excludePatient1Id = contract.PatientId;
         Guid? excludePatient2Id = null;
@@ -112,8 +135,7 @@ public class ContractHandler(
         var primaryResult = await ValidateAndHashParticipant(
             contract.PrimaryPatient,
             contract.Id,
-            excludePatient1Id,
-            excludePatient2Id,
+            isInsider,
             isRequired: true,
             "Paciente"
         );
@@ -128,8 +150,7 @@ public class ContractHandler(
             var secondaryResult = await ValidateAndHashParticipant(
                 contract.SecondaryPatient,
                 contract.Id,
-                excludePatient1Id,
-                excludePatient2Id,
+                isInsider,
                 isRequired: false,
                 "Segundo paciente"
             );
@@ -515,8 +536,7 @@ public class ContractHandler(
     private async Task<HandlerResult> ValidateAndHashParticipant(
         ContractParticipantInfo participant,
         Guid contractId,
-        Guid? excludePatient1Id,
-        Guid? excludePatient2Id,
+        bool isInsider,
         bool isRequired,
         string participantLabel
     )
@@ -543,7 +563,9 @@ public class ContractHandler(
         {
             participant.Cpf = CpfValidator.Strip(participant.Cpf);
             var cpfHash = CpfHelper.ComputeHash(participant.Cpf);
+            participant.CpfHash = cpfHash;
 
+            // Todos (Insider e Outsider) só podem ter 1 contrato ativo, pois a base de dados exige UNIQUE
             var existingInContracts = await context.Contracts.AnyAsync(c =>
                 c.Id != contractId
                 && (
@@ -557,23 +579,24 @@ public class ContractHandler(
                 return new HandlerResult(
                     false,
                     participantLabel == "Paciente"
-                        ? "Já existe um cadastro com este CPF."
-                        : $"Já existe um cadastro com o CPF do {participantLabel.ToLower()}."
+                        ? "Este paciente já possui um contrato ativo no sistema."
+                        : $"Já existe um contrato ativo com o CPF do {participantLabel.ToLower()}."
                 );
 
-            var existingInPatients = await context.Patients.AnyAsync(p =>
-                p.CpfHash == cpfHash && p.Id != excludePatient1Id && p.Id != excludePatient2Id
-            );
+            if (!isInsider)
+            {
+                // Apenas Outsiders (formulário público) são barrados se já existirem na tabela Patients.
+                // Insiders (painel admin) SÃO pacientes existentes, então é esperado que já estejam em Patients.
+                var existingInPatients = await context.Patients.AnyAsync(p => p.CpfHash == cpfHash);
 
-            if (existingInPatients)
-                return new HandlerResult(
-                    false,
-                    participantLabel == "Paciente"
-                        ? "Já existe um cadastro com este CPF."
-                        : $"Já existe um cadastro com o CPF do {participantLabel.ToLower()}."
-                );
-
-            participant.CpfHash = cpfHash;
+                if (existingInPatients)
+                    return new HandlerResult(
+                        false,
+                        participantLabel == "Paciente"
+                            ? "Já existe um cadastro com este CPF."
+                            : $"Já existe um cadastro com o CPF do {participantLabel.ToLower()}."
+                    );
+            }
         }
 
         return new HandlerResult(true);

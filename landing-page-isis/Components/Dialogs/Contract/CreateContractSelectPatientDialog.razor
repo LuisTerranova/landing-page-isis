@@ -82,13 +82,13 @@
 
     private async Task<IEnumerable<PatientListItemDto>> SearchPatients(string value, CancellationToken token)
     {
-        var response = await PatientHandler.QueryPatients(value ?? "", 0, 20, token);
+        var response = await PatientHandler.QueryPatients(value ?? "", 0, 20, token, excludeWithActiveContract: true);
         return response.Items;
     }
 
     private async Task<IEnumerable<CoupleListItemDto>> SearchCouples(string value, CancellationToken token)
     {
-        var response = await CoupleHandler.QueryCouples(value ?? "", 0, 20, token);
+        var response = await CoupleHandler.QueryCouples(value ?? "", 0, 20, token, excludeWithActiveContract: true);
         return response.Items;
     }
 
@@ -160,8 +160,8 @@
             };
         }
 
-        // Save the contract draft to the database
-        var result = await ContractHandler.CreateContract(contract);
+        // Save the contract draft to the database using the Insider workflow
+        var result = await ContractHandler.CreateInsiderContract(contract);
         if (result.Success)
         {
             MudDialog.Close(DialogResult.Ok(contract));

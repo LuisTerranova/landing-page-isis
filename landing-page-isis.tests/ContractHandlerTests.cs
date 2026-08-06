@@ -217,7 +217,7 @@ public class ContractHandlerTests
         var result = await handler.CreateContract(duplicate);
 
         Assert.False(result.Success);
-        Assert.Equal("Já existe um cadastro com este CPF.", result.Message);
+        Assert.Equal("Este paciente já possui um contrato ativo no sistema.", result.Message);
     }
 
     [Fact]
@@ -1078,5 +1078,70 @@ public class ContractHandlerTests
         var result = await handler.CreateContract(contract);
 
         Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task CreateInsiderContract_ShouldFail_WhenPatientAlreadyHasAnActiveContract()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var patientId = Guid.NewGuid();
+        context.Patients.Add(
+            new Patient
+            {
+                Id = patientId,
+                Name = "Patient With Previous Contract",
+                Phone = "11999999999",
+                Cpf = "529.982.247-25",
+            }
+        );
+
+        // Pre-existing contract for this patient
+        context.Contracts.Add(
+            new Contract
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientId,
+                PrimaryPatient = new ContractParticipantInfo
+                {
+                    Name = "Patient With Previous Contract",
+                    Phone = "11999999999",
+                    Cpf = "529.982.247-25",
+                    CpfHash = landing_page_isis.core.Helpers.CpfHelper.ComputeHash("52998224725"),
+                },
+                Status = ContractStatus.Ativo,
+                TermsAccepted = true,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        // Admin creates a NEW contract (renovation/new package) for the same existing patient
+        var newContract = CreateValidContract("529.982.247-25");
+        newContract.PatientId = patientId;
+
+        var result = await handler.CreateInsiderContract(newContract);
+
+        Assert.False(result.Success);
+        Assert.Equal("Este paciente já possui um contrato ativo no sistema.", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateInsiderContract_ShouldFail_WhenNeitherPatientIdNorCoupleIdSpecified()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var contract = CreateValidContract("529.982.247-25");
+        contract.PatientId = null;
+        contract.CoupleId = null;
+
+        var result = await handler.CreateInsiderContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Equal(
+            "O contrato deve estar vinculado a um paciente ou casal existente.",
+            result.Message
+        );
     }
 }

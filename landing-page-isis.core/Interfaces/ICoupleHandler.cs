@@ -18,7 +18,8 @@ public interface ICoupleHandler
         string query,
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        bool excludeWithActiveContract = false
     );
     Task<List<CoupleListItemDto>> GetAllCouples(CancellationToken ct);
     Task<Couple?> GetCoupleByPatientId(Guid patientId);

@@ -129,6 +129,35 @@
     font-weight: bold !important;
 }
 
+/* Contract Status Chip Styles */
+.status-ativo {
+    background-color: #2ECC71 !important;
+    color: white !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+}
+
+.status-aguardandoaceitacao {
+    background-color: #E67E22 !important;
+    color: white !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+}
+
+.status-rascunho {
+    background-color: #5D5D5D !important;
+    color: white !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+}
+
+.status-cancelado {
+    background-color: #1A1A1A !important;
+    color: white !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+}
+
 /* Package Status Chip Styles for High Visibility */
 .pkg-status-ativo {
     background-color: #2ECC71 !important;

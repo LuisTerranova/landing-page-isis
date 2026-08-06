@@ -147,13 +147,23 @@ public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) :
         string query,
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        bool excludeWithActiveContract = false
     )
     {
         var queryable = context
             .Couples.Include(c => c.Patient1)
             .Include(c => c.Patient2)
             .AsNoTracking();
+
+        if (excludeWithActiveContract)
+        {
+            queryable = queryable.Where(c => 
+                !context.Contracts.Any(contract => contract.CoupleId == c.Id && contract.Status != ContractStatus.Cancelado) &&
+                !context.Contracts.Any(contract => contract.PatientId == c.Patient1Id && contract.Status != ContractStatus.Cancelado) &&
+                !context.Contracts.Any(contract => contract.PatientId == c.Patient2Id && contract.Status != ContractStatus.Cancelado)
+            );
+        }
 
         if (!string.IsNullOrWhiteSpace(query))
             queryable = queryable.Where(c => c.Name.Contains(query));

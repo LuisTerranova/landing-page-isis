@@ -275,4 +275,14 @@ public partial class ContractsView : ComponentBase
             ContractStatus.Cancelado => Color.Error,
             _ => Color.Default,
         };
+
+    private static string GetStatusLabel(ContractStatus status) =>
+        status switch
+        {
+            ContractStatus.Rascunho => "RASCUNHO",
+            ContractStatus.AguardandoAceitacao => "AGUARDANDO ACEITAÇÃO",
+            ContractStatus.Ativo => "ATIVO",
+            ContractStatus.Cancelado => "CANCELADO",
+            _ => status.ToString().ToUpper(),
+        };
 }
