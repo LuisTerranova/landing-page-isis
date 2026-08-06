@@ -15,14 +15,14 @@
             <MudGrid>
                 <MudItem xs="12">
                     <MudTextField T="string" Label="Nome Completo" Required="true"
-                                  @bind-Value="Model.Name" Variant="Variant.Outlined"
+                                  @bind-Value="Model.Name" @bind-Value:after="SyncSelfPayer" Variant="Variant.Outlined"
                                   MaxLength="150" Counter="150" Immediate="true"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF" Required="true"
-                                  @bind-Value="Model.Cpf" Variant="Variant.Outlined"
+                                  @bind-Value="Model.Cpf" @bind-Value:after="SyncSelfPayer" Variant="Variant.Outlined"
                                   Validation="@(new Func<string, string?>(v => CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
-                                  MaxLength="11" Counter="11"/>
+                                  MaxLength="11" Counter="11" Immediate="true"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudDatePicker Label="Data de Nascimento"
@@ -49,21 +49,24 @@
                 </MudItem>
                 <MudItem xs="12">
                     <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
-                        Dados do Pagador (se diferente do paciente)
-                    </MudText>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                            Dados do Pagador
+                        </MudText>
+                        <MudCheckBox T="bool" Value="_isSelfPayer" ValueChanged="OnSelfPayerChanged" Color="Color.Primary" Dense="true" Label="O próprio paciente é o pagador"/>
+                    </MudStack>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="Nome do Pagador"
                                   @bind-Value="Model.PayerName" Variant="Variant.Outlined"
-                                  MaxLength="150" Counter="150"/>
+                                  MaxLength="150" Counter="150" Disabled="@_isSelfPayer"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
                                   Validation="@(new Func<string, string?>(v => string.IsNullOrEmpty(v) || CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
-                                  MaxLength="11" Counter="11"/>
+                                  MaxLength="11" Counter="11" Disabled="@_isSelfPayer"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -85,16 +88,55 @@
 
     private bool _formValido;
     private DateTime? _tempBirthDate;
+    private bool _isSelfPayer = true;
 
     protected override void OnParametersSet()
     {
         _tempBirthDate = Model.BirthDate?.ToDateTime(TimeOnly.MinValue);
+
+        // Define se o paciente é o próprio pagador ao carregar os dados
+        if (!string.IsNullOrEmpty(Model.PayerName) || !string.IsNullOrEmpty(Model.PayerCpf))
+        {
+            _isSelfPayer = Model.PayerName == Model.Name && CpfValidator.Strip(Model.PayerCpf) == CpfValidator.Strip(Model.Cpf);
+        }
+        else
+        {
+            _isSelfPayer = true;
+            SyncSelfPayer();
+        }
+    }
+
+    private void OnSelfPayerChanged(bool value)
+    {
+        _isSelfPayer = value;
+        if (_isSelfPayer)
+        {
+            SyncSelfPayer();
+        }
+        else
+        {
+            Model.PayerName = null;
+            Model.PayerCpf = null;
+        }
+    }
+
+    private void SyncSelfPayer()
+    {
+        if (_isSelfPayer)
+        {
+            Model.PayerName = Model.Name;
+            Model.PayerCpf = Model.Cpf;
+        }
     }
 
     private void Cancelar() => MudDialog.Cancel();
 
     private void Salvar()
     {
+        if (_isSelfPayer)
+        {
+            SyncSelfPayer();
+        }
         Model.BirthDate = _tempBirthDate.HasValue ? DateOnly.FromDateTime(_tempBirthDate.Value) : null;
         MudDialog.Close(DialogResult.Ok(Model));
     }

@@ -1,4 +1,5 @@
 @namespace landing_page_isis.Components.Helpers
+@using landing_page_isis.core.Helpers
 @using landing_page_isis.Components.Dialogs
 @using landing_page_isis.Components.Dialogs.Appointment
 @using landing_page_isis.Components.Dialogs.Patient
@@ -103,20 +104,28 @@
 
                                 <MudItem xs="12">
                                     <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
-                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
                                         <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
-                                        Dados do Pagador
+                                        Quem é o Pagador do Casal?
                                     </MudText>
+                                    @if (_isEditingCouple)
+                                    {
+                                        <MudRadioGroup T="string" Value="_couplePayerSelection" ValueChanged="OnCouplePayerSelectionChanged" Class="d-flex gap-4 mb-2">
+                                            <MudRadio Value="@("p1")" Color="Color.Primary">@(_coupleModel?.Patient1.Name ?? "Parceiro 1")</MudRadio>
+                                            <MudRadio Value="@("p2")" Color="Color.Primary">@(_coupleModel?.Patient2.Name ?? "Parceiro 2")</MudRadio>
+                                            <MudRadio Value="@("custom")" Color="Color.Primary">Outro Pagador</MudRadio>
+                                        </MudRadioGroup>
+                                    }
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudTextField @bind-Value="_coupleEditModel.PayerName" Label="Nome do Pagador"
-                                                  ReadOnly="@(!_isEditingCouple)"
+                                                  Disabled="@(!_isEditingCouple || _couplePayerSelection != "custom")"
                                                   Variant="Variant.Outlined" Margin="Margin.Dense"
                                                   MaxLength="150" Counter="150" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudTextField @bind-Value="_coupleEditModel.PayerCpf" Label="CPF do Pagador"
-                                                  ReadOnly="@(!_isEditingCouple)"
+                                                  Disabled="@(!_isEditingCouple || _couplePayerSelection != "custom")"
                                                   Variant="Variant.Outlined" Margin="Margin.Dense"
                                                   MaxLength="11" Counter="11" />
                                 </MudItem>
@@ -143,7 +152,7 @@
                         <MudForm @bind-IsValid="_isFormValid">
                             <MudGrid>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.Name" Label="Nome" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="150" Counter="150" Immediate="true" />
+                                    <MudTextField @bind-Value="_patientModel.Name" @bind-Value:after="SyncSelfPayer" Label="Nome" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="150" Counter="150" Immediate="true" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudTextField @bind-Value="_patientModel.Email" Label="E-mail" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="255" Counter="255" Immediate="true" />
@@ -164,7 +173,7 @@
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
                                     {
-                                        <MudTextField @bind-Value="_patientModel.Cpf" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="11" Counter="11" />
+                                        <MudTextField @bind-Value="_patientModel.Cpf" @bind-Value:after="SyncSelfPayer" Label="CPF" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" MaxLength="11" Counter="11" Immediate="true" />
                                     }
                                     else
                                     {
@@ -177,18 +186,24 @@
                                 </MudItem>
                                 <MudItem xs="12">
                                     <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
-                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
-                                        Dados do Pagador
-                                    </MudText>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                                            Dados do Pagador
+                                        </MudText>
+                                        @if (_isEditing)
+                                        {
+                                            <MudCheckBox T="bool" Value="_isSelfPayer" ValueChanged="OnSelfPayerChanged" Color="Color.Primary" Dense="true" Label="O próprio paciente é o pagador"/>
+                                        }
+                                    </MudStack>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField @bind-Value="_patientModel.PayerName" Label="Nome do Pagador" Disabled="@(!_isEditing)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="150" Counter="150" />
+                                    <MudTextField @bind-Value="_patientModel.PayerName" Label="Nome do Pagador" Disabled="@(!_isEditing || _isSelfPayer)" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="150" Counter="150" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     @if (_isEditing)
                                     {
-                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="11" Counter="11" />
+                                        <MudTextField @bind-Value="_patientModel.PayerCpf" Label="CPF do Pagador" Disabled="@_isSelfPayer" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="11" Counter="11" />
                                     }
                                     else
                                     {
@@ -509,6 +524,9 @@
         }
     }
 
+    private bool _isSelfPayer = true;
+    private string _couplePayerSelection = "p1";
+
     private void ResetPatientModel()
     {
         _patientModel = new PatientModel
@@ -524,6 +542,39 @@
             PayerCpf = Patient.PayerCpf,
         };
         _tempBirthDate = _patientModel.BirthDate?.ToDateTime(TimeOnly.MinValue);
+
+        if (!string.IsNullOrEmpty(_patientModel.PayerName) || !string.IsNullOrEmpty(_patientModel.PayerCpf))
+        {
+            _isSelfPayer = _patientModel.PayerName == _patientModel.Name && CpfValidator.Strip(_patientModel.PayerCpf) == CpfValidator.Strip(_patientModel.Cpf);
+        }
+        else
+        {
+            _isSelfPayer = true;
+            SyncSelfPayer();
+        }
+    }
+
+    private void OnSelfPayerChanged(bool value)
+    {
+        _isSelfPayer = value;
+        if (_isSelfPayer)
+        {
+            SyncSelfPayer();
+        }
+        else
+        {
+            _patientModel.PayerName = null;
+            _patientModel.PayerCpf = null;
+        }
+    }
+
+    private void SyncSelfPayer()
+    {
+        if (_isSelfPayer)
+        {
+            _patientModel.PayerName = _patientModel.Name;
+            _patientModel.PayerCpf = _patientModel.Cpf;
+        }
     }
 
     // ==================== PATIENT PROFILE METHODS ====================
@@ -618,6 +669,46 @@
             PayerCpf = Couple.PayerCpf,
             PolicySigned = Couple.PolicySigned,
         };
+
+        if (!string.IsNullOrEmpty(_coupleEditModel.PayerName) && _coupleModel != null)
+        {
+            if (_coupleEditModel.PayerName == _coupleModel.Patient1.Name)
+                _couplePayerSelection = "p1";
+            else if (_coupleEditModel.PayerName == _coupleModel.Patient2.Name)
+                _couplePayerSelection = "p2";
+            else
+                _couplePayerSelection = "custom";
+        }
+        else
+        {
+            _couplePayerSelection = "p1";
+            SyncCouplePayer();
+        }
+    }
+
+    private void OnCouplePayerSelectionChanged(string value)
+    {
+        _couplePayerSelection = value;
+        SyncCouplePayer();
+    }
+
+    private void SyncCouplePayer()
+    {
+        if (_couplePayerSelection == "p1" && _coupleModel != null)
+        {
+            _coupleEditModel.PayerName = _coupleModel.Patient1.Name;
+            _coupleEditModel.PayerCpf = _coupleModel.Patient1.Cpf;
+        }
+        else if (_couplePayerSelection == "p2" && _coupleModel != null)
+        {
+            _coupleEditModel.PayerName = _coupleModel.Patient2.Name;
+            _coupleEditModel.PayerCpf = _coupleModel.Patient2.Cpf;
+        }
+        else if (_couplePayerSelection == "custom")
+        {
+            _coupleEditModel.PayerName = null;
+            _coupleEditModel.PayerCpf = null;
+        }
     }
 
     private async Task ToggleCoupleEdit()

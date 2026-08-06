@@ -85,20 +85,26 @@
                 </MudItem>
                 <MudItem xs="12">
                     <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
-                        <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
-                        Dados do Pagador
-                    </MudText>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
+                            Dados do Pagador
+                        </MudText>
+                        @if (_appointmentType == "patient")
+                        {
+                            <MudCheckBox T="bool" Value="_isSelfPayer" ValueChanged="OnSelfPayerChanged" Color="Color.Primary" Dense="true" Label="O próprio paciente é o pagador"/>
+                        }
+                    </MudStack>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="Nome do Pagador"
                                   @bind-Value="Model.PayerName" Variant="Variant.Outlined"
-                                  MaxLength="150" Counter="150"/>
+                                  MaxLength="150" Counter="150" Disabled="@(_appointmentType == "patient" && _isSelfPayer)"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
-                                  MaxLength="11" Counter="11"/>
+                                  MaxLength="11" Counter="11" Disabled="@(_appointmentType == "patient" && _isSelfPayer)"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -126,6 +132,7 @@
     private string _appointmentType = "patient";
     private PatientListItemDto? _selectedPatient;
     private CoupleListItemDto? _selectedCouple;
+    private bool _isSelfPayer = true;
 
     [Inject] private IDialogService DialogService { get; set; } = null!;
     [Inject] private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
@@ -165,10 +172,24 @@
 
     private async Task PrefillPayerFromPatient(Patient patient)
     {
-        if (!string.IsNullOrEmpty(patient.PayerName))
+        if (_isSelfPayer)
         {
-            Model.PayerName ??= patient.PayerName;
-            Model.PayerCpf ??= patient.PayerCpf;
+            Model.PayerName = !string.IsNullOrEmpty(patient.PayerName) ? patient.PayerName : patient.Name;
+            Model.PayerCpf = !string.IsNullOrEmpty(patient.PayerCpf) ? patient.PayerCpf : patient.Cpf;
+        }
+    }
+
+    private void OnSelfPayerChanged(bool value)
+    {
+        _isSelfPayer = value;
+        if (!_isSelfPayer)
+        {
+            Model.PayerName = null;
+            Model.PayerCpf = null;
+        }
+        else if (_selectedPatient != null)
+        {
+            _ = OnPatientChanged();
         }
     }
 
@@ -187,8 +208,16 @@
             var full = await PatientHandler.GetPatient(_selectedPatient.Id);
             if (full != null)
             {
-                Model.PayerName = full.PayerName;
-                Model.PayerCpf = full.PayerCpf;
+                if (_isSelfPayer)
+                {
+                    Model.PayerName = !string.IsNullOrEmpty(full.PayerName) ? full.PayerName : full.Name;
+                    Model.PayerCpf = !string.IsNullOrEmpty(full.PayerCpf) ? full.PayerCpf : full.Cpf;
+                }
+                else
+                {
+                    Model.PayerName = full.PayerName;
+                    Model.PayerCpf = full.PayerCpf;
+                }
             }
         }
     }

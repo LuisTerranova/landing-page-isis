@@ -24,6 +24,7 @@
                     <MudAutocomplete T="PatientListItemDto"
                                      Label="Parceiro(a) 1"
                                      @bind-Value="_selectedPatient1"
+                                     @bind-Value:after="SyncCouplePayer"
                                      SearchFunc="@SearchPatient"
                                      ToStringFunc="@(p => p == null ? "" : p.Name)"
                                      Required="true"
@@ -37,6 +38,7 @@
                     <MudAutocomplete T="PatientListItemDto"
                                      Label="Parceiro(a) 2"
                                      @bind-Value="_selectedPatient2"
+                                     @bind-Value:after="SyncCouplePayer"
                                      SearchFunc="@SearchPatient"
                                      ToStringFunc="@(p => p == null ? "" : p.Name)"
                                      Required="true"
@@ -48,20 +50,25 @@
                 </MudItem>
                 <MudItem xs="12">
                     <MudDivider DividerType="DividerType.Middle" Class="my-4"/>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-4">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">
                         <MudIcon Icon="@Icons.Material.Filled.Payments" Class="mr-2 mb-n1"/>
-                        Dados do Pagador (se diferente do casal)
+                        Quem é o Pagador do Casal?
                     </MudText>
+                    <MudRadioGroup T="string" Value="_payerSelection" ValueChanged="OnPayerSelectionChanged" Class="d-flex gap-4 mb-2">
+                        <MudRadio Value="@("p1")" Color="Color.Primary">@(_selectedPatient1?.Name ?? "Parceiro 1")</MudRadio>
+                        <MudRadio Value="@("p2")" Color="Color.Primary">@(_selectedPatient2?.Name ?? "Parceiro 2")</MudRadio>
+                        <MudRadio Value="@("custom")" Color="Color.Primary">Outro Pagador</MudRadio>
+                    </MudRadioGroup>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="Nome do Pagador"
                                   @bind-Value="Model.PayerName" Variant="Variant.Outlined"
-                                  MaxLength="150" Counter="150"/>
+                                  MaxLength="150" Counter="150" Disabled="@(_payerSelection != "custom")"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudTextField T="string" Label="CPF do Pagador"
                                   @bind-Value="Model.PayerCpf" Variant="Variant.Outlined"
-                                  MaxLength="11" Counter="11"/>
+                                  MaxLength="11" Counter="11" Disabled="@(_payerSelection != "custom")"/>
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -85,6 +92,7 @@
     private bool _formValido;
     private PatientListItemDto? _selectedPatient1;
     private PatientListItemDto? _selectedPatient2;
+    private string _payerSelection = "p1";
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,6 +108,54 @@
             if (full != null)
                 _selectedPatient2 = new PatientListItemDto(full.Id, full.Name, full.Email, full.Phone, full.StateOfResidency);
         }
+
+        if (!string.IsNullOrEmpty(Model.PayerName))
+        {
+            if (_selectedPatient1 != null && Model.PayerName == _selectedPatient1.Name)
+                _payerSelection = "p1";
+            else if (_selectedPatient2 != null && Model.PayerName == _selectedPatient2.Name)
+                _payerSelection = "p2";
+            else
+                _payerSelection = "custom";
+        }
+        else
+        {
+            _payerSelection = "p1";
+            await SyncCouplePayer();
+        }
+    }
+
+    private async Task OnPayerSelectionChanged(string value)
+    {
+        _payerSelection = value;
+        await SyncCouplePayer();
+    }
+
+    private async Task SyncCouplePayer()
+    {
+        if (_payerSelection == "p1" && _selectedPatient1 != null)
+        {
+            var p1 = await PatientHandler.GetPatient(_selectedPatient1.Id);
+            if (p1 != null)
+            {
+                Model.PayerName = p1.Name;
+                Model.PayerCpf = p1.Cpf;
+            }
+        }
+        else if (_payerSelection == "p2" && _selectedPatient2 != null)
+        {
+            var p2 = await PatientHandler.GetPatient(_selectedPatient2.Id);
+            if (p2 != null)
+            {
+                Model.PayerName = p2.Name;
+                Model.PayerCpf = p2.Cpf;
+            }
+        }
+        else if (_payerSelection == "custom")
+        {
+            Model.PayerName = null;
+            Model.PayerCpf = null;
+        }
     }
 
     private async Task<IEnumerable<PatientListItemDto>> SearchPatient(string? value, CancellationToken ct)
@@ -110,10 +166,11 @@
 
     private void Cancelar() => MudDialog.Cancel();
 
-    private void Salvar()
+    private async Task Salvar()
     {
         Model.Patient1Id = _selectedPatient1?.Id ?? Guid.Empty;
         Model.Patient2Id = _selectedPatient2?.Id ?? Guid.Empty;
+        await SyncCouplePayer();
         MudDialog.Close(DialogResult.Ok(Model));
     }
 }
