@@ -721,6 +721,65 @@ public class AppointmentHandlerTests
     }
 
     [Fact]
+    public async Task UpdateAppointment_ShouldNotRefundPackage_WhenSlotIsOccupied()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var patientId = Guid.NewGuid();
+        context.Patients.Add(new Patient { Id = patientId, Name = "Test Patient" });
+
+        var package = new AppointmentPackage
+        {
+            Id = Guid.NewGuid(),
+            PatientId = patientId,
+            TotalAppointments = 10,
+            RemainingAppointments = 5,
+            Status = PackageStatus.Ativo,
+        };
+        context.AppointmentPackages.Add(package);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                AppointmentDate = DateTimeOffset.UtcNow.AddDays(1),
+                PatientId = patientId,
+                PackageId = package.Id,
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+
+        var occupiedDate = DateTimeOffset.UtcNow.AddDays(2);
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = occupiedDate,
+                PatientId = Guid.NewGuid(),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var cancelledAppointment = new Appointment
+        {
+            Id = appointmentId,
+            AppointmentDate = occupiedDate,
+            PatientId = patientId,
+            PackageId = package.Id,
+            AppointmentStatus = AppointmentStatusEnum.Cancelada,
+        };
+
+        var result = await handler.UpdateAppointment(cancelledAppointment, appointmentId);
+
+        Assert.False(result.Success);
+        var dbPackage = await context.AppointmentPackages.FindAsync(package.Id);
+        Assert.NotNull(dbPackage);
+        Assert.Equal(5, dbPackage.RemainingAppointments);
+    }
+
+    [Fact]
     public async Task IsTimeSlotAvailable_ShouldReturnTrue_WhenSlotIsFree()
     {
         await using var context = GetDatabaseContext();

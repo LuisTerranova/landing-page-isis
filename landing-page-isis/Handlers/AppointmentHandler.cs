@@ -167,16 +167,6 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         if (!validation.Success)
             return validation;
 
-        // Refund a package session if the appointment is being cancelled
-        if (
-            appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada
-            && existing.AppointmentStatus != AppointmentStatusEnum.Cancelada
-            && existing.PackageId.HasValue
-        )
-        {
-            await RefundPackageCredit(existing.PackageId.Value);
-        }
-
         // Force UTC conversion before database storage to satisfy PostgreSQL timestamp constraints
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
@@ -189,6 +179,16 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             )
         )
             return new HandlerResult(false, "Horario indisponivel");
+
+        // Refund a package session if the appointment is being cancelled
+        if (
+            appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada
+            && existing.AppointmentStatus != AppointmentStatusEnum.Cancelada
+            && existing.PackageId.HasValue
+        )
+        {
+            await RefundPackageCredit(existing.PackageId.Value);
+        }
 
         // SetValues is safe here because Appointment has fully mutable property mapping
         context.Entry(existing).CurrentValues.SetValues(appointment);
