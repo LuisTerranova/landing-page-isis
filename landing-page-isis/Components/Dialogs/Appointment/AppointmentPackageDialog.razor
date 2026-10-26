@@ -10,6 +10,13 @@
         </MudText>
     </TitleContent>
     <DialogContent>
+        @if (!string.IsNullOrWhiteSpace(OwnerDisplayName))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Primary" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" Size="Size.Small"/>
+                Pacote para <b>@OwnerDisplayName</b>
+            </MudText>
+        }
         <MudForm @bind-IsValid="@_formValido">
             <MudGrid>
                 @if (ShowPatientCoupleSelector)
@@ -27,7 +34,7 @@
                                      @bind-Value="Model.TotalAppointments" Variant="Variant.Outlined"/>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudNumericField T="decimal" Label="Valor Total (R$)" Required="true" Min="0"
+                    <MudNumericField T="decimal" Label="Valor Total (R$)" Required="true" Min="@(0.01m)"
                                      @bind-Value="Model.Price" Variant="Variant.Outlined" Format="N2"/>
                 </MudItem>
                 <MudItem xs="12">
@@ -76,6 +83,9 @@
 
     [Parameter]
     public bool ShowPatientCoupleSelector { get; set; }
+
+    [Parameter]
+    public string? OwnerDisplayName { get; set; }
 
     private bool _formValido;
     private string _packageOwnerType = "patient";

@@ -89,13 +89,24 @@ public partial class AppointmentsView : ComponentBase
         );
         var result = await dialog.Result;
 
-        if (result is { Canceled: false, Data: Appointment model })
+        if (result is { Canceled: false, Data: AppointmentDialogResult dialogResult })
         {
-            var success = await AppointmentHandler.CreateAppointment(model);
+            var success = await AppointmentHandler.CreateAppointment(dialogResult.Appointment);
             if (success.Success)
             {
-                Snackbar.Add("Agendamento criado!", Severity.Success);
+                var message =
+                    dialogResult.PackageCreated ? "Pacote criado e consulta agendada!"
+                    : dialogResult.IsCourtesy ? "Consulta de cortesia criada!"
+                    : "Agendamento criado!";
+                Snackbar.Add(message, Severity.Success);
                 await _appointmentsTable.ReloadAsync();
+            }
+            else if (dialogResult.PackageCreated)
+            {
+                Snackbar.Add(
+                    $"O pacote foi criado, mas o agendamento não pôde ser concluído: {success.Message} O pacote está ativo e pode ser usado ao tentar novamente.",
+                    Severity.Warning
+                );
             }
             else
             {
@@ -113,6 +124,7 @@ public partial class AppointmentsView : ComponentBase
         var parameters = new DialogParameters<AppointmentDialog>
         {
             { x => x.Titulo, "Editar Agendamento" },
+            { x => x.IsEdit, true },
             {
                 x => x.Model,
                 new Appointment
@@ -144,8 +156,9 @@ public partial class AppointmentsView : ComponentBase
         );
         var result = await dialog.Result;
 
-        if (result is { Canceled: false, Data: Appointment editedModel })
+        if (result is { Canceled: false, Data: AppointmentDialogResult dialogResult })
         {
+            var editedModel = dialogResult.Appointment;
             var success = await AppointmentHandler.UpdateAppointment(editedModel, editedModel.Id);
             if (success.Success)
             {

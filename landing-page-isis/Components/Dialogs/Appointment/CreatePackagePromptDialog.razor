@@ -1,0 +1,80 @@
+@namespace landing_page_isis.Components.Dialogs.Appointment
+
+<MudDialog>
+    <TitleContent>
+        @if (_isCourtesyStep)
+        {
+            <MudText Typo="Typo.h6" Color="Color.Secondary">
+                <MudIcon Icon="@Icons.Material.Filled.VolunteerActivism" Class="mr-3 mb-n1"/>
+                Consulta de cortesia
+            </MudText>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.CardGiftcard" Class="mr-3 mb-n1"/>
+                Pacote necessário
+            </MudText>
+        }
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrWhiteSpace(OwnerName))
+        {
+            <MudText Typo="Typo.body1" Class="mb-2">
+                @(IsCouple ? "Casal" : "Paciente"): <b>@OwnerName</b>
+            </MudText>
+        }
+
+        @if (_isCourtesyStep)
+        {
+            <MudText Typo="Typo.body2">
+                Deseja criar esta consulta como <b>cortesia</b>, sem pacote e sem cobrança?
+            </MudText>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2">
+                Não possui pacote ativo e a consulta está com valor <b>R$ 0,00</b>.
+                Deseja criar um pacote agora para cobrir esta sessão?
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (_isCourtesyStep)
+        {
+            <MudButton OnClick="Cancel" Color="Color.Error">Cancelar</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.VolunteerActivism" OnClick="ConfirmCourtesy">
+                Sim, criar cortesia
+            </MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="ShowCourtesyStep" Color="Color.Error">Cancelar</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.CardGiftcard" OnClick="ConfirmPackage">
+                Sim, criar pacote
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public string? OwnerName { get; set; }
+
+    [Parameter] public bool IsCouple { get; set; }
+
+    private bool _isCourtesyStep;
+
+    private void ShowCourtesyStep() => _isCourtesyStep = true;
+
+    private void ConfirmPackage() =>
+        MudDialog.Close(DialogResult.Ok(CreatePackagePromptChoice.CreatePackage));
+
+    private void ConfirmCourtesy() =>
+        MudDialog.Close(DialogResult.Ok(CreatePackagePromptChoice.Courtesy));
+
+    private void Cancel() => MudDialog.Cancel();
+}

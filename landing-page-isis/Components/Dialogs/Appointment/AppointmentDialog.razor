@@ -122,9 +122,12 @@
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
     [Inject] private IPatientHandler PatientHandler { get; set; } = null!;
     [Inject] private ICoupleHandler CoupleHandler { get; set; } = null!;
+    [Inject] private IAppointmentHandler AppointmentHandler { get; set; } = null!;
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Parameter] public Appointment Model { get; set; } = new();
     [Parameter] public string Titulo { get; set; } = "Novo Agendamento";
+    [Parameter] public bool IsEdit { get; set; }
 
     private bool _formValido;
     private DateTime? _tempDate;
@@ -133,6 +136,8 @@
     private PatientListItemDto? _selectedPatient;
     private CoupleListItemDto? _selectedCouple;
     private bool _isSelfPayer = true;
+    private bool _packageCreated;
+    private bool _isCourtesy;
 
     [Inject] private IDialogService DialogService { get; set; } = null!;
     [Inject] private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
@@ -261,40 +266,14 @@
 
     private async Task Salvar()
     {
-        if (_appointmentType == "patient" && _selectedPatient != null)
+        if (_tempDate is null || _tempTime is null)
         {
-            var packagesResponse = await PackageHandler.GetPackagesByPatientId(0, 1, _selectedPatient.Id, CancellationToken.None);
-            var hasActive = packagesResponse.Items.Any(p => p is { Status: PackageStatus.Ativo, RemainingAppointments: > 0 });
-
-            if (!hasActive)
-            {
-                var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
-                var dialog = await DialogService.ShowAsync<ConfirmScheduleDialog>("Atenção", options);
-                var result = await dialog.Result;
-                if (result == null || result.Canceled)
-                    return;
-            }
-        }
-        else if (_appointmentType == "couple" && _selectedCouple != null)
-        {
-            var packagesResponse = await PackageHandler.GetPackagesByCoupleId(0, 1, _selectedCouple.Id, CancellationToken.None);
-            var hasActive = packagesResponse.Items.Any(p => p is { Status: PackageStatus.Ativo, RemainingAppointments: > 0 });
-
-            if (!hasActive)
-            {
-                var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
-                var dialog = await DialogService.ShowAsync<ConfirmScheduleDialog>("Atenção", options);
-                var result = await dialog.Result;
-                if (result == null || result.Canceled)
-                    return;
-            }
+            Snackbar.Add("Informe a data e a hora da consulta.", Severity.Warning);
+            return;
         }
 
-        if (_tempDate.HasValue && _tempTime.HasValue)
-        {
-            var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
-            Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
-        }
+        var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
+        Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
 
         if (_appointmentType == "patient")
         {
@@ -307,6 +286,119 @@
             Model.PatientId = null;
         }
 
-        MudDialog.Close(DialogResult.Ok(Model));
+        var slotAvailable = await AppointmentHandler.IsTimeSlotAvailable(
+            Model.AppointmentDate,
+            IsEdit ? Model.Id : null,
+            CancellationToken.None
+        );
+
+        if (!slotAvailable)
+        {
+            Snackbar.Add("Este horário já possui um agendamento.", Severity.Error);
+            return;
+        }
+
+        if (!IsEdit && Model.Price == 0)
+        {
+            var hasActivePackage = await PackageHandler.HasActivePackageAsync(
+                Model.PatientId,
+                Model.CoupleId,
+                CancellationToken.None
+            );
+
+            if (!hasActivePackage)
+            {
+                var choice = await ShowPackagePromptAsync();
+                if (choice is null)
+                    return;
+
+                if (choice == CreatePackagePromptChoice.CreatePackage)
+                {
+                    if (!await CreatePackageInlineAsync())
+                        return;
+
+                    _packageCreated = true;
+                }
+                else
+                {
+                    _isCourtesy = true;
+                }
+            }
+        }
+
+        MudDialog.Close(
+            DialogResult.Ok(new AppointmentDialogResult(Model, _packageCreated, _isCourtesy))
+        );
+    }
+
+    private async Task<CreatePackagePromptChoice?> ShowPackagePromptAsync()
+    {
+        var parameters = new DialogParameters<CreatePackagePromptDialog>
+        {
+            { x => x.OwnerName, _selectedPatient?.Name ?? _selectedCouple?.Name },
+            { x => x.IsCouple, _appointmentType == "couple" },
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<CreatePackagePromptDialog>(
+            "Pacote necessário",
+            parameters,
+            options
+        );
+        var result = await dialog.Result;
+
+        return result is { Canceled: false, Data: CreatePackagePromptChoice choice }
+            ? choice
+            : null;
+    }
+
+    private async Task<bool> CreatePackageInlineAsync()
+    {
+        var package = new AppointmentPackage
+        {
+            PayerName = Model.PayerName,
+            PayerCpf = Model.PayerCpf,
+        };
+
+        if (_appointmentType == "patient")
+            package.PatientId = _selectedPatient?.Id;
+        else
+            package.CoupleId = _selectedCouple?.Id;
+
+        var parameters = new DialogParameters<AppointmentPackageDialog>
+        {
+            { x => x.Model, package },
+            { x => x.OwnerDisplayName, _selectedPatient?.Name ?? _selectedCouple?.Name },
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            BackdropClick = false,
+            CloseButton = true,
+        };
+
+        var dialog = await DialogService.ShowAsync<AppointmentPackageDialog>(
+            string.Empty,
+            parameters,
+            options
+        );
+        var result = await dialog.Result;
+
+        if (result is not { Canceled: false, Data: AppointmentPackage createdPackage })
+            return false;
+
+        var response = await PackageHandler.CreatePackage(createdPackage);
+        if (response.Success)
+            return true;
+
+        Snackbar.Add($"Erro ao criar pacote: {response.Message}", Severity.Error);
+        return false;
     }
 }
