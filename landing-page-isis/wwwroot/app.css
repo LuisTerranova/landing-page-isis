@@ -177,6 +177,11 @@
     font-weight: bold !important;
 }
 
+.courtesy-chip {
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+}
+
 .mud-charts-xaxis text {
     fill: white !important;
     font-weight: bold;

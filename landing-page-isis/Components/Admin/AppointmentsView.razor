@@ -42,7 +42,19 @@
                 @context.AppointmentStatus.ToString().ToUpper()
             </MudChip>
         </MudTd>
-        <MudTd DataLabel="Preço">@context.Price.ToString("C")</MudTd>
+        <MudTd DataLabel="Preço">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText>@context.Price.ToString("C")</MudText>
+                @if (context.Price == 0 && context.PackageId == null)
+                {
+                    <MudChip T="string" Variant="Variant.Filled" Size="Size.Small"
+                             Color="Color.Secondary" Icon="@Icons.Material.Filled.VolunteerActivism"
+                             Class="courtesy-chip">
+                        CORTESIA
+                    </MudChip>
+                }
+            </MudStack>
+        </MudTd>
     </RowColumns>
 
     <CustomActions>
