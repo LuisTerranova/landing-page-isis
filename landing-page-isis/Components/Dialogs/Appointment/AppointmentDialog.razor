@@ -73,6 +73,7 @@
                                      @bind-Value="Model.Price"
                                      Format="N2"
                                      Variant="Variant.Outlined"
+                                     Min="0"
                                      Required="true"/>
                 </MudItem>
                 <MudItem xs="6">
@@ -110,9 +111,9 @@
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancelar" Color="Color.Error">Cancelar</MudButton>
+        <MudButton OnClick="Cancelar" Color="Color.Error" Disabled="@_isSaving">Cancelar</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled"
-                   Disabled="@(!_formValido)" OnClick="Salvar">
+                   Disabled="@(!_formValido || _isSaving)" OnClick="Salvar">
             Salvar
         </MudButton>
     </DialogActions>
@@ -138,6 +139,7 @@
     private bool _isSelfPayer = true;
     private bool _packageCreated;
     private bool _isCourtesy;
+    private bool _isSaving;
 
     [Inject] private IDialogService DialogService { get; set; } = null!;
     [Inject] private IAppointmentPackageHandler PackageHandler { get; set; } = null!;
@@ -266,69 +268,98 @@
 
     private async Task Salvar()
     {
-        if (_tempDate is null || _tempTime is null)
-        {
-            Snackbar.Add("Informe a data e a hora da consulta.", Severity.Warning);
+        if (_isSaving)
             return;
-        }
 
-        var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
-        Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
-
-        if (_appointmentType == "patient")
+        _isSaving = true;
+        try
         {
-            Model.PatientId = _selectedPatient?.Id;
-            Model.CoupleId = null;
-        }
-        else
-        {
-            Model.CoupleId = _selectedCouple?.Id;
-            Model.PatientId = null;
-        }
+            if (_tempDate is null || _tempTime is null)
+            {
+                Snackbar.Add("Informe a data e a hora da consulta.", Severity.Warning);
+                return;
+            }
 
-        var slotAvailable = await AppointmentHandler.IsTimeSlotAvailable(
-            Model.AppointmentDate,
-            IsEdit ? Model.Id : null,
-            CancellationToken.None
-        );
+            if (_appointmentType == "patient" && _selectedPatient is null)
+            {
+                Snackbar.Add("Selecione o paciente.", Severity.Warning);
+                return;
+            }
 
-        if (!slotAvailable)
-        {
-            Snackbar.Add("Este horário já possui um agendamento.", Severity.Error);
-            return;
-        }
+            if (_appointmentType == "couple" && _selectedCouple is null)
+            {
+                Snackbar.Add("Selecione o casal.", Severity.Warning);
+                return;
+            }
 
-        if (!IsEdit && Model.Price == 0)
-        {
-            var hasActivePackage = await PackageHandler.HasActivePackageAsync(
-                Model.PatientId,
-                Model.CoupleId,
+            if (Model.Price < 0)
+            {
+                Snackbar.Add("O preço não pode ser negativo.", Severity.Warning);
+                return;
+            }
+
+            var combinedDateTime = _tempDate.Value.Date + _tempTime.Value;
+            Model.AppointmentDate = combinedDateTime.ToPortoVelhoDateTimeOffset();
+
+            if (_appointmentType == "patient")
+            {
+                Model.PatientId = _selectedPatient?.Id;
+                Model.CoupleId = null;
+            }
+            else
+            {
+                Model.CoupleId = _selectedCouple?.Id;
+                Model.PatientId = null;
+            }
+
+            var slotAvailable = await AppointmentHandler.IsTimeSlotAvailable(
+                Model.AppointmentDate,
+                IsEdit ? Model.Id : null,
                 CancellationToken.None
             );
 
-            if (!hasActivePackage)
+            if (!slotAvailable)
             {
-                var choice = await ShowPackagePromptAsync();
-                if (choice is null)
-                    return;
+                Snackbar.Add("Este horário já possui um agendamento.", Severity.Error);
+                return;
+            }
 
-                if (choice == CreatePackagePromptChoice.CreatePackage)
+            if (!IsEdit && Model.Price == 0)
+            {
+                var hasActivePackage = await PackageHandler.HasActivePackageAsync(
+                    Model.PatientId,
+                    Model.CoupleId,
+                    CancellationToken.None
+                );
+
+                if (!hasActivePackage)
                 {
-                    if (!await CreatePackageInlineAsync())
+                    var choice = await ShowPackagePromptAsync();
+                    if (choice is null)
                         return;
 
-                    _packageCreated = true;
-                }
-                else
-                {
-                    _isCourtesy = true;
+                    if (choice == CreatePackagePromptChoice.CreatePackage)
+                    {
+                        if (!await CreatePackageInlineAsync())
+                            return;
+
+                        _packageCreated = true;
+                    }
+                    else
+                    {
+                        _isCourtesy = true;
+                    }
                 }
             }
-        }
 
-        MudDialog.Close(
-            DialogResult.Ok(new AppointmentDialogResult(Model, _packageCreated, _isCourtesy))
-        );
+            MudDialog.Close(
+                DialogResult.Ok(new AppointmentDialogResult(Model, _packageCreated, _isCourtesy))
+            );
+        }
+        finally
+        {
+            _isSaving = false;
+        }
     }
 
     private async Task<CreatePackagePromptChoice?> ShowPackagePromptAsync()

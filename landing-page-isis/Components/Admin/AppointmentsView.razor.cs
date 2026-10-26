@@ -79,7 +79,7 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Small,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true,
+            CloseButton = false,
         };
 
         var dialog = await DialogService.ShowAsync<AppointmentDialog>(
@@ -147,7 +147,7 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Small,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true,
+            CloseButton = false,
         };
         var dialog = await DialogService.ShowAsync<AppointmentDialog>(
             "Editar Agendamento",
