@@ -84,6 +84,21 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         return await context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    public async Task<bool> IsTimeSlotAvailable(
+        DateTimeOffset appointmentDate,
+        Guid? excludeAppointmentId,
+        CancellationToken ct
+    )
+    {
+        var utcDate = appointmentDate.ToUniversalTime();
+        var query = context.Appointments.AsNoTracking().Where(a => a.AppointmentDate == utcDate);
+
+        if (excludeAppointmentId.HasValue)
+            query = query.Where(a => a.Id != excludeAppointmentId.Value);
+
+        return !await query.AnyAsync(ct);
+    }
+
     public async Task<HandlerResult> CreateAppointment(Appointment appointment)
     {
         var validation = appointment.Validate();
@@ -94,11 +109,7 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
         // Enforce time slot uniqueness to prevent booking conflicts
-        var isOccupied = await context
-            .Appointments.AsNoTracking()
-            .AnyAsync(a => a.AppointmentDate == appointment.AppointmentDate);
-
-        if (isOccupied)
+        if (!await IsTimeSlotAvailable(appointment.AppointmentDate, null, CancellationToken.None))
             return new HandlerResult(false, "Este horário já possui um agendamento.");
 
         // Automatically deduct a session credit if the client has an active prepaid package
@@ -170,13 +181,13 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
         appointment.AppointmentDate = appointment.AppointmentDate.ToUniversalTime();
 
         // Enforce slot uniqueness (excluding the current record itself)
-        var isOccupied = await context
-            .Appointments.AsNoTracking()
-            .AnyAsync(a =>
-                a.Id != appointment.Id && a.AppointmentDate == appointment.AppointmentDate
-            );
-
-        if (isOccupied)
+        if (
+            !await IsTimeSlotAvailable(
+                appointment.AppointmentDate,
+                appointment.Id,
+                CancellationToken.None
+            )
+        )
             return new HandlerResult(false, "Horario indisponivel");
 
         // SetValues is safe here because Appointment has fully mutable property mapping

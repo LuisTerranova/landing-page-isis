@@ -19,6 +19,11 @@ public interface IAppointmentHandler
     Task<Appointment?> GetAppointment(Guid id, Guid patientId);
     Task<Appointment?> GetAppointmentWithPatient(Guid id, Guid patientId);
     Task<Appointment?> GetAppointmentById(Guid id);
+    Task<bool> IsTimeSlotAvailable(
+        DateTimeOffset appointmentDate,
+        Guid? excludeAppointmentId,
+        CancellationToken ct
+    );
     Task<HandlerResult> CreateAppointment(Appointment appointment);
     Task<HandlerResult> UpdateAppointment(Appointment appointment, Guid id);
     Task<HandlerResult> DeleteAppointment(Guid id);

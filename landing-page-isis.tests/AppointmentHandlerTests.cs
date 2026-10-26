@@ -719,4 +719,69 @@ public class AppointmentHandlerTests
         Assert.NotNull(dbPackage);
         Assert.Equal(10, dbPackage.RemainingAppointments);
     }
+
+    [Fact]
+    public async Task IsTimeSlotAvailable_ShouldReturnTrue_WhenSlotIsFree()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var result = await handler.IsTimeSlotAvailable(
+            DateTimeOffset.UtcNow.AddDays(1),
+            null,
+            CancellationToken.None
+        );
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task IsTimeSlotAvailable_ShouldReturnFalse_WhenSlotIsOccupied()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+        var appointmentDate = DateTimeOffset.UtcNow.AddDays(1);
+
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                AppointmentDate = appointmentDate,
+                PatientId = Guid.NewGuid(),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.IsTimeSlotAvailable(
+            appointmentDate,
+            null,
+            CancellationToken.None
+        );
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task IsTimeSlotAvailable_ShouldIgnoreCurrentAppointment_WhenEditing()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+        var appointment = new Appointment
+        {
+            Id = Guid.NewGuid(),
+            AppointmentDate = DateTimeOffset.UtcNow.AddDays(1),
+            PatientId = Guid.NewGuid(),
+        };
+
+        context.Appointments.Add(appointment);
+        await context.SaveChangesAsync();
+
+        var result = await handler.IsTimeSlotAvailable(
+            appointment.AppointmentDate,
+            appointment.Id,
+            CancellationToken.None
+        );
+
+        Assert.True(result);
+    }
 }
