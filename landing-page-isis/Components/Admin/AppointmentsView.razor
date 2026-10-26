@@ -43,7 +43,7 @@
             </MudChip>
         </MudTd>
         <MudTd DataLabel="Preço">
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
                 <MudText>@context.Price.ToString("C")</MudText>
                 @if (context.Price == 0 && context.PackageId == null)
                 {
