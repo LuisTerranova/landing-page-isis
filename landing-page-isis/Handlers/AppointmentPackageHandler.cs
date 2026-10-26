@@ -126,10 +126,10 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
 
     public async Task<HandlerResult> CreatePackage(AppointmentPackage package)
     {
-        if (
-            (!package.PatientId.HasValue || package.PatientId.Value == Guid.Empty)
-            && package.CoupleId == null
-        )
+        var hasPatient = package.PatientId.HasValue && package.PatientId.Value != Guid.Empty;
+        var hasCouple = package.CoupleId.HasValue && package.CoupleId.Value != Guid.Empty;
+
+        if (!hasPatient && !hasCouple)
             return new HandlerResult(false, "Paciente ou casal não informado.");
 
         if (package.TotalAppointments <= 0)

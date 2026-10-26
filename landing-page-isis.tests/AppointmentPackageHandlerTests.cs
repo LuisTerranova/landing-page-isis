@@ -62,6 +62,26 @@ public class AppointmentPackageHandlerTests
     }
 
     [Fact]
+    public async Task CreatePackage_ShouldReturnFalse_WhenCoupleIdEmpty()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+
+        var pkg = new AppointmentPackage
+        {
+            Id = Guid.NewGuid(),
+            CoupleId = Guid.Empty,
+            TotalAppointments = 10,
+            Price = 500,
+        };
+
+        var result = await handler.CreatePackage(pkg);
+
+        Assert.False(result.Success);
+        Assert.Equal("Paciente ou casal não informado.", result.Message);
+    }
+
+    [Fact]
     public async Task CreatePackage_ShouldReturnFalse_WhenTotalAppointmentsZero()
     {
         await using var context = GetDatabaseContext();

@@ -78,8 +78,16 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
 
+    private const int DefaultTotalAppointments = 4;
+    private const decimal DefaultPrice = 200m;
+
     [Parameter]
-    public AppointmentPackage Model { get; set; } = new AppointmentPackage() { TotalAppointments = 4, Price = 200, PaymentMethod = PaymentMethod.Pix };
+    public AppointmentPackage Model { get; set; } = new AppointmentPackage()
+    {
+        TotalAppointments = DefaultTotalAppointments,
+        Price = DefaultPrice,
+        PaymentMethod = PaymentMethod.Pix,
+    };
 
     [Parameter]
     public bool ShowPatientCoupleSelector { get; set; }
@@ -89,6 +97,18 @@
 
     private bool _formValido;
     private string _packageOwnerType = "patient";
+
+    protected override void OnInitialized()
+    {
+        if (Model.Id != Guid.Empty)
+            return;
+
+        if (Model.TotalAppointments <= 0)
+            Model.TotalAppointments = DefaultTotalAppointments;
+
+        if (Model.Price <= 0)
+            Model.Price = DefaultPrice;
+    }
 
     protected override void OnParametersSet()
     {
