@@ -328,4 +328,133 @@ public class AppointmentPackageHandlerTests
         Assert.Equal(2, result.Items.Count());
         Assert.All(result.Items, pkg => Assert.Equal(coupleId, pkg.CoupleId));
     }
+
+    [Fact]
+    public async Task HasActivePackageAsync_ShouldReturnTrue_ForActivePatientPackage()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+        var patientId = Guid.NewGuid();
+
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientId,
+                TotalAppointments = 4,
+                RemainingAppointments = 2,
+                Status = PackageStatus.Ativo,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.HasActivePackageAsync(patientId, null, CancellationToken.None);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task HasActivePackageAsync_ShouldReturnTrue_ForActiveCouplePackage()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+        var coupleId = Guid.NewGuid();
+
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = coupleId,
+                TotalAppointments = 4,
+                RemainingAppointments = 1,
+                Status = PackageStatus.Ativo,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.HasActivePackageAsync(null, coupleId, CancellationToken.None);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task HasActivePackageAsync_ShouldReturnFalse_WhenPackageIsExhausted()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+        var patientId = Guid.NewGuid();
+
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientId,
+                TotalAppointments = 4,
+                RemainingAppointments = 0,
+                Status = PackageStatus.Esgotado,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.HasActivePackageAsync(patientId, null, CancellationToken.None);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HasActivePackageAsync_ShouldFindOlderActivePackage_WhenNewestIsExhausted()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+        var patientId = Guid.NewGuid();
+
+        context.AppointmentPackages.AddRange(
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientId,
+                TotalAppointments = 4,
+                RemainingAppointments = 2,
+                Status = PackageStatus.Ativo,
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-10),
+            },
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientId,
+                TotalAppointments = 4,
+                RemainingAppointments = 0,
+                Status = PackageStatus.Esgotado,
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.HasActivePackageAsync(patientId, null, CancellationToken.None);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task HasActivePackageAsync_ShouldReturnFalse_WhenNoOwnerIsProvided()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentPackageHandler(context);
+
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                PatientId = Guid.NewGuid(),
+                TotalAppointments = 4,
+                RemainingAppointments = 4,
+                Status = PackageStatus.Ativo,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.HasActivePackageAsync(null, null, CancellationToken.None);
+
+        Assert.False(result);
+    }
 }

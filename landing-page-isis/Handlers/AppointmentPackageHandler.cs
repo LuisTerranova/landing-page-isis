@@ -104,6 +104,26 @@ public class AppointmentPackageHandler(AppDbContext context) : IAppointmentPacka
         );
     }
 
+    public async Task<bool> HasActivePackageAsync(
+        Guid? patientId,
+        Guid? coupleId,
+        CancellationToken ct
+    )
+    {
+        var query = context
+            .AppointmentPackages.AsNoTracking()
+            .Where(p => p.Status == PackageStatus.Ativo && p.RemainingAppointments > 0);
+
+        if (patientId.HasValue && patientId.Value != Guid.Empty)
+            query = query.Where(p => p.PatientId == patientId.Value);
+        else if (coupleId.HasValue && coupleId.Value != Guid.Empty)
+            query = query.Where(p => p.CoupleId == coupleId.Value);
+        else
+            return false;
+
+        return await query.AnyAsync(ct);
+    }
+
     public async Task<HandlerResult> CreatePackage(AppointmentPackage package)
     {
         if (

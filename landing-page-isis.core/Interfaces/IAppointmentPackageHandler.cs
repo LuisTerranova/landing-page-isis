@@ -17,6 +17,7 @@ public interface IAppointmentPackageHandler
         Guid coupleId,
         CancellationToken ct
     );
+    Task<bool> HasActivePackageAsync(Guid? patientId, Guid? coupleId, CancellationToken ct);
     Task<HandlerResult> CreatePackage(AppointmentPackage package);
     Task<HandlerResult> UpdatePackage(AppointmentPackage package);
     Task<HandlerResult> DeletePackage(Guid id);
