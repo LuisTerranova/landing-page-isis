@@ -1,0 +1,87 @@
+@namespace landing_page_isis.Components.Prontuario
+@using landing_page_isis.core
+@using landing_page_isis.core.Models.DTOs
+@using landing_page_isis.Extensions
+
+<MudExpansionPanel>
+    <TitleContent>
+        <MudStack Spacing="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                <MudIcon Icon="@TypeIcon" Color="@TypeColor" Size="Size.Small" />
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@TypeColor">
+                    @TypeLabel
+                </MudChip>
+                <MudText Typo="Typo.subtitle2">
+                    <b>@Item.EventDate.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")</b>
+                </MudText>
+                @if (Item.IsDraft)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Warning">
+                        Rascunho
+                    </MudChip>
+                }
+            </MudStack>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                <b>Criado em:</b> @Item.CreatedAt.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")
+                @if (Item.UpdatedAt.HasValue)
+                {
+                    <span> | <b>@UpdatedLabel:</b> @Item.UpdatedAt.Value.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm")</span>
+                }
+            </MudText>
+        </MudStack>
+    </TitleContent>
+    <ChildContent>
+        <MudText Typo="Typo.body2" Style="white-space: pre-wrap; word-break: break-word;" Class="mb-3">
+            @Item.Content
+        </MudText>
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="1">
+            @if (IsAppointment && !Item.IsDraft)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.EditNote"
+                           OnClick="@(() => OnRectify.InvokeAsync(Item))">
+                    Retificar
+                </MudButton>
+            }
+            @if (IsAdditionalNote)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Edit"
+                           OnClick="@(() => OnEditNote.InvokeAsync(Item))">
+                    Editar
+                </MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="@(() => OnDeleteNote.InvokeAsync(Item))">
+                    Excluir
+                </MudButton>
+            }
+        </MudStack>
+    </ChildContent>
+</MudExpansionPanel>
+
+@code {
+    [Parameter, EditorRequired]
+    public ProntuarioTimelineItemDto Item { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<ProntuarioTimelineItemDto> OnRectify { get; set; }
+
+    [Parameter]
+    public EventCallback<ProntuarioTimelineItemDto> OnEditNote { get; set; }
+
+    [Parameter]
+    public EventCallback<ProntuarioTimelineItemDto> OnDeleteNote { get; set; }
+
+    private bool IsAppointment => Item.Type == ProntuarioItemType.Consulta;
+    private bool IsAdditionalNote => Item.Type == ProntuarioItemType.Anotacao;
+
+    private string TypeLabel => IsAppointment ? "Consulta" : "Nota Avulsa";
+
+    private string TypeIcon =>
+        IsAppointment ? Icons.Material.Filled.Assignment : Icons.Material.Filled.StickyNote2;
+
+    private Color TypeColor => IsAppointment ? Color.Primary : Color.Tertiary;
+
+    private string UpdatedLabel => IsAppointment ? "Retificado em" : "Editada em";
+}

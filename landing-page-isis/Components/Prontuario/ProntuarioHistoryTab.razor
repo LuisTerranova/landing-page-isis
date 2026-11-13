@@ -1,0 +1,69 @@
+@namespace landing_page_isis.Components.Prontuario
+@using landing_page_isis.Components.Dialogs.Patient
+@using landing_page_isis.Components.Dialogs.Prontuario
+@using landing_page_isis.core
+@using landing_page_isis.core.Models
+@using landing_page_isis.core.Models.DTOs
+
+<div class="pa-6">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+        <MudText Typo="Typo.h6">@Title</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateNoteAsync">
+                Nova Nota Avulsa
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Download" OnClick="OpenExportDialogAsync"
+                       Disabled="_isExporting">
+                @if (_isExporting)
+                {
+                    <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-1" />
+                }
+                Exportar
+            </MudButton>
+            <MudDatePicker Date="_filterMonthYear" DateChanged="OnFilterChangedAsync"
+                           OpenTo="OpenTo.Month" FixDay="1" DateFormat="MM/yyyy"
+                           Label="Filtrar por Mês" Clearable="true"
+                           Variant="Variant.Outlined" Margin="Margin.Dense"
+                           Style="max-width: 200px" />
+        </MudStack>
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudStack Row="true" Justify="Justify.Center" Class="my-4">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </MudStack>
+    }
+    else if (_items.Count > 0)
+    {
+        <MudPaper Style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px;">
+            <MudExpansionPanels MultiExpansion="true" Elevation="2" Class="mb-3">
+                @foreach (var item in _items)
+                {
+                    <ProntuarioTimelineItem @key="item.Id" Item="item"
+                                            OnRectify="RectifyAsync"
+                                            OnEditNote="EditNoteAsync"
+                                            OnDeleteNote="DeleteNoteAsync" />
+                }
+            </MudExpansionPanels>
+            @if (_items.Count < _totalItems)
+            {
+                <MudStack Row="true" Justify="Justify.Center" Class="mt-2 mb-2">
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="LoadMoreAsync" Disabled="_loadingMore">
+                        @if (_loadingMore)
+                        {
+                            <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-1" />
+                        }
+                        Ver Mais
+                    </MudButton>
+                </MudStack>
+            }
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info">Nenhum registro de prontuário encontrado.</MudAlert>
+    }
+</div>

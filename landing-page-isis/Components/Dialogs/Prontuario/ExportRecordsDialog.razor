@@ -1,0 +1,39 @@
+@namespace landing_page_isis.Components.Dialogs.Prontuario
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Download" Class="mr-3" />
+            Exportar Prontuário
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect T="string" Label="Formato" @bind-Value="_format" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
+            <MudSelectItem Value="@("pdf")">PDF</MudSelectItem>
+            <MudSelectItem Value="@("docx")">DOCX</MudSelectItem>
+        </MudSelect>
+
+        <MudCheckBox T="bool" @bind-Value="_includeNotes" Color="Color.Primary" Label="Incluir notas avulsas" />
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            As notas avulsas não fazem parte do histórico de consultas.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Error">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Exportar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private string _format = "pdf";
+    private bool _includeNotes;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit() =>
+        MudDialog.Close(DialogResult.Ok(new ExportRecordsOptions(_format, _includeNotes)));
+}
