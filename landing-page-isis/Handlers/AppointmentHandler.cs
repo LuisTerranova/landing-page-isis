@@ -313,6 +313,61 @@ public class AppointmentHandler(AppDbContext context) : IAppointmentHandler
             );
     }
 
+    public async Task<HandlerResult> FinalizeAppointment(
+        Guid appointmentId,
+        string note,
+        CancellationToken ct
+    )
+    {
+        if (string.IsNullOrWhiteSpace(note))
+            return new HandlerResult(false, "A nota da consulta é obrigatória.");
+
+        var appointment = await context
+            .Appointments.Include(a => a.Record)
+            .FirstOrDefaultAsync(a => a.Id == appointmentId, ct);
+
+        if (appointment is null)
+            return new HandlerResult(false, "Consulta não encontrada.");
+
+        if (appointment.AppointmentStatus == AppointmentStatusEnum.Realizada)
+            return new HandlerResult(false, "Consulta já finalizada.");
+
+        if (appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada)
+            return new HandlerResult(false, "Não é possível finalizar uma consulta cancelada.");
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (appointment.Record is not null)
+        {
+            if (!appointment.Record.IsDraft)
+                return new HandlerResult(false, "Consulta já possui registro finalizado.");
+
+            appointment.Record.Note = note.Trim();
+            appointment.Record.IsDraft = false;
+            appointment.Record.UpdatedAt = now;
+        }
+        else
+        {
+            context.AppointmentRecords.Add(
+                new AppointmentRecord
+                {
+                    AppointmentId = appointmentId,
+                    Note = note.Trim(),
+                    IsDraft = false,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                }
+            );
+        }
+
+        appointment.AppointmentStatus = AppointmentStatusEnum.Realizada;
+
+        // A single SaveChanges call keeps the note and the status update in the same implicit transaction
+        await context.SaveChangesAsync(ct);
+
+        return new HandlerResult(true, "Consulta finalizada com sucesso.");
+    }
+
     private static AppointmentListItemDto ToListItemDto(Appointment a)
     {
         var displayName = a.Couple?.Name ?? a.Patient?.Name;

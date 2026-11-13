@@ -86,6 +86,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAppointmentHandler, AppointmentHandler>();
         services.AddScoped<IAppointmentRecordHandler, AppointmentRecordHandler>();
         services.AddScoped<IAppointmentRecordExportHandler, AppointmentRecordExportHandler>();
+        services.AddScoped<IProntuarioHandler, ProntuarioHandler>();
+        services.AddScoped<IAdditionalNoteHandler, AdditionalNoteHandler>();
         services.AddScoped<IAppointmentPackageHandler, AppointmentPackageHandler>();
         services.AddScoped<IPatientHandler, PatientHandler>();
         services.AddScoped<ICoupleHandler, CoupleHandler>();

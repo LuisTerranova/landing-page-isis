@@ -4,6 +4,7 @@ using landing_page_isis.core.Helpers;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,10 +18,19 @@ public class PatientHandler(AppDbContext context, IValidator<Patient> validator)
     public async Task<PaginatedResponse<PatientListItemDto>> GetPatients(
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        PatientStatusFilter filter = PatientStatusFilter.Active
     )
     {
         var query = context.Patients.AsNoTracking();
+
+        query = filter switch
+        {
+            PatientStatusFilter.Active => query.Where(p => p.IsActive),
+            PatientStatusFilter.Inactive => query.Where(p => !p.IsActive),
+            _ => query,
+        };
+
         var totalItems = await query.CountAsync(ct);
 
         if (totalItems <= 0)
@@ -130,18 +140,26 @@ public class PatientHandler(AppDbContext context, IValidator<Patient> validator)
         int page,
         int pageSize,
         CancellationToken ct,
-        bool excludeWithActiveContract = false
+        bool excludeWithActiveContract = false,
+        bool includeDeactivated = false
     )
     {
         var queryable = context.Patients.AsNoTracking();
 
+        if (!includeDeactivated)
+            queryable = queryable.Where(p => p.IsActive);
+
         if (excludeWithActiveContract)
         {
-            queryable = queryable.Where(p => 
-                !context.Contracts.Any(c => c.PatientId == p.Id && c.Status != ContractStatus.Cancelado) &&
-                !context.Couples.Any(c => 
-                    (c.Patient1Id == p.Id || c.Patient2Id == p.Id) && 
-                    context.Contracts.Any(cc => cc.CoupleId == c.Id && cc.Status != ContractStatus.Cancelado)
+            queryable = queryable.Where(p =>
+                !context.Contracts.Any(c =>
+                    c.PatientId == p.Id && c.Status != ContractStatus.Cancelado
+                )
+                && !context.Couples.Any(c =>
+                    (c.Patient1Id == p.Id || c.Patient2Id == p.Id)
+                    && context.Contracts.Any(cc =>
+                        cc.CoupleId == c.Id && cc.Status != ContractStatus.Cancelado
+                    )
                 )
             );
         }
@@ -162,5 +180,132 @@ public class PatientHandler(AppDbContext context, IValidator<Patient> validator)
             .ToListAsync(ct);
 
         return new PaginatedResponse<PatientListItemDto>(items, totalItems, page, pageSize);
+    }
+
+    public async Task<HandlerResult> SetPatientActive(Guid id, bool active, CancellationToken ct)
+    {
+        var patient = await context.Patients.FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        if (patient is null)
+            return new HandlerResult(false, "Paciente não encontrado.");
+
+        if (patient.IsActive == active)
+            return new HandlerResult(true);
+
+        if (!active)
+        {
+            var belongsToCouple = await context.Couples.AnyAsync(
+                c => c.Patient1Id == id || c.Patient2Id == id,
+                ct
+            );
+
+            if (belongsToCouple)
+                return new HandlerResult(
+                    false,
+                    "Não é possível desativar este paciente porque ele pertence a um casal."
+                );
+
+            var now = DateTimeOffset.UtcNow;
+            var hasFutureAppointment = await context.Appointments.AnyAsync(
+                a =>
+                    a.PatientId == id
+                    && a.AppointmentStatus == AppointmentStatusEnum.Marcada
+                    && a.AppointmentDate > now,
+                ct
+            );
+
+            if (hasFutureAppointment)
+                return new HandlerResult(
+                    false,
+                    "Não é possível desativar este paciente porque ele possui consultas futuras agendadas."
+                );
+
+            var hasActivePackageWithBalance = await context.AppointmentPackages.AnyAsync(
+                p =>
+                    p.PatientId == id
+                    && p.Status == PackageStatus.Ativo
+                    && p.RemainingAppointments > 0,
+                ct
+            );
+
+            if (hasActivePackageWithBalance)
+                return new HandlerResult(
+                    false,
+                    "Não é possível desativar este paciente porque ele possui um pacote de consultas ativo com saldo."
+                );
+        }
+
+        patient.IsActive = active;
+        await context.SaveChangesAsync(ct);
+
+        return new HandlerResult(
+            true,
+            active ? "Paciente reativado com sucesso." : "Paciente desativado com sucesso."
+        );
+    }
+
+    public async Task<IReadOnlyList<BirthdayListItemDto>> GetUpcomingBirthdays(
+        int daysAhead,
+        CancellationToken ct
+    )
+    {
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToPortoVelhoTime());
+
+        var patients = await context
+            .Patients.AsNoTracking()
+            .Where(p => p.IsActive && p.BirthDate != null)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                BirthDate = p.BirthDate!.Value,
+            })
+            .ToListAsync(ct);
+
+        var birthdays = new List<BirthdayListItemDto>();
+
+        foreach (var patient in patients)
+        {
+            var nextBirthday = GetNextBirthday(patient.BirthDate, today);
+            var daysUntil = nextBirthday.DayNumber - today.DayNumber;
+
+            if (daysUntil < 0 || daysUntil > daysAhead)
+                continue;
+
+            birthdays.Add(
+                new BirthdayListItemDto(
+                    patient.Id,
+                    patient.Name,
+                    patient.BirthDate,
+                    nextBirthday,
+                    daysUntil,
+                    daysUntil == 0
+                )
+            );
+        }
+
+        return birthdays
+            .OrderBy(b => b.DaysUntil)
+            .ThenBy(b => b.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static DateOnly GetNextBirthday(DateOnly birthDate, DateOnly today)
+    {
+        var candidate = ResolveBirthdayForYear(today.Year, birthDate);
+
+        if (candidate < today)
+            candidate = ResolveBirthdayForYear(today.Year + 1, birthDate);
+
+        return candidate;
+    }
+
+    private static DateOnly ResolveBirthdayForYear(int year, DateOnly birthDate)
+    {
+        // February 29 birthdays are celebrated on February 28 in non-leap years
+        if (birthDate.Month == 2 && birthDate.Day == 29 && !DateTime.IsLeapYear(year))
+            return new DateOnly(year, 2, 28);
+
+        return new DateOnly(year, birthDate.Month, birthDate.Day);
     }
 }

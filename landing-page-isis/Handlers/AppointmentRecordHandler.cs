@@ -27,6 +27,72 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
             .FirstOrDefaultAsync(ar => ar.AppointmentId == appointmentId);
     }
 
+    public async Task<AppointmentRecord?> GetDraftByAppointmentId(
+        Guid appointmentId,
+        CancellationToken ct
+    )
+    {
+        return await context
+            .AppointmentRecords.AsNoTracking()
+            .FirstOrDefaultAsync(ar => ar.AppointmentId == appointmentId && ar.IsDraft, ct);
+    }
+
+    public async Task<HandlerResult> SaveDraft(
+        Guid appointmentId,
+        string note,
+        CancellationToken ct
+    )
+    {
+        var appointment = await context
+            .Appointments.Include(a => a.Record)
+            .FirstOrDefaultAsync(a => a.Id == appointmentId, ct);
+
+        if (appointment is null)
+            return new HandlerResult(false, "Consulta não encontrada.");
+
+        if (appointment.AppointmentStatus == AppointmentStatusEnum.Realizada)
+            return new HandlerResult(false, "Consulta já finalizada.");
+
+        var trimmedNote = note?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrEmpty(trimmedNote))
+        {
+            // An empty draft means the professional cleared the automatic note.
+            // Finalized records are never removed through the draft flow.
+            if (appointment.Record is { IsDraft: true })
+                context.AppointmentRecords.Remove(appointment.Record);
+
+            await context.SaveChangesAsync(ct);
+            return new HandlerResult(true);
+        }
+
+        if (appointment.Record is not null)
+        {
+            if (!appointment.Record.IsDraft)
+                return new HandlerResult(false, "Consulta já finalizada.");
+
+            appointment.Record.Note = trimmedNote;
+            appointment.Record.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+        else
+        {
+            var now = DateTimeOffset.UtcNow;
+            context.AppointmentRecords.Add(
+                new AppointmentRecord
+                {
+                    AppointmentId = appointmentId,
+                    Note = trimmedNote,
+                    IsDraft = true,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                }
+            );
+        }
+
+        await context.SaveChangesAsync(ct);
+        return new HandlerResult(true, "Rascunho salvo com sucesso.");
+    }
+
     public async Task<PaginatedResponse<AppointmentRecordListItemDto>> GetRecordsByPatientId(
         int page,
         int pageSize,
@@ -111,6 +177,12 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
 
         if (existing == null)
             return new HandlerResult(false, "Nota não encontrada.");
+
+        if (existing.IsDraft)
+            return new HandlerResult(
+                false,
+                "Não é possível retificar um rascunho. Finalize a consulta primeiro."
+            );
 
         // Psychological records must preserve historical integrity.
         // We append rectifications rather than overwriting existing text to comply with medical record auditing rules.

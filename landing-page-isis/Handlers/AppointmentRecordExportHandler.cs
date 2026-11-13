@@ -1,6 +1,7 @@
 using DocumentFormat.OpenXml;
+using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
-using landing_page_isis.core.Models;
+using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -13,39 +14,119 @@ using PackOpenXml = DocumentFormat.OpenXml.Packaging;
 namespace landing_page_isis.Handlers;
 
 /// <summary>
-/// Handles exporting patient clinical record histories into PDF (via QuestPDF) and DOCX (via OpenXML) file formats.
+/// Handles exporting patient and couple clinical record histories into PDF (via QuestPDF) and DOCX (via OpenXML) formats.
 /// </summary>
-public class AppointmentRecordExportHandler(AppDbContext context) : IAppointmentRecordExportHandler
+public class AppointmentRecordExportHandler(
+    AppDbContext context,
+    IProntuarioHandler prontuarioHandler
+) : IAppointmentRecordExportHandler
 {
     private static readonly string SystemGreen = "#2E7D32";
     private static readonly string SystemBurgundy = "#800020";
 
-    public async Task<byte[]> ExportPatientRecords(Guid patientId, string format)
+    public async Task<byte[]> ExportPatientRecords(
+        Guid patientId,
+        string format,
+        bool includeNotes = false,
+        CancellationToken ct = default
+    )
     {
         var patient = await context
             .Patients.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == patientId);
+            .FirstOrDefaultAsync(p => p.Id == patientId, ct);
 
         if (patient is null)
             throw new KeyNotFoundException("Paciente não encontrado.");
 
-        // Retrieve patient metadata and their complete clinical history, sorted chronologically from newest to oldest
-        var records = await context
-            .AppointmentRecords.Include(ar => ar.Appointment)
-            .AsNoTracking()
-            .Where(ar => ar.Appointment != null && ar.Appointment.PatientId == patientId)
-            .OrderByDescending(ar => ar.CreatedAt)
-            .ToListAsync();
+        var items = await prontuarioHandler.GetFullTimelineByPatientId(
+            patientId,
+            includeNotes,
+            includeDrafts: false,
+            ct
+        );
 
+        var ownerDetails = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(patient.Cpf))
+            ownerDetails.Add($"CPF: {patient.Cpf.FormatCpf()}");
+
+        if (!string.IsNullOrWhiteSpace(patient.Phone))
+            ownerDetails.Add($"Telefone: {patient.Phone.FormatPhone()}");
+
+        if (!string.IsNullOrWhiteSpace(patient.Email))
+            ownerDetails.Add($"E-mail: {patient.Email}");
+
+        if (patient.BirthDate.HasValue)
+            ownerDetails.Add($"Nascimento: {patient.BirthDate:dd/MM/yyyy}");
+
+        if (!string.IsNullOrWhiteSpace(patient.StateOfResidency))
+            ownerDetails.Add($"Estado: {patient.StateOfResidency}");
+
+        var export = new ExportContext(
+            "PRONTUÁRIO DO PACIENTE",
+            $"Paciente: {patient.Name}",
+            ownerDetails,
+            items
+        );
+
+        return Render(export, format);
+    }
+
+    public async Task<byte[]> ExportCoupleRecords(
+        Guid coupleId,
+        string format,
+        bool includeNotes = false,
+        CancellationToken ct = default
+    )
+    {
+        var couple = await context
+            .Couples.AsNoTracking()
+            .Include(c => c.Patient1)
+            .Include(c => c.Patient2)
+            .FirstOrDefaultAsync(c => c.Id == coupleId, ct);
+
+        if (couple is null)
+            throw new KeyNotFoundException("Casal não encontrado.");
+
+        var items = await prontuarioHandler.GetFullTimelineByCoupleId(
+            coupleId,
+            includeNotes,
+            includeDrafts: false,
+            ct
+        );
+
+        var ownerDetails = new List<string>
+        {
+            $"Parceiro(a): {couple.Patient1.Name}",
+            $"Parceiro(a): {couple.Patient2.Name}",
+        };
+
+        var export = new ExportContext(
+            "PRONTUÁRIO DO CASAL",
+            $"Casal: {couple.Name}",
+            ownerDetails,
+            items
+        );
+
+        return Render(export, format);
+    }
+
+    private static byte[] Render(ExportContext export, string format)
+    {
         return format.ToLowerInvariant() switch
         {
-            "pdf" => GeneratePdf(patient, records),
-            "docx" => GenerateDocx(patient, records),
+            "pdf" => GeneratePdf(export),
+            "docx" => GenerateDocx(export),
             _ => throw new ArgumentException("Formato inválido. Use 'pdf' ou 'docx'."),
         };
     }
 
-    private byte[] GeneratePdf(Patient patient, List<AppointmentRecord> records)
+    private static string GetItemLabel(ProntuarioTimelineItemDto item)
+    {
+        return item.Type == ProntuarioItemType.Consulta ? "Consulta" : "Nota Avulsa";
+    }
+
+    private static byte[] GeneratePdf(ExportContext export)
     {
         // Build A4 PDF documents using QuestPDF's fluent API page layout engine
         return Document
@@ -56,15 +137,15 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
                     page.Size(PageSizes.A4);
                     page.Margin(2, Unit.Centimetre);
 
-                    page.Header().Element(c => ComposePdfHeader(c, patient));
-                    page.Content().Element(c => ComposePdfContent(c, patient, records));
+                    page.Header().Element(c => ComposePdfHeader(c, export.Title));
+                    page.Content().Element(c => ComposePdfContent(c, export));
                     page.Footer().Element(ComposePdfFooter);
                 });
             })
             .GeneratePdf();
     }
 
-    private void ComposePdfHeader(IContainer container, Patient patient)
+    private static void ComposePdfHeader(IContainer container, string title)
     {
         container.Column(col =>
         {
@@ -75,7 +156,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
                         .Column(c =>
                         {
                             c.Item()
-                                .Text("PRONTUÁRIO DO PACIENTE")
+                                .Text(title)
                                 .FontSize(20)
                                 .Bold()
                                 .FontColor(Color.FromHex(SystemGreen));
@@ -96,11 +177,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
         });
     }
 
-    private void ComposePdfContent(
-        IContainer container,
-        Patient patient,
-        List<AppointmentRecord> records
-    )
+    private static void ComposePdfContent(IContainer container, ExportContext export)
     {
         container.Column(col =>
         {
@@ -108,27 +185,15 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
                 .PaddingTop(10)
                 .Column(c =>
                 {
-                    c.Item().Text($"Paciente: {patient.Name}").FontSize(12).Bold();
+                    c.Item().Text(export.OwnerHeading).FontSize(12).Bold();
 
-                    if (!string.IsNullOrWhiteSpace(patient.Cpf))
-                        c.Item().Text($"CPF: {patient.Cpf}").FontSize(10);
-
-                    if (!string.IsNullOrWhiteSpace(patient.Phone))
-                        c.Item().Text($"Telefone: {patient.Phone.FormatPhone()}").FontSize(10);
-
-                    if (!string.IsNullOrWhiteSpace(patient.Email))
-                        c.Item().Text($"E-mail: {patient.Email}").FontSize(10);
-
-                    if (patient.BirthDate.HasValue)
-                        c.Item().Text($"Nascimento: {patient.BirthDate:dd/MM/yyyy}").FontSize(10);
-
-                    if (!string.IsNullOrWhiteSpace(patient.StateOfResidency))
-                        c.Item().Text($"Estado: {patient.StateOfResidency}").FontSize(10);
+                    foreach (var detail in export.OwnerDetails)
+                        c.Item().Text(detail).FontSize(10);
                 });
 
             col.Item().PaddingVertical(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
-            if (records.Count == 0)
+            if (export.Items.Count == 0)
             {
                 col.Item()
                     .PaddingTop(20)
@@ -140,12 +205,12 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
             }
 
             col.Item()
-                .Text($"Histórico de Sessões ({records.Count})")
+                .Text($"Histórico do Prontuário ({export.Items.Count})")
                 .FontSize(14)
                 .Bold()
                 .FontColor(Color.FromHex(SystemBurgundy));
 
-            foreach (var record in records)
+            foreach (var item in export.Items)
             {
                 col.Item()
                     .PaddingVertical(6)
@@ -157,25 +222,23 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
                             .Padding(8)
                             .Column(detail =>
                             {
-                                var appointmentDate =
-                                    record
-                                        .Appointment?.AppointmentDate.ToPortoVelhoTime()
-                                        .ToString("dd/MM/yyyy HH:mm")
-                                    ?? "Data não informada";
+                                var eventDate = item
+                                    .EventDate.ToPortoVelhoTime()
+                                    .ToString("dd/MM/yyyy HH:mm");
 
                                 detail
                                     .Item()
-                                    .Text($"Sessão — {appointmentDate}")
+                                    .Text($"{GetItemLabel(item)} — {eventDate}")
                                     .FontSize(11)
                                     .Bold()
                                     .FontColor(Color.FromHex(SystemGreen));
 
-                                if (!string.IsNullOrWhiteSpace(record.Note))
+                                if (!string.IsNullOrWhiteSpace(item.Content))
                                 {
                                     detail
                                         .Item()
                                         .PaddingTop(4)
-                                        .Text(record.Note)
+                                        .Text(item.Content)
                                         .FontSize(10)
                                         .LineHeight(1.4f);
                                 }
@@ -184,17 +247,17 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
                                     .Item()
                                     .PaddingTop(4)
                                     .Text(
-                                        $"Criado em: {record.CreatedAt.ToPortoVelhoTime():dd/MM/yyyy HH:mm}"
+                                        $"Criado em: {item.CreatedAt.ToPortoVelhoTime():dd/MM/yyyy HH:mm}"
                                     )
                                     .FontSize(8)
                                     .FontColor(Colors.Grey.Darken2);
 
-                                if (record.UpdatedAt.HasValue)
+                                if (item.UpdatedAt.HasValue)
                                 {
                                     detail
                                         .Item()
                                         .Text(
-                                            $"Retificado em: {record.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}"
+                                            $"Atualizado em: {item.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}"
                                         )
                                         .FontSize(8)
                                         .FontColor(Color.FromHex(SystemBurgundy));
@@ -211,7 +274,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
         });
     }
 
-    private void ComposePdfFooter(IContainer container)
+    private static void ComposePdfFooter(IContainer container)
     {
         container
             .AlignCenter()
@@ -226,7 +289,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
             });
     }
 
-    private byte[] GenerateDocx(Patient patient, List<AppointmentRecord> records)
+    private static byte[] GenerateDocx(ExportContext export)
     {
         // Programmatically construct Word documents (DOCX) using the OpenXML standard.
         using var ms = new MemoryStream();
@@ -246,7 +309,7 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
             // Title
             AddDocxPara(
                 body,
-                "PRONTUÁRIO DO PACIENTE",
+                export.Title,
                 bold: true,
                 size: 40,
                 color: SystemGreen,
@@ -265,26 +328,18 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
             // Burgundy divider
             AddDocxDivider(body, SystemBurgundy);
 
-            // Patient info section
-            AddDocxPara(body, $"Paciente: {patient.Name}", bold: true, size: 24, spacingAfter: 120);
+            // Owner info section
+            AddDocxPara(body, export.OwnerHeading, bold: true, size: 24, spacingAfter: 120);
 
-            if (!string.IsNullOrWhiteSpace(patient.Cpf))
-                AddDocxPara(body, $"CPF: {patient.Cpf.FormatCpf()}", size: 20);
-            if (!string.IsNullOrWhiteSpace(patient.Phone))
-                AddDocxPara(body, $"Telefone: {patient.Phone.FormatPhone()}", size: 20);
-            if (!string.IsNullOrWhiteSpace(patient.Email))
-                AddDocxPara(body, $"E-mail: {patient.Email}", size: 20);
-            if (patient.BirthDate.HasValue)
-                AddDocxPara(body, $"Nascimento: {patient.BirthDate:dd/MM/yyyy}", size: 20);
-            if (!string.IsNullOrWhiteSpace(patient.StateOfResidency))
-                AddDocxPara(body, $"Estado: {patient.StateOfResidency}", size: 20);
+            foreach (var detail in export.OwnerDetails)
+                AddDocxPara(body, detail, size: 20);
 
             AddDocxSpacer(body);
             AddDocxDivider(body, "CCCCCC");
             AddDocxSpacer(body);
 
-            // Records section
-            if (records.Count == 0)
+            // Timeline section
+            if (export.Items.Count == 0)
             {
                 AddDocxPara(
                     body,
@@ -298,25 +353,21 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
             {
                 AddDocxPara(
                     body,
-                    $"Histórico de Sessões ({records.Count})",
+                    $"Histórico do Prontuário ({export.Items.Count})",
                     bold: true,
                     size: 28,
                     color: SystemBurgundy,
                     spacingAfter: 300
                 );
 
-                foreach (var record in records)
+                foreach (var item in export.Items)
                 {
-                    var appointmentDate =
-                        record
-                            .Appointment?.AppointmentDate.ToPortoVelhoTime()
-                            .ToString("dd/MM/yyyy HH:mm")
-                        ?? "Data não informada";
+                    var eventDate = item.EventDate.ToPortoVelhoTime().ToString("dd/MM/yyyy HH:mm");
 
                     // Each record wrapped in grey background
                     AddDocxPara(
                         body,
-                        $"Sessão — {appointmentDate}",
+                        $"{GetItemLabel(item)} — {eventDate}",
                         bold: true,
                         size: 22,
                         color: SystemGreen,
@@ -324,25 +375,31 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
                         shade: "F5F5F5"
                     );
 
-                    if (!string.IsNullOrWhiteSpace(record.Note))
+                    if (!string.IsNullOrWhiteSpace(item.Content))
                     {
-                        AddDocxPara(body, record.Note, size: 20, spacingAfter: 80, shade: "F5F5F5");
+                        AddDocxPara(
+                            body,
+                            item.Content,
+                            size: 20,
+                            spacingAfter: 80,
+                            shade: "F5F5F5"
+                        );
                     }
 
                     AddDocxPara(
                         body,
-                        $"Criado em: {record.CreatedAt.ToPortoVelhoTime():dd/MM/yyyy HH:mm}",
+                        $"Criado em: {item.CreatedAt.ToPortoVelhoTime():dd/MM/yyyy HH:mm}",
                         size: 16,
                         color: "666666",
                         spacingAfter: 40,
                         shade: "F5F5F5"
                     );
 
-                    if (record.UpdatedAt.HasValue)
+                    if (item.UpdatedAt.HasValue)
                     {
                         AddDocxPara(
                             body,
-                            $"Retificado em: {record.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}",
+                            $"Atualizado em: {item.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}",
                             size: 16,
                             color: SystemBurgundy,
                             spacingAfter: 200,
@@ -529,4 +586,11 @@ public class AppointmentRecordExportHandler(AppDbContext context) : IAppointment
     {
         body.AppendChild(new OpenXml.Paragraph(new OpenXml.Run()));
     }
+
+    private sealed record ExportContext(
+        string Title,
+        string OwnerHeading,
+        IReadOnlyList<string> OwnerDetails,
+        IReadOnlyList<ProntuarioTimelineItemDto> Items
+    );
 }
