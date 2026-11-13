@@ -34,6 +34,12 @@ public class Patient
     public string? StateOfResidency { get; set; }
     public bool PolicySigned { get; set; } = false;
 
+    /// <summary>
+    /// Indicates whether the patient is active. Deactivated patients are hidden from
+    /// scheduling and administrative autocompletes by default.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
+
     [MaxLength(150, ErrorMessage = "Nome do pagador deve ter no máximo 150 caracteres")]
     public string? PayerName { get; set; }
 

@@ -50,4 +50,9 @@ public interface IAppointmentHandler
         CancellationToken ct
     );
     Task<int> CountPendingRecordsAsync();
+
+    /// <summary>
+    /// Atomically finalizes an appointment: persists the final note and marks the appointment as completed.
+    /// </summary>
+    Task<HandlerResult> FinalizeAppointment(Guid appointmentId, string note, CancellationToken ct);
 }

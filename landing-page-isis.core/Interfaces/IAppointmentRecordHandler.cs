@@ -16,4 +16,14 @@ public interface IAppointmentRecordHandler
         CancellationToken ct
     );
     Task<AppointmentRecord?> GetAppointmentRecordByAppointmentId(Guid appointmentId);
+
+    /// <summary>
+    /// Returns the automatic draft associated with an appointment, when one exists.
+    /// </summary>
+    Task<AppointmentRecord?> GetDraftByAppointmentId(Guid appointmentId, CancellationToken ct);
+
+    /// <summary>
+    /// Creates or updates the automatic draft for an appointment. An empty note removes any existing draft.
+    /// </summary>
+    Task<HandlerResult> SaveDraft(Guid appointmentId, string note, CancellationToken ct);
 }
