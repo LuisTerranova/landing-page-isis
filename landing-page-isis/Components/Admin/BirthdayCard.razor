@@ -1,0 +1,58 @@
+@using landing_page_isis.core.Models.DTOs
+
+@if (Birthdays.Count > 0)
+{
+    <MudPaper Elevation="4" Class="pa-5 mb-6" Style="border-radius: 16px; background: linear-gradient(135deg, #EC407A 0%, #7E57C2 100%);">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Filled.Cake" Color="Color.Inherit" Style="font-size: 2rem;"/>
+                <div>
+                    <MudText Typo="Typo.subtitle1" Class="white-text" Style="font-weight: 700;">
+                        Aniversariantes
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="white-text-70">
+                        Hoje e nos próximos 5 dias
+                    </MudText>
+                </div>
+            </MudStack>
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Inherit"
+                           OnClick="@(async () => await OnRefresh.InvokeAsync())"/>
+        </MudStack>
+
+        <MudStack Spacing="2">
+            @foreach (var birthday in Birthdays)
+            {
+                <MudStack Row="true"
+                          Justify="Justify.SpaceBetween"
+                          AlignItems="AlignItems.Center"
+                          Class="pa-3"
+                          Style="background-color: rgba(255, 255, 255, 0.12); border-radius: 12px;">
+                    <div>
+                        <MudText Typo="Typo.body1" Class="white-text" Style="font-weight: 700;">
+                            @birthday.Name
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="white-text-70">
+                            @birthday.NextBirthday.ToString("dd/MM")
+                        </MudText>
+                    </div>
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Variant="Variant.Filled"
+                             Class="white-text"
+                             Style="background-color: rgba(255, 255, 255, 0.25); font-weight: 700;">
+                        @(birthday.IsToday ? "Hoje 🎂" : $"Em {birthday.DaysUntil} dia(s)")
+                    </MudChip>
+                </MudStack>
+            }
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<BirthdayListItemDto> Birthdays { get; set; } = [];
+
+    [Parameter]
+    public EventCallback OnRefresh { get; set; }
+}
