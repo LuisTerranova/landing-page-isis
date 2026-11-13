@@ -1,3 +1,4 @@
+using landing_page_isis.core;
 using landing_page_isis.core.Models;
 using landing_page_isis.Handlers;
 using landing_page_isis.Infrastructure.Data;
@@ -280,5 +281,293 @@ public class AppointmentRecordHandlerTests
         Assert.NotNull(result);
         Assert.Equal(recordId, result.Id);
         Assert.Equal("Sessão tranquila.", result.Note);
+    }
+
+    [Fact]
+    public async Task SaveDraft_ShouldCreateDraft_WhenNoneExists()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(
+            appointmentId,
+            "Rascunho automático.",
+            CancellationToken.None
+        );
+
+        Assert.True(result.Success);
+        var record = await context.AppointmentRecords.SingleAsync(r =>
+            r.AppointmentId == appointmentId
+        );
+        Assert.Equal("Rascunho automático.", record.Note);
+        Assert.True(record.IsDraft);
+        Assert.NotNull(record.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task SaveDraft_ShouldUpdateTheSameDraft()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        var recordId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = recordId,
+                AppointmentId = appointmentId,
+                Note = "Rascunho antigo.",
+                IsDraft = true,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(
+            appointmentId,
+            "Rascunho atualizado.",
+            CancellationToken.None
+        );
+
+        Assert.True(result.Success);
+        var records = await context.AppointmentRecords.ToListAsync();
+        var record = Assert.Single(records);
+        Assert.Equal(recordId, record.Id);
+        Assert.Equal("Rascunho atualizado.", record.Note);
+        Assert.True(record.IsDraft);
+        Assert.NotNull(record.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task SaveDraft_ShouldRemoveDraft_WhenNoteIsEmpty()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = appointmentId,
+                Note = "Rascunho antigo.",
+                IsDraft = true,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(appointmentId, "   ", CancellationToken.None);
+
+        Assert.True(result.Success);
+        Assert.Empty(await context.AppointmentRecords.ToListAsync());
+    }
+
+    [Fact]
+    public async Task SaveDraft_ShouldNotRemoveFinalRecord_WhenNoteIsEmpty()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = appointmentId,
+                Note = "Nota final.",
+                IsDraft = false,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(appointmentId, "", CancellationToken.None);
+
+        Assert.True(result.Success);
+        var record = await context.AppointmentRecords.SingleAsync();
+        Assert.Equal("Nota final.", record.Note);
+        Assert.False(record.IsDraft);
+    }
+
+    [Fact]
+    public async Task SaveDraft_ShouldNotChangeCompletedAppointment()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Realizada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(
+            appointmentId,
+            "Rascunho após finalização.",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("Consulta já finalizada.", result.Message);
+        Assert.Empty(await context.AppointmentRecords.ToListAsync());
+    }
+
+    [Fact]
+    public async Task SaveDraft_ShouldNotOverwriteFinalRecord()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = appointmentId,
+                Note = "Nota final.",
+                IsDraft = false,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(
+            appointmentId,
+            "Rascunho indevido.",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        var record = await context.AppointmentRecords.SingleAsync();
+        Assert.Equal("Nota final.", record.Note);
+        Assert.False(record.IsDraft);
+    }
+
+    [Fact]
+    public async Task UpdateAppointmentRecord_ShouldBlockDrafts()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var recordId = Guid.NewGuid();
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = recordId,
+                AppointmentId = Guid.NewGuid(),
+                Note = "Rascunho.",
+                IsDraft = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.UpdateAppointmentRecord(
+            new AppointmentRecord { Id = recordId, Note = "Retificação." }
+        );
+
+        Assert.False(result.Success);
+        Assert.Contains("rascunho", result.Message);
+        var record = await context.AppointmentRecords.SingleAsync();
+        Assert.Equal("Rascunho.", record.Note);
+    }
+
+    [Fact]
+    public async Task GetDraftByAppointmentId_ShouldReturnOnlyDrafts()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var draftAppointmentId = Guid.NewGuid();
+        var finalAppointmentId = Guid.NewGuid();
+
+        context.AppointmentRecords.AddRange(
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = draftAppointmentId,
+                Note = "Rascunho.",
+                IsDraft = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = finalAppointmentId,
+                Note = "Final.",
+                IsDraft = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var draft = await handler.GetDraftByAppointmentId(
+            draftAppointmentId,
+            CancellationToken.None
+        );
+        var final = await handler.GetDraftByAppointmentId(
+            finalAppointmentId,
+            CancellationToken.None
+        );
+
+        Assert.NotNull(draft);
+        Assert.True(draft.IsDraft);
+        Assert.Null(final);
     }
 }

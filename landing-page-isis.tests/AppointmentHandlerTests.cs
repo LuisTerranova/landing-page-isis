@@ -843,4 +843,233 @@ public class AppointmentHandlerTests
 
         Assert.True(result);
     }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldCreateRecordAndMarkAsCompleted()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var patientId = Guid.NewGuid();
+        var appointmentId = Guid.NewGuid();
+
+        context.Patients.Add(new Patient { Id = patientId, Name = "Test" });
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = patientId,
+                AppointmentDate = DateTimeOffset.UtcNow.AddHours(-1),
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.FinalizeAppointment(
+            appointmentId,
+            "Nota final da consulta.",
+            CancellationToken.None
+        );
+
+        Assert.True(result.Success);
+        var appointment = await context.Appointments.FindAsync(appointmentId);
+        Assert.NotNull(appointment);
+        Assert.Equal(AppointmentStatusEnum.Realizada, appointment.AppointmentStatus);
+
+        var record = await context.AppointmentRecords.SingleAsync(r =>
+            r.AppointmentId == appointmentId
+        );
+        Assert.Equal("Nota final da consulta.", record.Note);
+        Assert.False(record.IsDraft);
+        Assert.NotNull(record.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldConvertDraftIntoFinalRecord()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var patientId = Guid.NewGuid();
+        var appointmentId = Guid.NewGuid();
+        var recordId = Guid.NewGuid();
+
+        context.Patients.Add(new Patient { Id = patientId, Name = "Test" });
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = patientId,
+                AppointmentDate = DateTimeOffset.UtcNow.AddHours(-1),
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = recordId,
+                AppointmentId = appointmentId,
+                Note = "Rascunho automático.",
+                IsDraft = true,
+                CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.FinalizeAppointment(
+            appointmentId,
+            "Nota final revisada.",
+            CancellationToken.None
+        );
+
+        Assert.True(result.Success);
+        var record = await context.AppointmentRecords.SingleAsync(r =>
+            r.AppointmentId == appointmentId
+        );
+        Assert.Equal(recordId, record.Id);
+        Assert.Equal("Nota final revisada.", record.Note);
+        Assert.False(record.IsDraft);
+        Assert.NotNull(record.UpdatedAt);
+
+        var appointment = await context.Appointments.FindAsync(appointmentId);
+        Assert.NotNull(appointment);
+        Assert.Equal(AppointmentStatusEnum.Realizada, appointment.AppointmentStatus);
+    }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldRejectEmptyNote()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow.AddHours(-1),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.FinalizeAppointment(
+            appointmentId,
+            "   ",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("A nota da consulta é obrigatória.", result.Message);
+    }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldRejectAlreadyCompletedAppointment()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow.AddHours(-1),
+                AppointmentStatus = AppointmentStatusEnum.Realizada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.FinalizeAppointment(
+            appointmentId,
+            "Nota",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("Consulta já finalizada.", result.Message);
+    }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldRejectCancelledAppointment()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow.AddHours(-1),
+                AppointmentStatus = AppointmentStatusEnum.Cancelada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.FinalizeAppointment(
+            appointmentId,
+            "Nota",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("Não é possível finalizar uma consulta cancelada.", result.Message);
+    }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldRejectExistingFinalRecord()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow.AddHours(-1),
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        context.AppointmentRecords.Add(
+            new AppointmentRecord
+            {
+                Id = Guid.NewGuid(),
+                AppointmentId = appointmentId,
+                Note = "Nota já finalizada.",
+                IsDraft = false,
+                CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.FinalizeAppointment(
+            appointmentId,
+            "Nova nota",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("Consulta já possui registro finalizado.", result.Message);
+    }
+
+    [Fact]
+    public async Task FinalizeAppointment_ShouldReturnFalse_WhenAppointmentDoesNotExist()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentHandler(context);
+
+        var result = await handler.FinalizeAppointment(
+            Guid.NewGuid(),
+            "Nota",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("Consulta não encontrada.", result.Message);
+    }
 }
