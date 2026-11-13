@@ -210,7 +210,7 @@ public class PatientHandler(AppDbContext context, IValidator<Patient> validator)
                 a =>
                     a.PatientId == id
                     && a.AppointmentStatus == AppointmentStatusEnum.Marcada
-                    && a.AppointmentDate > now,
+                    && a.AppointmentDate >= now,
                 ct
             );
 

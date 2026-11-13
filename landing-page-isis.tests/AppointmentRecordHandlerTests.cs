@@ -460,6 +460,35 @@ public class AppointmentRecordHandlerTests
     }
 
     [Fact]
+    public async Task SaveDraft_ShouldRejectCancelledAppointment()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = new AppointmentRecordHandler(context);
+
+        var appointmentId = Guid.NewGuid();
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = appointmentId,
+                PatientId = Guid.NewGuid(),
+                AppointmentDate = DateTimeOffset.UtcNow,
+                AppointmentStatus = AppointmentStatusEnum.Cancelada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SaveDraft(
+            appointmentId,
+            "Rascunho de consulta cancelada.",
+            CancellationToken.None
+        );
+
+        Assert.False(result.Success);
+        Assert.Equal("Não é possível salvar rascunho de uma consulta cancelada.", result.Message);
+        Assert.Empty(await context.AppointmentRecords.ToListAsync());
+    }
+
+    [Fact]
     public async Task SaveDraft_ShouldNotOverwriteFinalRecord()
     {
         await using var context = GetDatabaseContext();

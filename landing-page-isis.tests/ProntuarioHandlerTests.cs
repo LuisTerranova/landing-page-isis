@@ -256,6 +256,43 @@ public class ProntuarioHandlerTests
     }
 
     [Fact]
+    public async Task GetTimelineByPatientId_ShouldUsePortoVelhoBoundary_ForMonthFilter()
+    {
+        await using var context = GetDatabaseContext();
+        var patientId = Guid.NewGuid();
+        await SeedPatient(context, patientId);
+
+        // 31/03/2026 23:00 -04:00 is stored as 01/04/2026 03:00 UTC
+        var boundaryDate = new DateTimeOffset(2026, 3, 31, 23, 0, 0, TimeSpan.FromHours(-4));
+
+        AddNote(context, patientId, null, boundaryDate, "Nota na virada do mês");
+        AddAppointmentWithRecord(context, patientId, boundaryDate, "Consulta na virada do mês");
+        await context.SaveChangesAsync();
+
+        var handler = new ProntuarioHandler(context);
+
+        var marchResult = await handler.GetTimelineByPatientId(
+            0,
+            10,
+            patientId,
+            new DateTime(2026, 3, 1),
+            CancellationToken.None
+        );
+        var aprilResult = await handler.GetTimelineByPatientId(
+            0,
+            10,
+            patientId,
+            new DateTime(2026, 4, 1),
+            CancellationToken.None
+        );
+
+        Assert.Equal(2, marchResult.TotalItems);
+        Assert.Contains(marchResult.Items, i => i.Content == "Nota na virada do mês");
+        Assert.Contains(marchResult.Items, i => i.Content == "Consulta na virada do mês");
+        Assert.Equal(0, aprilResult.TotalItems);
+    }
+
+    [Fact]
     public async Task GetTimelineByCoupleId_ShouldIncludeBothPartnersAndCoupleAppointments()
     {
         await using var context = GetDatabaseContext();

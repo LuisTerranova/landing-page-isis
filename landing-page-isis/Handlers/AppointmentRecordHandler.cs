@@ -53,6 +53,12 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
         if (appointment.AppointmentStatus == AppointmentStatusEnum.Realizada)
             return new HandlerResult(false, "Consulta já finalizada.");
 
+        if (appointment.AppointmentStatus == AppointmentStatusEnum.Cancelada)
+            return new HandlerResult(
+                false,
+                "Não é possível salvar rascunho de uma consulta cancelada."
+            );
+
         var trimmedNote = note?.Trim() ?? string.Empty;
 
         if (string.IsNullOrEmpty(trimmedNote))

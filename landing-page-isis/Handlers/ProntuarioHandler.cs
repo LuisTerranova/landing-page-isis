@@ -2,6 +2,7 @@ using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
+using landing_page_isis.Extensions;
 using landing_page_isis.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -285,7 +286,7 @@ public class ProntuarioHandler(AppDbContext context) : IProntuarioHandler
         if (!filterMonthYear.HasValue)
             return null;
 
-        // Convert the local month boundaries to UTC to align with PostgreSQL timestamp storage
+        // Convert the local Porto Velho month boundaries to UTC to align with PostgreSQL timestamp storage
         var localStart = new DateTime(
             filterMonthYear.Value.Year,
             filterMonthYear.Value.Month,
@@ -293,12 +294,12 @@ public class ProntuarioHandler(AppDbContext context) : IProntuarioHandler
             0,
             0,
             0,
-            DateTimeKind.Local
+            DateTimeKind.Unspecified
         );
 
         return (
-            new DateTimeOffset(localStart.ToUniversalTime()),
-            new DateTimeOffset(localStart.AddMonths(1).ToUniversalTime())
+            localStart.ToPortoVelhoDateTimeOffset(),
+            localStart.AddMonths(1).ToPortoVelhoDateTimeOffset()
         );
     }
 
