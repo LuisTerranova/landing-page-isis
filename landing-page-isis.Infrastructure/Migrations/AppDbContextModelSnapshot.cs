@@ -55,6 +55,59 @@ namespace landingpageisis.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("landing_page_isis.core.Models.AdditionalNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<Guid?>("CoupleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("couple_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTimeOffset>("NoteDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("note_date");
+
+                    b.Property<Guid?>("PatientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoupleId", "NoteDate");
+
+                    b.HasIndex("PatientId", "NoteDate");
+
+                    b.ToTable("additional_notes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_additional_notes_exactly_one_owner", "(patient_id IS NOT NULL) <> (couple_id IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("landing_page_isis.core.Models.Appointment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -102,11 +155,11 @@ namespace landingpageisis.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CoupleId");
-
                     b.HasIndex("PackageId");
 
-                    b.HasIndex("PatientId");
+                    b.HasIndex("CoupleId", "AppointmentDate");
+
+                    b.HasIndex("PatientId", "AppointmentDate");
 
                     b.ToTable("appointments", (string)null);
                 });
@@ -187,6 +240,12 @@ namespace landingpageisis.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<bool>("IsDraft")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_draft");
 
                     b.Property<string>("Note")
                         .HasColumnType("text")
@@ -415,6 +474,12 @@ namespace landingpageisis.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("email");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -455,6 +520,23 @@ namespace landingpageisis.Migrations
                         .HasFilter("\"cpf_hash\" IS NOT NULL");
 
                     b.ToTable("patients", (string)null);
+                });
+
+            modelBuilder.Entity("landing_page_isis.core.Models.AdditionalNote", b =>
+                {
+                    b.HasOne("landing_page_isis.core.Models.Couple", "Couple")
+                        .WithMany()
+                        .HasForeignKey("CoupleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("landing_page_isis.core.Models.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Couple");
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("landing_page_isis.core.Models.Appointment", b =>

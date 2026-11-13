@@ -23,6 +23,12 @@ public class AppointmentRecordMap : IEntityTypeConfiguration<AppointmentRecord>
                 v => AesEncryptionService.Decrypt(v)
             );
 
+        builder
+            .Property(x => x.IsDraft)
+            .IsRequired()
+            .HasDefaultValue(false)
+            .HasColumnName("is_draft");
+
         builder.Property(x => x.CreatedAt).IsRequired().HasColumnName("created_at");
 
         builder.Property(x => x.UpdatedAt).IsRequired(false).HasColumnName("updated_at");

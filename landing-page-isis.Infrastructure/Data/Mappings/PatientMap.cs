@@ -64,6 +64,12 @@ public class PatientMap : IEntityTypeConfiguration<Patient>
             .HasColumnName("policy_signed");
 
         builder
+            .Property(p => p.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true)
+            .HasColumnName("is_active");
+
+        builder
             .Property(p => p.PayerName)
             .IsRequired(false)
             .HasMaxLength(150)

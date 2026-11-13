@@ -29,6 +29,9 @@ public class AppointmentMap : IEntityTypeConfiguration<Appointment>
 
         builder.Property(a => a.PackageId).IsRequired(false).HasColumnName("package_id");
 
+        builder.HasIndex(a => new { a.PatientId, a.AppointmentDate });
+        builder.HasIndex(a => new { a.CoupleId, a.AppointmentDate });
+
         builder
             .Property(a => a.PayerName)
             .IsRequired(false)
