@@ -28,37 +28,84 @@
 
 @if (!ShowCouples)
 {
-    <GenericTable @ref="_patientsTable"
-                  TItem="PatientListItemDto"
-                  ServerData="@ServerReload"
-                  OnCreate="@(OpenCreate)"
-                  OnDelete="@(DeletePatient)"
-                  ShowSearchBar="true"
-                  @bind-SearchQuery="_searchQuery">
+    <MudTabs ActivePanelIndex="_patientTabIndex"
+             ActivePanelIndexChanged="OnPatientTabChanged"
+             KeepPanelsAlive="true"
+             Elevation="0"
+             Rounded="true"
+             ApplyEffectsToContainer="true">
+        <MudTabPanel Text="Ativos">
+            <GenericTable @ref="_activePatientsTable"
+                          TItem="PatientListItemDto"
+                          ServerData="@ActiveServerReload"
+                          OnCreate="@(OpenCreate)"
+                          ShowCreateButton="true"
+                          ShowSearchBar="true"
+                          @bind-SearchQuery="_activeSearchQuery">
 
-        <HeaderColumns>
-            <MudTh>Nome</MudTh>
-            <MudTh>E-mail</MudTh>
-            <MudTh>Telefone</MudTh>
-            <MudTh>Estado</MudTh>
-        </HeaderColumns>
+                <HeaderColumns>
+                    <MudTh>Nome</MudTh>
+                    <MudTh>E-mail</MudTh>
+                    <MudTh>Telefone</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderColumns>
 
-        <RowColumns>
-            <MudTd DataLabel="Nome">@context.Name</MudTd>
-            <MudTd DataLabel="E-mail">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
-            <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
-            <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
-        </RowColumns>
+                <RowColumns>
+                    <MudTd DataLabel="Nome">@context.Name</MudTd>
+                    <MudTd DataLabel="E-mail">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
+                    <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+                    <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
+                </RowColumns>
 
-        <CustomActions>
-            <MudMenuItem OnClick="@(() => OpenDetails(context))">
-                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
-            </MudMenuItem>
-            <MudMenuItem OnClick="@(() => HandleContract(context))">
-                <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2"/> Contrato
-            </MudMenuItem>
-        </CustomActions>
-    </GenericTable>
+                <CustomActions>
+                    <MudMenuItem OnClick="@(() => OpenDetails(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => HandleContract(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2"/> Contrato
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => DeactivatePatient(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.PersonOff" Class="me-2"/> Desativar
+                    </MudMenuItem>
+                </CustomActions>
+            </GenericTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Desativados">
+            <GenericTable @ref="_inactivePatientsTable"
+                          TItem="PatientListItemDto"
+                          ServerData="@InactiveServerReload"
+                          ShowCreateButton="false"
+                          ShowSearchBar="false">
+
+                <HeaderColumns>
+                    <MudTh>Nome</MudTh>
+                    <MudTh>E-mail</MudTh>
+                    <MudTh>Telefone</MudTh>
+                    <MudTh>Estado</MudTh>
+                </HeaderColumns>
+
+                <RowColumns>
+                    <MudTd DataLabel="Nome">@context.Name</MudTd>
+                    <MudTd DataLabel="E-mail">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
+                    <MudTd DataLabel="Telefone">@context.Phone.FormatPhone()</MudTd>
+                    <MudTd DataLabel="Estado">@context.StateOfResidency</MudTd>
+                </RowColumns>
+
+                <CustomActions>
+                    <MudMenuItem OnClick="@(() => OpenDetails(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => HandleContract(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2"/> Contrato
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => ReactivatePatient(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="me-2"/> Reativar
+                    </MudMenuItem>
+                </CustomActions>
+            </GenericTable>
+        </MudTabPanel>
+    </MudTabs>
 }
 else
 {

@@ -1,5 +1,6 @@
 using landing_page_isis.core;
 using landing_page_isis.core.Interfaces;
+using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Extensions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,9 @@ public partial class WelcomeView : ComponentBase
 
     [Inject]
     private IAppointmentHandler AppointmentHandler { get; set; } = null!;
+
+    [Inject]
+    private IPatientHandler PatientHandler { get; set; } = null!;
 
     [Inject]
     private ILogger<WelcomeView> Logger { get; set; } = null!;
@@ -32,6 +36,7 @@ public partial class WelcomeView : ComponentBase
     private int _pageSize = 9;
     private int _totalItems = 0;
     private int PendingRecordsCount { get; set; }
+    private IReadOnlyList<BirthdayListItemDto> _birthdays = [];
 
     #endregion
 
@@ -41,12 +46,28 @@ public partial class WelcomeView : ComponentBase
     {
         _selectedDate = DateTime.UtcNow.ToPortoVelhoTime().Date;
         await LoadPendingCount();
+        await LoadBirthdays();
         await LoadAppointments();
     }
 
     private async Task LoadPendingCount()
     {
         PendingRecordsCount = await AppointmentHandler.CountPendingRecordsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadBirthdays()
+    {
+        try
+        {
+            _birthdays = await PatientHandler.GetUpcomingBirthdays(5, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading upcoming birthdays");
+            _birthdays = [];
+        }
+
         StateHasChanged();
     }
 

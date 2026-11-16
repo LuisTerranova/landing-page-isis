@@ -35,16 +35,18 @@ public partial class PatientsView : ComponentBase
     #region Properties
 
     private bool ShowCouples { get; set; }
-    private GenericTable<PatientListItemDto> _patientsTable = null!;
+    private GenericTable<PatientListItemDto>? _activePatientsTable;
+    private GenericTable<PatientListItemDto>? _inactivePatientsTable;
     private GenericTable<CoupleListItemDto> _couplesTable = null!;
-    private string _searchQuery = string.Empty;
+    private int _patientTabIndex;
+    private string _activeSearchQuery = string.Empty;
     private string _coupleSearchQuery = string.Empty;
 
     #endregion
 
     #region Methods - Individuals
 
-    private async Task<TableData<PatientListItemDto>> ServerReload(
+    private async Task<TableData<PatientListItemDto>> ActiveServerReload(
         TableState state,
         CancellationToken ct
     )
@@ -52,17 +54,23 @@ public partial class PatientsView : ComponentBase
         try
         {
             PaginatedResponse<PatientListItemDto> result;
-            if (string.IsNullOrWhiteSpace(_searchQuery))
+            if (string.IsNullOrWhiteSpace(_activeSearchQuery))
             {
-                result = await PatientHandler.GetPatients(state.Page, state.PageSize, ct);
+                result = await PatientHandler.GetPatients(
+                    state.Page,
+                    state.PageSize,
+                    ct,
+                    PatientStatusFilter.Active
+                );
             }
             else
             {
                 result = await PatientHandler.QueryPatients(
-                    _searchQuery,
+                    _activeSearchQuery,
                     state.Page,
                     state.PageSize,
-                    ct
+                    ct,
+                    includeDeactivated: false
                 );
             }
 
@@ -78,7 +86,47 @@ public partial class PatientsView : ComponentBase
         }
     }
 
-    private async Task DeletePatient(PatientListItemDto patient)
+    private async Task<TableData<PatientListItemDto>> InactiveServerReload(
+        TableState state,
+        CancellationToken ct
+    )
+    {
+        try
+        {
+            var result = await PatientHandler.GetPatients(
+                state.Page,
+                state.PageSize,
+                ct,
+                PatientStatusFilter.Inactive
+            );
+
+            return new TableData<PatientListItemDto>
+            {
+                TotalItems = result.TotalItems,
+                Items = result.Items,
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            return new TableData<PatientListItemDto>();
+        }
+    }
+
+    private async Task OnPatientTabChanged(int index)
+    {
+        _patientTabIndex = index;
+
+        if (index == 0 && _activePatientsTable is not null)
+        {
+            await _activePatientsTable.ReloadAsync();
+        }
+        else if (index == 1 && _inactivePatientsTable is not null)
+        {
+            await _inactivePatientsTable.ReloadAsync();
+        }
+    }
+
+    private async Task DeactivatePatient(PatientListItemDto patient)
     {
         var options = new DialogOptions
         {
@@ -88,27 +136,77 @@ public partial class PatientsView : ComponentBase
         };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
-            "Confirmar Exclusão",
-            $"Tem certeza que deseja apagar os dados de {patient.Name}?",
-            yesText: "Excluir",
+            "Desativar Paciente",
+            $"Desativar {patient.Name}? O histórico, contrato e pacotes serão preservados.",
+            yesText: "Desativar",
             cancelText: "Cancelar",
             options: options
         );
 
-        if (confirm == true)
-        {
-            var result = await PatientHandler.DeletePatient(patient.Id);
+        if (confirm != true)
+            return;
 
-            if (result.Success)
-            {
-                Snackbar.Add("Paciente removido com sucesso.", Severity.Success);
-                await _patientsTable.ReloadAsync();
-            }
-            else
-            {
-                Snackbar.Add(result.Message ?? "Erro ao excluir o paciente.", Severity.Error);
-            }
+        var result = await PatientHandler.SetPatientActive(
+            patient.Id,
+            false,
+            CancellationToken.None
+        );
+
+        if (result.Success)
+        {
+            Snackbar.Add("Paciente desativado com sucesso.", Severity.Success);
+            await ReloadPatientTables();
         }
+        else
+        {
+            Snackbar.Add(result.Message ?? "Erro ao desativar o paciente.", Severity.Error);
+        }
+    }
+
+    private async Task ReactivatePatient(PatientListItemDto patient)
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            BackdropClick = false,
+            CloseButton = true,
+        };
+
+        var confirm = await DialogService.ShowMessageBoxAsync(
+            "Reativar Paciente",
+            $"Reativar {patient.Name}? O paciente voltará a aparecer nas listas ativas.",
+            yesText: "Reativar",
+            cancelText: "Cancelar",
+            options: options
+        );
+
+        if (confirm != true)
+            return;
+
+        var result = await PatientHandler.SetPatientActive(
+            patient.Id,
+            true,
+            CancellationToken.None
+        );
+
+        if (result.Success)
+        {
+            Snackbar.Add("Paciente reativado com sucesso.", Severity.Success);
+            await ReloadPatientTables();
+        }
+        else
+        {
+            Snackbar.Add(result.Message ?? "Erro ao reativar o paciente.", Severity.Error);
+        }
+    }
+
+    private async Task ReloadPatientTables()
+    {
+        if (_activePatientsTable is not null)
+            await _activePatientsTable.ReloadAsync();
+
+        if (_inactivePatientsTable is not null)
+            await _inactivePatientsTable.ReloadAsync();
     }
 
     private async Task OpenCreate()
@@ -132,7 +230,8 @@ public partial class PatientsView : ComponentBase
             if (sucesso.Success)
             {
                 Snackbar.Add("Paciente salvo!", Severity.Success);
-                await _patientsTable.ReloadAsync();
+                if (_activePatientsTable is not null)
+                    await _activePatientsTable.ReloadAsync();
             }
         }
     }
@@ -252,7 +351,7 @@ public partial class PatientsView : ComponentBase
             if (result is { Canceled: false })
             {
                 Snackbar.Add("Contrato salvo com sucesso.", Severity.Success);
-                await _patientsTable.ReloadAsync();
+                await ReloadPatientTables();
             }
         }
         else
@@ -313,7 +412,7 @@ public partial class PatientsView : ComponentBase
             if (result is { Canceled: false })
             {
                 Snackbar.Add("Contrato salvo com sucesso.", Severity.Success);
-                await _patientsTable.ReloadAsync();
+                await ReloadPatientTables();
             }
         }
     }
