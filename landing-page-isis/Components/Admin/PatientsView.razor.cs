@@ -42,73 +42,77 @@ public partial class PatientsView : ComponentBase
     private string _activeSearchQuery = string.Empty;
     private string _coupleSearchQuery = string.Empty;
 
+    // Blazor Server circuits share one scoped DbContext. Serialize table queries so
+    // switching tabs cannot start overlapping EF Core operations on the same instance.
+    private readonly SemaphoreSlim _queryLock = new(1, 1);
+
     #endregion
 
     #region Methods - Individuals
 
-    private async Task<TableData<PatientListItemDto>> ActiveServerReload(
+    private Task<TableData<PatientListItemDto>> ActiveServerReload(
         TableState state,
         CancellationToken ct
     )
     {
-        try
-        {
-            PaginatedResponse<PatientListItemDto> result;
-            if (string.IsNullOrWhiteSpace(_activeSearchQuery))
-            {
-                result = await PatientHandler.GetPatients(
-                    state.Page,
-                    state.PageSize,
-                    ct,
-                    PatientStatusFilter.Active
-                );
-            }
-            else
-            {
-                result = await PatientHandler.QueryPatients(
-                    _activeSearchQuery,
-                    state.Page,
-                    state.PageSize,
-                    ct,
-                    includeDeactivated: false
-                );
-            }
-
-            return new TableData<PatientListItemDto>
-            {
-                TotalItems = result.TotalItems,
-                Items = result.Items,
-            };
-        }
-        catch (OperationCanceledException)
-        {
-            return new TableData<PatientListItemDto>();
-        }
+        return QueryWithLockAsync(
+            token =>
+                string.IsNullOrWhiteSpace(_activeSearchQuery)
+                    ? PatientHandler.GetPatients(
+                        state.Page,
+                        state.PageSize,
+                        token,
+                        PatientStatusFilter.Active
+                    )
+                    : PatientHandler.QueryPatients(
+                        _activeSearchQuery,
+                        state.Page,
+                        state.PageSize,
+                        token,
+                        includeDeactivated: false
+                    ),
+            ct
+        );
     }
 
-    private async Task<TableData<PatientListItemDto>> InactiveServerReload(
+    private Task<TableData<PatientListItemDto>> InactiveServerReload(
         TableState state,
+        CancellationToken ct
+    )
+    {
+        return QueryWithLockAsync(
+            token =>
+                PatientHandler.GetPatients(
+                    state.Page,
+                    state.PageSize,
+                    token,
+                    PatientStatusFilter.Inactive
+                ),
+            ct
+        );
+    }
+
+    private async Task<TableData<T>> QueryWithLockAsync<T>(
+        Func<CancellationToken, Task<PaginatedResponse<T>>> query,
         CancellationToken ct
     )
     {
         try
         {
-            var result = await PatientHandler.GetPatients(
-                state.Page,
-                state.PageSize,
-                ct,
-                PatientStatusFilter.Inactive
-            );
-
-            return new TableData<PatientListItemDto>
+            await _queryLock.WaitAsync(ct);
+            try
             {
-                TotalItems = result.TotalItems,
-                Items = result.Items,
-            };
+                var result = await query(ct);
+                return new TableData<T> { TotalItems = result.TotalItems, Items = result.Items };
+            }
+            finally
+            {
+                _queryLock.Release();
+            }
         }
         catch (OperationCanceledException)
         {
-            return new TableData<PatientListItemDto>();
+            return new TableData<T>();
         }
     }
 
@@ -421,38 +425,23 @@ public partial class PatientsView : ComponentBase
 
     #region Methods - Couples
 
-    private async Task<TableData<CoupleListItemDto>> CoupleServerReload(
+    private Task<TableData<CoupleListItemDto>> CoupleServerReload(
         TableState state,
         CancellationToken ct
     )
     {
-        try
-        {
-            PaginatedResponse<CoupleListItemDto> result;
-            if (string.IsNullOrWhiteSpace(_coupleSearchQuery))
-            {
-                result = await CoupleHandler.GetCouples(state.Page, state.PageSize, ct);
-            }
-            else
-            {
-                result = await CoupleHandler.QueryCouples(
-                    _coupleSearchQuery,
-                    state.Page,
-                    state.PageSize,
-                    ct
-                );
-            }
-
-            return new TableData<CoupleListItemDto>
-            {
-                TotalItems = result.TotalItems,
-                Items = result.Items,
-            };
-        }
-        catch (OperationCanceledException)
-        {
-            return new TableData<CoupleListItemDto>();
-        }
+        return QueryWithLockAsync(
+            token =>
+                string.IsNullOrWhiteSpace(_coupleSearchQuery)
+                    ? CoupleHandler.GetCouples(state.Page, state.PageSize, token)
+                    : CoupleHandler.QueryCouples(
+                        _coupleSearchQuery,
+                        state.Page,
+                        state.PageSize,
+                        token
+                    ),
+            ct
+        );
     }
 
     private async Task OpenCreateCouple()
