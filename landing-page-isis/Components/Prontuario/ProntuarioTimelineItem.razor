@@ -45,7 +45,7 @@
             }
             @if (IsAdditionalNote)
             {
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.Edit"
                            OnClick="@(() => OnEditNote.InvokeAsync(Item))">
                     Editar
@@ -79,9 +79,9 @@
     private string TypeLabel => IsAppointment ? "Consulta" : "Nota Avulsa";
 
     private string TypeIcon =>
-        IsAppointment ? Icons.Material.Filled.Assignment : Icons.Material.Filled.StickyNote2;
+        IsAppointment ? Icons.Material.Filled.Assignment : Icons.Material.Filled.NoteAlt;
 
-    private Color TypeColor => IsAppointment ? Color.Primary : Color.Tertiary;
+    private Color TypeColor => IsAppointment ? Color.Primary : Color.Secondary;
 
     private string UpdatedLabel => IsAppointment ? "Retificado em" : "Editada em";
 }
