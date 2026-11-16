@@ -5,7 +5,6 @@ using landing_page_isis.core.Interfaces;
 using landing_page_isis.core.Models;
 using landing_page_isis.core.Models.DTOs;
 using landing_page_isis.Extensions;
-using landing_page_isis.Infrastructure.Data;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -21,12 +20,6 @@ public partial class AppointmentsView : ComponentBase
 
     [Inject]
     private IAppointmentHandler AppointmentHandler { get; set; } = null!;
-
-    [Inject]
-    private IAppointmentRecordHandler RecordHandler { get; set; } = null!;
-
-    [Inject]
-    private AppDbContext DbContext { get; set; } = null!;
 
     private GenericTable<AppointmentListItemDto> _appointmentsTable = null!;
     private string _searchQuery = string.Empty;
@@ -221,7 +214,8 @@ public partial class AppointmentsView : ComponentBase
             MaxWidth = MaxWidth.Medium,
             FullWidth = true,
             BackdropClick = false,
-            CloseButton = true,
+            CloseOnEscapeKey = false,
+            CloseButton = false,
         };
 
         var dialog = await DialogService.ShowAsync<AppointmentRecordDialog>(
@@ -231,38 +225,22 @@ public partial class AppointmentsView : ComponentBase
         );
         var result = await dialog.Result;
 
-        if (result is { Canceled: false, Data: AppointmentRecord record })
+        if (result is { Canceled: false, Data: string note })
         {
-            await using var transaction = await DbContext.Database.BeginTransactionAsync();
-
-            appointment.AppointmentStatus = AppointmentStatusEnum.Realizada;
-            var updateStatus = await AppointmentHandler.UpdateAppointment(
-                appointment,
-                appointment.Id
+            var response = await AppointmentHandler.FinalizeAppointment(
+                appointment.Id,
+                note,
+                CancellationToken.None
             );
 
-            if (updateStatus.Success)
+            if (response.Success)
             {
-                var createRecord = await RecordHandler.CreateAppointmentRecord(record);
-                if (createRecord.Success)
-                {
-                    await transaction.CommitAsync();
-                    Snackbar.Add("Consulta finalizada e prontuário salvo!", Severity.Success);
-                    await _appointmentsTable.ReloadAsync();
-                }
-                else
-                {
-                    await transaction.RollbackAsync();
-                    Snackbar.Add(
-                        $"Status atualizado, mas houve erro no prontuário: {createRecord.Message}",
-                        Severity.Warning
-                    );
-                }
+                Snackbar.Add("Consulta finalizada e prontuário salvo!", Severity.Success);
+                await _appointmentsTable.ReloadAsync();
             }
             else
             {
-                await transaction.RollbackAsync();
-                Snackbar.Add($"Erro ao finalizar consulta: {updateStatus.Message}", Severity.Error);
+                Snackbar.Add(response.Message ?? "Erro ao finalizar consulta.", Severity.Error);
             }
         }
     }

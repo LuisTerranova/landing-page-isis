@@ -1,5 +1,8 @@
 @namespace landing_page_isis.Components.Dialogs.Appointment
+@implements IAsyncDisposable
+@using landing_page_isis.core.Interfaces
 @using landing_page_isis.core.Models
+@using landing_page_isis.Extensions
 
 <MudDialog>
     <TitleContent>
@@ -9,42 +12,317 @@
         </MudText>
     </TitleContent>
     <DialogContent>
+        @if (_draftRecovered)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                Rascunho recuperado.
+            </MudAlert>
+        }
+
         <MudAlert Severity="Severity.Info" Class="mb-4">
             Ao finalizar, esta consulta será marcada como realizada. Use o campo abaixo para as notas da sessão.
         </MudAlert>
+
         <MudTextField @bind-Value="_note"
+                      @bind-Value:after="OnNoteChanged"
                       Label="Notas da Sessão"
                       Lines="10"
                       Variant="Variant.Outlined"
                       Margin="Margin.Dense"
                       Placeholder="Descreva aqui..."
                       Required="true"
-                      RequiredError="As notas do prontuário são obrigatórias para finalizar." />
+                      RequiredError="As notas do prontuário são obrigatórias para finalizar."
+                      Immediate="true"
+                      Disabled="@(_isLoadingDraft || _isClosing)" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="1" Class="mt-2">
+            @if (_isLoadingDraft)
+            {
+                <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Carregando rascunho…</MudText>
+            }
+            else if (_saving)
+            {
+                <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Salvando…</MudText>
+            }
+            else if (!string.IsNullOrWhiteSpace(_saveError))
+            {
+                <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Small" />
+                <MudText Typo="Typo.caption" Color="Color.Error">@_saveError</MudText>
+            }
+            else if (_lastSavedAt.HasValue)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.CloudDone" Color="Color.Success" Size="Size.Small" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Rascunho salvo às @_lastSavedAt.Value.ToPortoVelhoTime().ToString("HH:mm")
+                </MudText>
+            }
+        </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Color="Color.Error">Cancelar</MudButton>
-        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit" Disabled="@(string.IsNullOrWhiteSpace(_note))">Finalizar Consulta</MudButton>
+        <MudButton OnClick="CancelAsync" Color="Color.Error" Disabled="_isClosing">Cancelar</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled"
+                   OnClick="SubmitAsync"
+                   Disabled="@(string.IsNullOrWhiteSpace(_note) || _isLoadingDraft || _isClosing)">
+            Finalizar Consulta
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
+    private const int AutosaveDelayMilliseconds = 2000;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Inject]
+    private IAppointmentRecordHandler RecordHandler { get; set; } = null!;
 
     [Parameter]
     public Appointment Appointment { get; set; } = null!;
 
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
+    private CancellationTokenSource? _debounceCts;
     private string _note = string.Empty;
+    private string _lastSavedNote = string.Empty;
+    private DateTimeOffset? _lastSavedAt;
+    private bool _draftRecovered;
+    private bool _saving;
+    private bool _isLoadingDraft = true;
+    private bool _isClosing;
+    private bool _disposed;
+    private string? _saveError;
 
-    private void Cancel() => MudDialog.Cancel();
-
-    private void Submit()
+    protected override async Task OnInitializedAsync()
     {
-        var record = new AppointmentRecord
+        try
         {
-            AppointmentId = Appointment.Id,
-            Note = _note
-        };
-        MudDialog.Close(DialogResult.Ok(record));
+            var draft = await RecordHandler.GetDraftByAppointmentId(
+                Appointment.Id,
+                CancellationToken.None
+            );
+
+            if (draft is not null)
+            {
+                _note = draft.Note ?? string.Empty;
+                _lastSavedNote = _note;
+                _lastSavedAt = draft.UpdatedAt;
+                _draftRecovered = !string.IsNullOrWhiteSpace(_note);
+            }
+        }
+        catch (Exception ex)
+        {
+            _saveError = $"Erro ao recuperar rascunho: {ex.Message}";
+        }
+        finally
+        {
+            _isLoadingDraft = false;
+        }
+    }
+
+    private void OnNoteChanged()
+    {
+        if (_isLoadingDraft || _isClosing || _disposed)
+            return;
+
+        ScheduleAutosave();
+    }
+
+    private void ScheduleAutosave()
+    {
+        CancelDebounce();
+
+        var cts = new CancellationTokenSource();
+        _debounceCts = cts;
+        _ = DebounceAndSaveAsync(cts.Token);
+    }
+
+    private async Task DebounceAndSaveAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(AutosaveDelayMilliseconds, ct);
+
+            if (ct.IsCancellationRequested || _disposed || _isClosing)
+                return;
+
+            await SaveNoteAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer keystroke replaced this debounce.
+        }
+        catch (Exception ex)
+        {
+            _saveError = $"Erro ao salvar rascunho: {ex.Message}";
+            NotifyStateChanged();
+        }
+    }
+
+    private async Task<bool> SaveNoteAsync()
+    {
+        var lockTaken = false;
+
+        try
+        {
+            await _saveLock.WaitAsync();
+            lockTaken = true;
+
+            if (_disposed)
+                return false;
+
+            var noteToSave = _note;
+            if (string.Equals(noteToSave, _lastSavedNote, StringComparison.Ordinal))
+                return true;
+
+            _saving = true;
+            _saveError = null;
+            NotifyStateChanged();
+
+            var result = await RecordHandler.SaveDraft(
+                Appointment.Id,
+                noteToSave,
+                CancellationToken.None
+            );
+
+            if (!result.Success)
+            {
+                _saveError = $"Erro ao salvar rascunho: {result.Message}";
+                return false;
+            }
+
+            _lastSavedNote = noteToSave;
+            _lastSavedAt = DateTimeOffset.UtcNow;
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _saveError = $"Erro ao salvar rascunho: {ex.Message}";
+            return false;
+        }
+        finally
+        {
+            _saving = false;
+
+            if (lockTaken)
+            {
+                try
+                {
+                    _saveLock.Release();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The dialog was disposed while this save was finishing.
+                }
+            }
+
+            NotifyStateChanged();
+        }
+    }
+
+    private async Task<bool> FlushPendingSaveAsync()
+    {
+        CancelDebounce();
+        return await SaveNoteAsync();
+    }
+
+    private async Task CancelAsync()
+    {
+        if (_isClosing)
+            return;
+
+        _isClosing = true;
+        NotifyStateChanged();
+
+        var saved = await FlushPendingSaveAsync();
+        if (!saved)
+        {
+            _isClosing = false;
+            NotifyStateChanged();
+            return;
+        }
+
+        MudDialog.Cancel();
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_isClosing)
+            return;
+
+        if (string.IsNullOrWhiteSpace(_note))
+        {
+            _saveError = "As notas do prontuário são obrigatórias para finalizar.";
+            return;
+        }
+
+        _isClosing = true;
+        NotifyStateChanged();
+
+        var saved = await FlushPendingSaveAsync();
+        if (!saved)
+        {
+            _isClosing = false;
+            NotifyStateChanged();
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(_note));
+    }
+
+    private void CancelDebounce()
+    {
+        var cts = _debounceCts;
+        _debounceCts = null;
+
+        if (cts is null)
+            return;
+
+        cts.Cancel();
+        cts.Dispose();
+    }
+
+    private void NotifyStateChanged()
+    {
+        if (_disposed)
+            return;
+
+        try
+        {
+            _ = InvokeAsync(() =>
+            {
+                if (!_disposed)
+                    StateHasChanged();
+            });
+        }
+        catch (ObjectDisposedException)
+        {
+            // The dialog was closed while the save was finishing.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        CancelDebounce();
+
+        try
+        {
+            await _saveLock.WaitAsync();
+            _saveLock.Release();
+            _saveLock.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+            // A save completed while the dialog was being disposed.
+        }
     }
 }

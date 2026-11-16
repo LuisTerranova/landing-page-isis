@@ -58,7 +58,7 @@
     </RowColumns>
 
     <CustomActions>
-        @if (context.AppointmentStatus != AppointmentStatusEnum.Realizada)
+        @if (context.AppointmentStatus == AppointmentStatusEnum.Marcada)
         {
             <MudMenuItem OnClick="@(() => MarkAsCompleted(context))">
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2"/> Finalizar

@@ -1,0 +1,130 @@
+@namespace landing_page_isis.Components.Dialogs.Prontuario
+@using landing_page_isis.core.Models.DTOs
+@using landing_page_isis.Extensions
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.StickyNote2" Class="mr-3" />
+            @(IsEditing ? "Editar Nota Avulsa" : "Nova Nota Avulsa")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_content"
+                      Label="Conteúdo"
+                      Lines="8"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Placeholder="Descreva aqui..."
+                      Required="true"
+                      RequiredError="O conteúdo da nota é obrigatório."
+                      Immediate="true" />
+
+        <MudGrid Class="mt-2">
+            <MudItem xs="12" sm="5">
+                <MudDatePicker Label="Data"
+                               @bind-Date="_date"
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Editable="true"
+                               Required="true" />
+            </MudItem>
+            <MudItem xs="8" sm="4">
+                <MudTimePicker Label="Hora"
+                               @bind-Time="_time"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Editable="true"
+                               Required="true" />
+            </MudItem>
+            <MudItem xs="4" sm="3">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Schedule"
+                           OnClick="SetNow"
+                           Class="mt-2">
+                    Agora
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-2">@_error</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Error">Cancelar</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit"
+                   Disabled="@(string.IsNullOrWhiteSpace(_content))">
+            Salvar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public AdditionalNoteDto? Note { get; set; }
+
+    private string _content = string.Empty;
+    private DateTime? _date;
+    private TimeSpan? _time;
+    private string? _error;
+
+    private bool IsEditing => Note is not null;
+
+    protected override void OnInitialized()
+    {
+        if (Note is not null)
+        {
+            _content = Note.Content;
+            var localDate = Note.NoteDate.ToPortoVelhoTime();
+            _date = localDate.Date;
+            _time = localDate.TimeOfDay;
+        }
+        else
+        {
+            SetNow();
+        }
+    }
+
+    private void SetNow()
+    {
+        var now = DateTime.UtcNow.ToPortoVelhoTime();
+        _date = now.Date;
+        _time = now.TimeOfDay;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_content))
+        {
+            _error = "Informe o conteúdo da nota.";
+            return;
+        }
+
+        if (!_date.HasValue || !_time.HasValue)
+        {
+            _error = "Informe a data e a hora da nota.";
+            return;
+        }
+
+        var localDateTime = DateTime.SpecifyKind(
+            _date.Value.Date + _time.Value,
+            DateTimeKind.Unspecified
+        );
+        var noteDate = localDateTime.ToPortoVelhoDateTimeOffset();
+
+        MudDialog.Close(DialogResult.Ok(new AdditionalNoteFormResult(_content.Trim(), noteDate)));
+    }
+}
