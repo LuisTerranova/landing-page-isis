@@ -15,9 +15,13 @@
                        FullWidth="true" />
     </MudItem>
     <MudItem xs="12" md="6">
+        @* The CPF mask is applied in app.js (data-cpf-mask) because MudBlazor's Mask
+           overwrites digits on Blazor Server. *@
         <MudTextField T="string" Label="CPF" Variant="Variant.Outlined"
                        @bind-Value="Participant.Cpf"
-                       Mask="@(new PatternMask("000.000.000-00"))"
+                       data-cpf-mask="true"
+                       InputMode="InputMode.numeric"
+                       MaxLength="14"
                        Validation="@(new Func<string, string?>(v => string.IsNullOrEmpty(v) || CpfValidator.IsValid(CpfValidator.Strip(v)) ? null : "CPF inválido"))"
                        FullWidth="true" />
     </MudItem>
