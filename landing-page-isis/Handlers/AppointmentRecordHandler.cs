@@ -192,9 +192,12 @@ public class AppointmentRecordHandler(AppDbContext context) : IAppointmentRecord
 
         // Psychological records must preserve historical integrity.
         // We append rectifications rather than overwriting existing text to comply with medical record auditing rules.
+        var now = DateTimeOffset.UtcNow;
+
         existing.Note +=
-            $"\n\nRetificado em {DateTimeOffset.UtcNow.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
-        existing.UpdatedAt = DateTimeOffset.UtcNow;
+            $"\n\nRetificado em {now.ToPortoVelhoTime():dd/MM/yyyy HH:mm}:\n{record.Note}";
+        existing.UpdatedAt = now;
+        existing.RectifiedAt = now;
 
         await context.SaveChangesAsync();
         return new HandlerResult(true, "Retificação adicionada com sucesso");

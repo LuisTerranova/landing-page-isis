@@ -126,6 +126,11 @@ public class AppointmentRecordExportHandler(
         return item.Type == ProntuarioItemType.Consulta ? "Consulta" : "Nota Avulsa";
     }
 
+    private static string GetUpdatedLabel(ProntuarioTimelineItemDto item)
+    {
+        return item.Type == ProntuarioItemType.Consulta ? "Retificado em" : "Atualizado em";
+    }
+
     private static byte[] GeneratePdf(ExportContext export)
     {
         // Build A4 PDF documents using QuestPDF's fluent API page layout engine
@@ -257,7 +262,7 @@ public class AppointmentRecordExportHandler(
                                     detail
                                         .Item()
                                         .Text(
-                                            $"Atualizado em: {item.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}"
+                                            $"{GetUpdatedLabel(item)}: {item.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}"
                                         )
                                         .FontSize(8)
                                         .FontColor(Color.FromHex(SystemBurgundy));
@@ -399,7 +404,7 @@ public class AppointmentRecordExportHandler(
                     {
                         AddDocxPara(
                             body,
-                            $"Atualizado em: {item.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}",
+                            $"{GetUpdatedLabel(item)}: {item.UpdatedAt.Value.ToPortoVelhoTime():dd/MM/yyyy HH:mm}",
                             size: 16,
                             color: SystemBurgundy,
                             spacingAfter: 200,

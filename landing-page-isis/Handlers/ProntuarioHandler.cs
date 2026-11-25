@@ -199,7 +199,7 @@ public class ProntuarioHandler(AppDbContext context) : IProntuarioHandler
                 a.AppointmentDate,
                 a.Record!.Note ?? string.Empty,
                 a.Record.CreatedAt,
-                a.Record.UpdatedAt,
+                a.Record.RectifiedAt,
                 a.Id,
                 a.Record.IsDraft
             ))
@@ -249,7 +249,7 @@ public class ProntuarioHandler(AppDbContext context) : IProntuarioHandler
                 a.AppointmentDate,
                 a.Record!.Note ?? string.Empty,
                 a.Record.CreatedAt,
-                a.Record.UpdatedAt,
+                a.Record.RectifiedAt,
                 a.Id,
                 a.Record.IsDraft
             ))
