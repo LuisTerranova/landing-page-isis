@@ -251,6 +251,10 @@ namespace landingpageisis.Migrations
                         .HasColumnType("text")
                         .HasColumnName("note");
 
+                    b.Property<DateTimeOffset?>("RectifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rectified_at");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");

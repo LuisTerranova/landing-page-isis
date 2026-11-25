@@ -33,6 +33,8 @@ public class AppointmentRecordMap : IEntityTypeConfiguration<AppointmentRecord>
 
         builder.Property(x => x.UpdatedAt).IsRequired(false).HasColumnName("updated_at");
 
+        builder.Property(x => x.RectifiedAt).IsRequired(false).HasColumnName("rectified_at");
+
         builder
             .HasOne(x => x.Appointment)
             .WithOne(a => a.Record)

@@ -12,7 +12,16 @@ public class AppointmentRecord
     public bool IsDraft { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// Technical last-modification timestamp (draft autosave, finalization or rectification).
+    /// </summary>
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Timestamp of the last audit rectification. Only set when the professional rectifies the record.
+    /// </summary>
+    public DateTimeOffset? RectifiedAt { get; set; }
 
     public Appointment? Appointment { get; set; }
 }
