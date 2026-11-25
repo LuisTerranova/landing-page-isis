@@ -882,6 +882,7 @@ public class AppointmentHandlerTests
         Assert.Equal("Nota final da consulta.", record.Note);
         Assert.False(record.IsDraft);
         Assert.NotNull(record.UpdatedAt);
+        Assert.Null(record.RectifiedAt);
     }
 
     [Fact]
@@ -912,6 +913,7 @@ public class AppointmentHandlerTests
                 Note = "Rascunho automático.",
                 IsDraft = true,
                 CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1),
             }
         );
         await context.SaveChangesAsync();
@@ -930,6 +932,7 @@ public class AppointmentHandlerTests
         Assert.Equal("Nota final revisada.", record.Note);
         Assert.False(record.IsDraft);
         Assert.NotNull(record.UpdatedAt);
+        Assert.Null(record.RectifiedAt);
 
         var appointment = await context.Appointments.FindAsync(appointmentId);
         Assert.NotNull(appointment);

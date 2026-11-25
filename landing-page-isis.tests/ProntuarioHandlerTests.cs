@@ -39,7 +39,9 @@ public class ProntuarioHandlerTests
         DateTimeOffset appointmentDate,
         string note,
         bool isDraft = false,
-        Guid? coupleId = null
+        Guid? coupleId = null,
+        DateTimeOffset? updatedAt = null,
+        DateTimeOffset? rectifiedAt = null
     )
     {
         var appointmentId = Guid.NewGuid();
@@ -63,6 +65,8 @@ public class ProntuarioHandlerTests
                 Note = note,
                 IsDraft = isDraft,
                 CreatedAt = appointmentDate,
+                UpdatedAt = updatedAt,
+                RectifiedAt = rectifiedAt,
             }
         );
     }
@@ -474,6 +478,83 @@ public class ProntuarioHandlerTests
         var item = Assert.Single(result.Items);
         Assert.True(item.IsDraft);
         Assert.Equal(ProntuarioItemType.Consulta, item.Type);
+    }
+
+    [Fact]
+    public async Task GetTimelineByPatientId_ShouldNotExposeDraftAutosaveAsRectification()
+    {
+        await using var context = GetDatabaseContext();
+        var patientId = Guid.NewGuid();
+        await SeedPatient(context, patientId);
+
+        AddAppointmentWithRecord(
+            context,
+            patientId,
+            new DateTimeOffset(2026, 9, 10, 10, 0, 0, TimeSpan.Zero),
+            "Rascunho salvo automaticamente",
+            isDraft: true,
+            updatedAt: new DateTimeOffset(2026, 9, 10, 10, 5, 0, TimeSpan.Zero)
+        );
+        await context.SaveChangesAsync();
+
+        var handler = new ProntuarioHandler(context);
+        var result = await handler.GetTimelineByPatientId(
+            0,
+            10,
+            patientId,
+            null,
+            CancellationToken.None
+        );
+
+        var item = Assert.Single(result.Items);
+        Assert.True(item.IsDraft);
+        Assert.Null(item.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task GetTimelineByPatientId_ShouldExposeRectificationTimestampOnlyWhenRectified()
+    {
+        await using var context = GetDatabaseContext();
+        var patientId = Guid.NewGuid();
+        await SeedPatient(context, patientId);
+
+        var technicalUpdate = new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero);
+        var rectifiedAt = new DateTimeOffset(2026, 9, 21, 15, 30, 0, TimeSpan.Zero);
+
+        AddAppointmentWithRecord(
+            context,
+            patientId,
+            new DateTimeOffset(2026, 9, 20, 10, 0, 0, TimeSpan.Zero),
+            "Consulta sem retificação",
+            updatedAt: technicalUpdate
+        );
+        AddAppointmentWithRecord(
+            context,
+            patientId,
+            new DateTimeOffset(2026, 9, 21, 10, 0, 0, TimeSpan.Zero),
+            "Consulta retificada",
+            updatedAt: technicalUpdate,
+            rectifiedAt: rectifiedAt
+        );
+        await context.SaveChangesAsync();
+
+        var handler = new ProntuarioHandler(context);
+        var result = await handler.GetTimelineByPatientId(
+            0,
+            10,
+            patientId,
+            null,
+            CancellationToken.None
+        );
+
+        var notRectified = Assert.Single(
+            result.Items,
+            i => i.Content == "Consulta sem retificação"
+        );
+        Assert.Null(notRectified.UpdatedAt);
+
+        var rectified = Assert.Single(result.Items, i => i.Content == "Consulta retificada");
+        Assert.Equal(rectifiedAt, rectified.UpdatedAt);
     }
 
     [Fact]

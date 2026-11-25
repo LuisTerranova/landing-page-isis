@@ -90,6 +90,7 @@ public class AppointmentRecordHandlerTests
         Assert.NotNull(db);
         Assert.Contains("Original note.", db.Note);
         Assert.Contains("Retificação", db.Note);
+        Assert.NotNull(db.RectifiedAt);
     }
 
     [Fact]
