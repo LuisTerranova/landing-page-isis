@@ -553,4 +553,293 @@ public class CoupleHandlerTests
 
         Assert.Equal(2, result.Count);
     }
+
+    private static Couple AddCouple(
+        AppDbContext context,
+        string name = "Casal Teste",
+        bool active = true,
+        bool patientsActive = true
+    )
+    {
+        var p1 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Parceiro 1",
+            Phone = "11999999999",
+            IsActive = patientsActive,
+        };
+        var p2 = new Patient
+        {
+            Id = Guid.NewGuid(),
+            Name = "Parceiro 2",
+            Phone = "11999999998",
+            IsActive = patientsActive,
+        };
+        context.Patients.AddRange(p1, p2);
+
+        var couple = new Couple
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Patient1Id = p1.Id,
+            Patient2Id = p2.Id,
+            Patient1 = p1,
+            Patient2 = p2,
+            IsActive = active,
+        };
+        context.Couples.Add(couple);
+
+        return couple;
+    }
+
+    [Fact]
+    public async Task SetCoupleActive_ShouldDeactivate_WhenThereAreNoBlockers_AndKeepPatientsActive()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context);
+        await context.SaveChangesAsync();
+
+        var result = await handler.SetCoupleActive(couple.Id, false, CancellationToken.None);
+
+        Assert.True(result.Success);
+        var saved = await context.Couples.FindAsync(couple.Id);
+        Assert.NotNull(saved);
+        Assert.False(saved.IsActive);
+
+        var patient1 = await context.Patients.FindAsync(couple.Patient1Id);
+        var patient2 = await context.Patients.FindAsync(couple.Patient2Id);
+        Assert.True(patient1!.IsActive);
+        Assert.True(patient2!.IsActive);
+    }
+
+    [Fact]
+    public async Task SetCoupleActive_ShouldBlockDeactivation_WhenThereIsFutureCoupleAppointment()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context);
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = couple.Id,
+                AppointmentDate = DateTimeOffset.UtcNow.AddDays(2),
+                AppointmentStatus = AppointmentStatusEnum.Marcada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SetCoupleActive(couple.Id, false, CancellationToken.None);
+
+        Assert.False(result.Success);
+        Assert.Contains("consultas futuras", result.Message);
+        var saved = await context.Couples.FindAsync(couple.Id);
+        Assert.True(saved!.IsActive);
+    }
+
+    [Fact]
+    public async Task SetCoupleActive_ShouldBlockDeactivation_WhenThereIsActivePackageWithBalance()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context);
+        context.AppointmentPackages.Add(
+            new AppointmentPackage
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = couple.Id,
+                TotalAppointments = 10,
+                RemainingAppointments = 3,
+                Status = PackageStatus.Ativo,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SetCoupleActive(couple.Id, false, CancellationToken.None);
+
+        Assert.False(result.Success);
+        Assert.Contains("pacote", result.Message);
+    }
+
+    [Theory]
+    [InlineData(ContractStatus.Ativo)]
+    [InlineData(ContractStatus.AguardandoAceitacao)]
+    public async Task SetCoupleActive_ShouldBlockDeactivation_WhenThereIsOpenContract(
+        ContractStatus status
+    )
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context);
+        context.Contracts.Add(
+            new Contract
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = couple.Id,
+                Status = status,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SetCoupleActive(couple.Id, false, CancellationToken.None);
+
+        Assert.False(result.Success);
+        Assert.Contains("contrato", result.Message);
+    }
+
+    [Fact]
+    public async Task SetCoupleActive_ShouldRequireActivePatients_WhenReactivating()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context, active: false, patientsActive: false);
+        await context.SaveChangesAsync();
+
+        var blocked = await handler.SetCoupleActive(couple.Id, true, CancellationToken.None);
+        Assert.False(blocked.Success);
+        Assert.Contains("Reative os parceiros", blocked.Message);
+
+        var patient1 = await context.Patients.FindAsync(couple.Patient1Id);
+        var patient2 = await context.Patients.FindAsync(couple.Patient2Id);
+        patient1!.IsActive = true;
+        patient2!.IsActive = true;
+        await context.SaveChangesAsync();
+
+        var result = await handler.SetCoupleActive(couple.Id, true, CancellationToken.None);
+        Assert.True(result.Success);
+
+        var saved = await context.Couples.FindAsync(couple.Id);
+        Assert.True(saved!.IsActive);
+    }
+
+    [Fact]
+    public async Task GetCouples_ShouldFilterByActivationStatus()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        AddCouple(context, "Casal Ativo");
+        AddCouple(context, "Casal Inativo", active: false);
+        await context.SaveChangesAsync();
+
+        var active = await handler.GetCouples(
+            0,
+            10,
+            CancellationToken.None,
+            CoupleStatusFilter.Active
+        );
+        var inactive = await handler.GetCouples(
+            0,
+            10,
+            CancellationToken.None,
+            CoupleStatusFilter.Inactive
+        );
+
+        Assert.Equal("Casal Ativo", Assert.Single(active.Items).Name);
+        Assert.Equal("Casal Inativo", Assert.Single(inactive.Items).Name);
+    }
+
+    [Fact]
+    public async Task QueryCouples_ShouldFilterByActivationStatus()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        AddCouple(context, "Casal Ativo");
+        AddCouple(context, "Casal Inativo", active: false);
+        await context.SaveChangesAsync();
+
+        var result = await handler.QueryCouples(
+            "Casal",
+            0,
+            10,
+            CancellationToken.None,
+            filter: CoupleStatusFilter.Inactive
+        );
+
+        Assert.Equal("Casal Inativo", Assert.Single(result.Items).Name);
+    }
+
+    [Fact]
+    public async Task DeleteCouple_ShouldBlock_WhenThereIsAppointmentHistory()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context);
+        context.Appointments.Add(
+            new Appointment
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = couple.Id,
+                AppointmentDate = DateTimeOffset.UtcNow.AddDays(-5),
+                AppointmentStatus = AppointmentStatusEnum.Realizada,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.DeleteCouple(couple.Id);
+
+        Assert.False(result.Success);
+        Assert.Contains("Desative o casal", result.Message);
+        Assert.NotNull(await context.Couples.FindAsync(couple.Id));
+    }
+
+    [Fact]
+    public async Task DeleteCouple_ShouldBlock_WhenThereIsStandaloneNote()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context);
+        context.AdditionalNotes.Add(
+            new AdditionalNote
+            {
+                Id = Guid.NewGuid(),
+                CoupleId = couple.Id,
+                Content = "Nota do casal",
+                NoteDate = DateTimeOffset.UtcNow,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.DeleteCouple(couple.Id);
+
+        Assert.False(result.Success);
+        Assert.NotNull(await context.Couples.FindAsync(couple.Id));
+        Assert.NotNull(await context.AdditionalNotes.FirstOrDefaultAsync());
+    }
+
+    [Fact]
+    public async Task UpdateCouple_ShouldPreserveActivationStatus()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var couple = AddCouple(context, active: false);
+        await context.SaveChangesAsync();
+
+        var update = new Couple
+        {
+            Id = couple.Id,
+            Name = "Casal Renomeado",
+            Patient1Id = couple.Patient1Id,
+            Patient2Id = couple.Patient2Id,
+            IsActive = true,
+        };
+
+        var result = await handler.UpdateCouple(update);
+
+        Assert.True(result.Success);
+        var saved = await context.Couples.FindAsync(couple.Id);
+        Assert.NotNull(saved);
+        Assert.Equal("Casal Renomeado", saved.Name);
+        Assert.False(saved.IsActive);
+    }
 }

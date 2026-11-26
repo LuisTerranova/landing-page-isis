@@ -539,6 +539,48 @@ public class PatientHandlerTests
     }
 
     [Fact]
+    public async Task SetPatientActive_ShouldAllowDeactivation_WhenCoupleIsInactive()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = GetHandler(context);
+
+        var patientId = Guid.NewGuid();
+        var partnerId = Guid.NewGuid();
+        context.Patients.AddRange(
+            new Patient
+            {
+                Id = patientId,
+                Name = "Parceiro 1",
+                Phone = "1",
+            },
+            new Patient
+            {
+                Id = partnerId,
+                Name = "Parceiro 2",
+                Phone = "2",
+            }
+        );
+        context.Couples.Add(
+            new Couple
+            {
+                Id = Guid.NewGuid(),
+                Name = "Casal Inativo",
+                Patient1Id = patientId,
+                Patient2Id = partnerId,
+                IsActive = false,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await handler.SetPatientActive(patientId, false, CancellationToken.None);
+
+        Assert.True(result.Success);
+        var patient = await context.Patients.FindAsync(patientId);
+        Assert.NotNull(patient);
+        Assert.False(patient.IsActive);
+    }
+
+    [Fact]
     public async Task SetPatientActive_ShouldBlockDeactivation_WhenThereIsFutureScheduledAppointment()
     {
         await using var context = GetDatabaseContext();

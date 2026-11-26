@@ -1144,4 +1144,30 @@ public class ContractHandlerTests
             result.Message
         );
     }
+
+    [Fact]
+    public async Task CreateContract_ShouldFail_WhenInsiderCoupleIsInactive()
+    {
+        await using var context = GetDatabaseContext();
+        var handler = CreateHandler(context);
+
+        var coupleId = Guid.NewGuid();
+        context.Couples.Add(
+            new Couple
+            {
+                Id = coupleId,
+                Name = "Casal Desativado",
+                IsActive = false,
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var contract = CreateValidContract("529.982.247-25");
+        contract.CoupleId = coupleId;
+
+        var result = await handler.CreateContract(contract);
+
+        Assert.False(result.Success);
+        Assert.Contains("desativado", result.Message);
+    }
 }
