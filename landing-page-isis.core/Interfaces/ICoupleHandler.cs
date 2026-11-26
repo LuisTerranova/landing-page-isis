@@ -8,7 +8,8 @@ public interface ICoupleHandler
     Task<PaginatedResponse<CoupleListItemDto>> GetCouples(
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        CoupleStatusFilter filter = CoupleStatusFilter.Active
     );
     Task<Couple?> GetCouple(Guid id);
     Task<HandlerResult> CreateCouple(Couple couple);
@@ -19,8 +20,11 @@ public interface ICoupleHandler
         int page,
         int pageSize,
         CancellationToken ct,
-        bool excludeWithActiveContract = false
+        bool excludeWithActiveContract = false,
+        CoupleStatusFilter filter = CoupleStatusFilter.Active
     );
     Task<List<CoupleListItemDto>> GetAllCouples(CancellationToken ct);
     Task<Couple?> GetCoupleByPatientId(Guid patientId);
+
+    Task<HandlerResult> SetCoupleActive(Guid id, bool active, CancellationToken ct);
 }

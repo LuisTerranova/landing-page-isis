@@ -195,7 +195,7 @@ public class PatientHandler(AppDbContext context, IValidator<Patient> validator)
         if (!active)
         {
             var belongsToCouple = await context.Couples.AnyAsync(
-                c => c.Patient1Id == id || c.Patient2Id == id,
+                c => c.IsActive && (c.Patient1Id == id || c.Patient2Id == id),
                 ct
             );
 

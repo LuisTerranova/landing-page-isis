@@ -106,6 +106,22 @@ public class ContractHandler(
                 "O contrato deve estar vinculado a um paciente ou casal existente."
             );
 
+        if (contract.CoupleId.HasValue)
+        {
+            var couple = await context
+                .Couples.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == contract.CoupleId.Value);
+
+            if (couple is null)
+                return new HandlerResult(false, "Casal não encontrado.");
+
+            if (!couple.IsActive)
+                return new HandlerResult(
+                    false,
+                    "Este casal está desativado. Reative o casal antes de criar um novo contrato."
+                );
+        }
+
         contract.TermsAccepted = true;
         return await CreateContractInternal(contract, isInsider: true);
     }

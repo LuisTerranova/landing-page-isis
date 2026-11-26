@@ -40,6 +40,12 @@ public class CoupleMap : IEntityTypeConfiguration<Couple>
             .HasColumnName("policy_signed");
 
         builder
+            .Property(c => c.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true)
+            .HasColumnName("is_active");
+
+        builder
             .HasOne(c => c.Patient1)
             .WithMany()
             .HasForeignKey(c => c.Patient1Id)

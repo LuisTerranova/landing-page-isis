@@ -16,13 +16,14 @@ public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) :
     public async Task<PaginatedResponse<CoupleListItemDto>> GetCouples(
         int page,
         int pageSize,
-        CancellationToken ct
+        CancellationToken ct,
+        CoupleStatusFilter filter = CoupleStatusFilter.Active
     )
     {
-        var query = context
-            .Couples.Include(c => c.Patient1)
-            .Include(c => c.Patient2)
-            .AsNoTracking();
+        var query = ApplyStatusFilter(
+            context.Couples.Include(c => c.Patient1).Include(c => c.Patient2).AsNoTracking(),
+            filter
+        );
 
         var totalItems = await query.CountAsync(ct);
 
@@ -107,6 +108,9 @@ public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) :
         if (!string.IsNullOrEmpty(couple.PayerCpf))
             couple.PayerCpf = landing_page_isis.core.Helpers.CpfValidator.Strip(couple.PayerCpf);
 
+        // Activation status changes go through SetCoupleActive; profile updates must not toggle it.
+        couple.IsActive = existing.IsActive;
+
         context.Entry(existing).CurrentValues.SetValues(couple);
         await context.SaveChangesAsync();
         return new HandlerResult(true);
@@ -118,24 +122,18 @@ public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) :
         if (couple == null)
             return new HandlerResult(false, "Casal não encontrado.");
 
-        var hasActivePackage = await context.AppointmentPackages.AnyAsync(p =>
-            p.CoupleId == id && p.Status == PackageStatus.Ativo
-        );
+        // Hardening: a couple with any linked history must be deactivated instead of deleted.
+        // The AdditionalNote FK cascades on the database, so deleting would silently drop notes.
+        var hasLinkedHistory =
+            await context.Appointments.AnyAsync(a => a.CoupleId == id)
+            || await context.AppointmentPackages.AnyAsync(p => p.CoupleId == id)
+            || await context.AdditionalNotes.AnyAsync(n => n.CoupleId == id)
+            || await context.Contracts.AnyAsync(c => c.CoupleId == id);
 
-        if (hasActivePackage)
+        if (hasLinkedHistory)
             return new HandlerResult(
                 false,
-                "Não é possível excluir este casal porque ele possui um pacote de consultas ativo. Finalize ou cancele o pacote antes de excluir."
-            );
-
-        var hasActiveContract = await context.Contracts.AnyAsync(c =>
-            c.CoupleId == id && c.Status == ContractStatus.Ativo
-        );
-
-        if (hasActiveContract)
-            return new HandlerResult(
-                false,
-                "Não é possível excluir este casal porque ele possui um contrato ativo."
+                "Não é possível excluir este casal porque existem consultas, pacotes, notas ou contratos vinculados. Desative o casal em vez de excluí-lo."
             );
 
         context.Couples.Remove(couple);
@@ -143,25 +141,118 @@ public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) :
         return new HandlerResult(true);
     }
 
+    public async Task<HandlerResult> SetCoupleActive(Guid id, bool active, CancellationToken ct)
+    {
+        var couple = await context
+            .Couples.Include(c => c.Patient1)
+            .Include(c => c.Patient2)
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+
+        if (couple is null)
+            return new HandlerResult(false, "Casal não encontrado.");
+
+        if (couple.IsActive == active)
+            return new HandlerResult(true);
+
+        if (active)
+        {
+            var inactivePartners = new[] { couple.Patient1, couple.Patient2 }
+                .Where(p => p is { IsActive: false })
+                .Select(p => p.Name)
+                .ToList();
+
+            if (inactivePartners.Count > 0)
+                return new HandlerResult(
+                    false,
+                    $"Reative os parceiros ({string.Join(", ", inactivePartners)}) antes de reativar o casal."
+                );
+        }
+        else
+        {
+            var now = DateTimeOffset.UtcNow;
+
+            var hasFutureAppointment = await context.Appointments.AnyAsync(
+                a =>
+                    a.CoupleId == id
+                    && a.AppointmentStatus == AppointmentStatusEnum.Marcada
+                    && a.AppointmentDate >= now,
+                ct
+            );
+
+            if (hasFutureAppointment)
+                return new HandlerResult(
+                    false,
+                    "Não é possível desativar este casal porque ele possui consultas futuras agendadas."
+                );
+
+            var hasActivePackageWithBalance = await context.AppointmentPackages.AnyAsync(
+                p =>
+                    p.CoupleId == id
+                    && p.Status == PackageStatus.Ativo
+                    && p.RemainingAppointments > 0,
+                ct
+            );
+
+            if (hasActivePackageWithBalance)
+                return new HandlerResult(
+                    false,
+                    "Não é possível desativar este casal porque ele possui um pacote de consultas ativo com saldo."
+                );
+
+            var hasOpenContract = await context.Contracts.AnyAsync(
+                c =>
+                    c.CoupleId == id
+                    && (
+                        c.Status == ContractStatus.Ativo
+                        || c.Status == ContractStatus.AguardandoAceitacao
+                    ),
+                ct
+            );
+
+            if (hasOpenContract)
+                return new HandlerResult(
+                    false,
+                    "Não é possível desativar este casal porque ele possui um contrato ativo ou aguardando aceitação."
+                );
+        }
+
+        couple.IsActive = active;
+        await context.SaveChangesAsync(ct);
+
+        return new HandlerResult(
+            true,
+            active ? "Casal reativado com sucesso." : "Casal desativado com sucesso."
+        );
+    }
+
     public async Task<PaginatedResponse<CoupleListItemDto>> QueryCouples(
         string query,
         int page,
         int pageSize,
         CancellationToken ct,
-        bool excludeWithActiveContract = false
+        bool excludeWithActiveContract = false,
+        CoupleStatusFilter filter = CoupleStatusFilter.Active
     )
     {
-        var queryable = context
-            .Couples.Include(c => c.Patient1)
-            .Include(c => c.Patient2)
-            .AsNoTracking();
+        var queryable = ApplyStatusFilter(
+            context.Couples.Include(c => c.Patient1).Include(c => c.Patient2).AsNoTracking(),
+            filter
+        );
 
         if (excludeWithActiveContract)
         {
-            queryable = queryable.Where(c => 
-                !context.Contracts.Any(contract => contract.CoupleId == c.Id && contract.Status != ContractStatus.Cancelado) &&
-                !context.Contracts.Any(contract => contract.PatientId == c.Patient1Id && contract.Status != ContractStatus.Cancelado) &&
-                !context.Contracts.Any(contract => contract.PatientId == c.Patient2Id && contract.Status != ContractStatus.Cancelado)
+            queryable = queryable.Where(c =>
+                !context.Contracts.Any(contract =>
+                    contract.CoupleId == c.Id && contract.Status != ContractStatus.Cancelado
+                )
+                && !context.Contracts.Any(contract =>
+                    contract.PatientId == c.Patient1Id
+                    && contract.Status != ContractStatus.Cancelado
+                )
+                && !context.Contracts.Any(contract =>
+                    contract.PatientId == c.Patient2Id
+                    && contract.Status != ContractStatus.Cancelado
+                )
             );
         }
 
@@ -214,5 +305,18 @@ public class CoupleHandler(AppDbContext context, IValidator<Couple> validator) :
                 c.Patient1.Email
             ))
             .ToListAsync(ct);
+    }
+
+    private static IQueryable<Couple> ApplyStatusFilter(
+        IQueryable<Couple> queryable,
+        CoupleStatusFilter filter
+    )
+    {
+        return filter switch
+        {
+            CoupleStatusFilter.Active => queryable.Where(c => c.IsActive),
+            CoupleStatusFilter.Inactive => queryable.Where(c => !c.IsActive),
+            _ => queryable,
+        };
     }
 }

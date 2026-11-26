@@ -21,6 +21,12 @@ public class Couple
 
     public bool PolicySigned { get; set; } = false;
 
+    /// <summary>
+    /// Indicates whether the couple is active. Deactivated couples keep their patients active
+    /// so each partner can be deactivated individually.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
+
     public Patient Patient1 { get; set; } = null!;
     public Patient Patient2 { get; set; } = null!;
 
