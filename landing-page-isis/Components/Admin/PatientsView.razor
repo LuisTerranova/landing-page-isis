@@ -108,32 +108,75 @@
 }
 else
 {
-    <GenericTable @ref="_couplesTable"
-                  TItem="CoupleListItemDto"
-                  ServerData="@CoupleServerReload"
-                  OnCreate="@(OpenCreateCouple)"
-                  OnDelete="@(DeleteCouple)"
-                  ShowSearchBar="true"
-                  @bind-SearchQuery="_coupleSearchQuery">
+    <MudTabs ActivePanelIndex="_coupleTabIndex"
+             ActivePanelIndexChanged="OnCoupleTabChanged"
+             Elevation="0"
+             Rounded="true"
+             ApplyEffectsToContainer="true">
+        <MudTabPanel Text="Ativos">
+            <GenericTable @ref="_activeCouplesTable"
+                          TItem="CoupleListItemDto"
+                          ServerData="@ActiveCoupleServerReload"
+                          OnCreate="@(OpenCreateCouple)"
+                          ShowSearchBar="true"
+                          @bind-SearchQuery="_activeCoupleSearchQuery">
 
-        <HeaderColumns>
-            <MudTh>Nome do Casal</MudTh>
-            <MudTh>Parceiro 1</MudTh>
-            <MudTh>Parceiro 2</MudTh>
-            <MudTh>Telefone</MudTh>
-        </HeaderColumns>
+                <HeaderColumns>
+                    <MudTh>Nome do Casal</MudTh>
+                    <MudTh>Parceiro 1</MudTh>
+                    <MudTh>Parceiro 2</MudTh>
+                    <MudTh>Telefone</MudTh>
+                </HeaderColumns>
 
-        <RowColumns>
-            <MudTd DataLabel="Casal">@context.Name</MudTd>
-            <MudTd DataLabel="Parceiro 1">@context.Partner1Name</MudTd>
-            <MudTd DataLabel="Parceiro 2">@context.Partner2Name</MudTd>
-            <MudTd DataLabel="Telefone">@context.Partner1Phone.FormatPhone()</MudTd>
-        </RowColumns>
+                <RowColumns>
+                    <MudTd DataLabel="Casal">@context.Name</MudTd>
+                    <MudTd DataLabel="Parceiro 1">@context.Partner1Name</MudTd>
+                    <MudTd DataLabel="Parceiro 2">@context.Partner2Name</MudTd>
+                    <MudTd DataLabel="Telefone">@context.Partner1Phone.FormatPhone()</MudTd>
+                </RowColumns>
 
-        <CustomActions>
-            <MudMenuItem OnClick="@(() => OpenCoupleDetails(context))">
-                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
-            </MudMenuItem>
-        </CustomActions>
-    </GenericTable>
+                <CustomActions>
+                    <MudMenuItem OnClick="@(() => OpenCoupleDetails(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => SetCoupleActive(context, false))">
+                        <MudIcon Icon="@Icons.Material.Filled.GroupOff" Class="me-2"/> Desativar
+                    </MudMenuItem>
+                </CustomActions>
+            </GenericTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Desativados">
+            <GenericTable @ref="_inactiveCouplesTable"
+                          TItem="CoupleListItemDto"
+                          ServerData="@InactiveCoupleServerReload"
+                          ShowCreateButton="false"
+                          ShowSearchBar="true"
+                          @bind-SearchQuery="_inactiveCoupleSearchQuery">
+
+                <HeaderColumns>
+                    <MudTh>Nome do Casal</MudTh>
+                    <MudTh>Parceiro 1</MudTh>
+                    <MudTh>Parceiro 2</MudTh>
+                    <MudTh>Telefone</MudTh>
+                </HeaderColumns>
+
+                <RowColumns>
+                    <MudTd DataLabel="Casal">@context.Name</MudTd>
+                    <MudTd DataLabel="Parceiro 1">@context.Partner1Name</MudTd>
+                    <MudTd DataLabel="Parceiro 2">@context.Partner2Name</MudTd>
+                    <MudTd DataLabel="Telefone">@context.Partner1Phone.FormatPhone()</MudTd>
+                </RowColumns>
+
+                <CustomActions>
+                    <MudMenuItem OnClick="@(() => OpenCoupleDetails(context))">
+                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2"/> Detalhes
+                    </MudMenuItem>
+                    <MudMenuItem OnClick="@(() => SetCoupleActive(context, true))">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Class="me-2"/> Reativar
+                    </MudMenuItem>
+                </CustomActions>
+            </GenericTable>
+        </MudTabPanel>
+    </MudTabs>
 }

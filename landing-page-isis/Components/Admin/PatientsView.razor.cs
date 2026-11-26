@@ -37,10 +37,13 @@ public partial class PatientsView : ComponentBase
     private bool ShowCouples { get; set; }
     private GenericTable<PatientListItemDto>? _activePatientsTable;
     private GenericTable<PatientListItemDto>? _inactivePatientsTable;
-    private GenericTable<CoupleListItemDto> _couplesTable = null!;
+    private GenericTable<CoupleListItemDto>? _activeCouplesTable;
+    private GenericTable<CoupleListItemDto>? _inactiveCouplesTable;
     private int _patientTabIndex;
+    private int _coupleTabIndex;
     private string _activeSearchQuery = string.Empty;
-    private string _coupleSearchQuery = string.Empty;
+    private string _activeCoupleSearchQuery = string.Empty;
+    private string _inactiveCoupleSearchQuery = string.Empty;
 
     // Blazor Server circuits share one scoped DbContext. Serialize table queries so
     // switching tabs cannot start overlapping EF Core operations on the same instance.
@@ -425,23 +428,64 @@ public partial class PatientsView : ComponentBase
 
     #region Methods - Couples
 
-    private Task<TableData<CoupleListItemDto>> CoupleServerReload(
+    private Task<TableData<CoupleListItemDto>> ActiveCoupleServerReload(
         TableState state,
         CancellationToken ct
     )
     {
         return QueryWithLockAsync(
             token =>
-                string.IsNullOrWhiteSpace(_coupleSearchQuery)
-                    ? CoupleHandler.GetCouples(state.Page, state.PageSize, token)
-                    : CoupleHandler.QueryCouples(
-                        _coupleSearchQuery,
+                string.IsNullOrWhiteSpace(_activeCoupleSearchQuery)
+                    ? CoupleHandler.GetCouples(
                         state.Page,
                         state.PageSize,
-                        token
+                        token,
+                        CoupleStatusFilter.Active
+                    )
+                    : CoupleHandler.QueryCouples(
+                        _activeCoupleSearchQuery,
+                        state.Page,
+                        state.PageSize,
+                        token,
+                        filter: CoupleStatusFilter.Active
                     ),
             ct
         );
+    }
+
+    private Task<TableData<CoupleListItemDto>> InactiveCoupleServerReload(
+        TableState state,
+        CancellationToken ct
+    )
+    {
+        return QueryWithLockAsync(
+            token =>
+                string.IsNullOrWhiteSpace(_inactiveCoupleSearchQuery)
+                    ? CoupleHandler.GetCouples(
+                        state.Page,
+                        state.PageSize,
+                        token,
+                        CoupleStatusFilter.Inactive
+                    )
+                    : CoupleHandler.QueryCouples(
+                        _inactiveCoupleSearchQuery,
+                        state.Page,
+                        state.PageSize,
+                        token,
+                        filter: CoupleStatusFilter.Inactive
+                    ),
+            ct
+        );
+    }
+
+    private async Task OnCoupleTabChanged(int index)
+    {
+        _coupleTabIndex = index;
+
+        if (index == 0 && _activeCouplesTable is not null)
+            await _activeCouplesTable.ReloadAsync();
+        else if (index == 1 && _inactiveCouplesTable is not null)
+            await _inactiveCouplesTable.ReloadAsync();
     }
 
     private async Task OpenCreateCouple()
@@ -455,7 +499,8 @@ public partial class PatientsView : ComponentBase
             if (response.Success)
             {
                 Snackbar.Add("Casal criado com sucesso!", Severity.Success);
-                await _couplesTable.ReloadAsync();
+                if (_activeCouplesTable is not null)
+                    await _activeCouplesTable.ReloadAsync();
             }
             else
             {
@@ -464,7 +509,7 @@ public partial class PatientsView : ComponentBase
         }
     }
 
-    private async Task DeleteCouple(CoupleListItemDto couple)
+    private async Task SetCoupleActive(CoupleListItemDto couple, bool active)
     {
         var options = new DialogOptions
         {
@@ -474,27 +519,45 @@ public partial class PatientsView : ComponentBase
         };
 
         var confirm = await DialogService.ShowMessageBoxAsync(
-            "Confirmar Exclusão",
-            $"Tem certeza que deseja apagar o casal {couple.Name}?",
-            yesText: "Excluir",
+            active ? "Reativar Casal" : "Desativar Casal",
+            active
+                ? $"Reativar o casal {couple.Name}? Os dois parceiros precisam estar ativos."
+                : $"Desativar o casal {couple.Name}? Os pacientes continuarão ativos e poderão ser desativados individualmente.",
+            yesText: active ? "Reativar" : "Desativar",
             cancelText: "Cancelar",
             options: options
         );
 
-        if (confirm == true)
-        {
-            var result = await CoupleHandler.DeleteCouple(couple.Id);
+        if (confirm != true)
+            return;
 
-            if (result.Success)
-            {
-                Snackbar.Add("Casal removido com sucesso.", Severity.Success);
-                await _couplesTable.ReloadAsync();
-            }
-            else
-            {
-                Snackbar.Add(result.Message ?? "Erro ao excluir o casal.", Severity.Error);
-            }
+        var result = await CoupleHandler.SetCoupleActive(couple.Id, active, CancellationToken.None);
+
+        if (result.Success)
+        {
+            Snackbar.Add(
+                active ? "Casal reativado com sucesso." : "Casal desativado com sucesso.",
+                Severity.Success
+            );
+            await ReloadCoupleTables();
         }
+        else
+        {
+            Snackbar.Add(
+                result.Message
+                    ?? (active ? "Erro ao reativar o casal." : "Erro ao desativar o casal."),
+                Severity.Error
+            );
+        }
+    }
+
+    private async Task ReloadCoupleTables()
+    {
+        if (_activeCouplesTable is not null)
+            await _activeCouplesTable.ReloadAsync();
+
+        if (_inactiveCouplesTable is not null)
+            await _inactiveCouplesTable.ReloadAsync();
     }
 
     #endregion
